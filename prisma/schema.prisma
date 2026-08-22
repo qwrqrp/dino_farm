@@ -24,6 +24,7 @@ model User {
   referralsSent   Referral[] @relation("ReferralInviter")
   referralSource  Referral?  @relation("ReferralInvited")
   shopPurchases   ShopPurchase[]
+  withdrawals     Withdrawal[]
 }
 
 model Balance {
@@ -99,4 +100,27 @@ model ShopPurchase {
 
   @@index([userId])
   @@index([shopItemId])
+}
+
+
+model Withdrawal {
+  id              String   @id
+  userId          String
+  requestKey      String   @unique
+  currency        String   @default("USDT")
+  network         String
+  walletAddress   String
+  dnaAmount       Float
+  rateUsdtPerDna  Decimal  @db.Decimal(18, 8)
+  usdtAmount      Decimal  @db.Decimal(18, 8)
+  status          String   @default("PENDING")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+  processedAt     DateTime?
+  note            String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
 }
