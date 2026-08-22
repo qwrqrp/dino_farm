@@ -502,6 +502,8 @@ export default function GameApp() {
   const [depositTelegramRequired, setDepositTelegramRequired] = useState(false);
   const [depositAmount, setDepositAmount] = useState("3");
   const [depositMethodCode, setDepositMethodCode] = useState("");
+  const [selectedMethodMinimumUsd, setSelectedMethodMinimumUsd] = useState<number | null>(null);
+  const [minimumLoading, setMinimumLoading] = useState(false);
   const [activeDeposit, setActiveDeposit] = useState<DepositItem | null>(null);
   const [isCreatingDeposit, setIsCreatingDeposit] = useState(false);
   const [isCheckingDeposit, setIsCheckingDeposit] = useState(false);
@@ -584,7 +586,10 @@ export default function GameApp() {
       valid:
         Boolean(depositConfig) &&
         amountUsd >=
-          (depositConfig?.minUsd ?? 3) &&
+          Math.max(
+            depositConfig?.minUsd ?? 3,
+            selectedMethodMinimumUsd ?? 0,
+          ) &&
         amountUsd <=
           (depositConfig?.maxUsd ??
             20_000),
@@ -593,6 +598,7 @@ export default function GameApp() {
     depositAmount,
     depositConfig,
     firstDepositEligible,
+    selectedMethodMinimumUsd,
   ]);
 
   const eggsPerHour = useMemo(() => {
@@ -1350,6 +1356,91 @@ export default function GameApp() {
     }
   };
 
+  const loadSelectedMethodMinimum =
+    async (methodCode: string) => {
+      if (!methodCode) {
+        setSelectedMethodMinimumUsd(
+          null,
+        );
+        return;
+      }
+
+      setMinimumLoading(true);
+      setSelectedMethodMinimumUsd(
+        null,
+      );
+
+      try {
+        const response = await fetch(
+          `/api/deposits/minimum?methodCode=${encodeURIComponent(
+            methodCode,
+          )}`,
+          {
+            cache: "no-store",
+            credentials: "include",
+          },
+        );
+
+        const data =
+          (await response.json()) as {
+            ok?: boolean;
+            minimumUsd?:
+              | number
+              | null;
+            error?: string;
+            message?: string;
+          };
+
+        if (!response.ok || !data.ok) {
+          throw new Error(
+            data.message ||
+              data.error ||
+              "Не удалось получить минимум",
+          );
+        }
+
+        setSelectedMethodMinimumUsd(
+          typeof data.minimumUsd ===
+              "number" &&
+            Number.isFinite(
+              data.minimumUsd,
+            )
+            ? data.minimumUsd
+            : null,
+        );
+      } catch (error) {
+        console.error(
+          "Failed to load selected method minimum",
+          error,
+        );
+
+        setSelectedMethodMinimumUsd(
+          null,
+        );
+      } finally {
+        setMinimumLoading(false);
+      }
+    };
+
+  useEffect(() => {
+    if (
+      tab !== "shop" ||
+      shopSection !== "deposit" ||
+      !depositMethodCode
+    ) {
+      return;
+    }
+
+    void loadSelectedMethodMinimum(
+      depositMethodCode,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    tab,
+    shopSection,
+    depositMethodCode,
+  ]);
+
   const createDeposit = async () => {
     if (
       isCreatingDeposit ||
@@ -1405,8 +1496,8 @@ export default function GameApp() {
           const minimum =
             data.minimumUsd as number;
 
-          setDepositAmount(
-            minimum.toFixed(2),
+          setSelectedMethodMinimumUsd(
+            minimum,
           );
 
           throw new Error(
@@ -3142,11 +3233,10 @@ export default function GameApp() {
                     opacity: .72,
                   }}
                 >
-                  ⚠️ У каждой криптовалюты есть свой
-                  динамический минимум сети. Если
-                  выбранная сумма ниже него, игра
-                  покажет актуальный минимум до
-                  создания платежа.
+                  ⚠️ Минимум рассчитывается отдельно
+                  для выбранной монеты и сети и
+                  может меняться из-за комиссий и
+                  курса.
                 </p>
 
                 {depositStatus === "loading" ||
@@ -3453,6 +3543,57 @@ export default function GameApp() {
                       Выберите криптовалюту
                     </strong>
 
+                    {depositMethodCode ? (
+                      <div
+                        style={{
+                          marginBottom: 10,
+                          padding: "9px 11px",
+                          borderRadius: 12,
+                          background:
+                            "rgba(255,255,255,.04)",
+                          fontSize: 12,
+                          lineHeight: 1.45,
+                        }}
+                      >
+                        {minimumLoading ? (
+                          <span>
+                            ⏳ Проверяем минимум
+                            выбранной сети...
+                          </span>
+                        ) : selectedMethodMinimumUsd !==
+                          null ? (
+                          <span>
+                            Минимум для{" "}
+                            <b>
+                              {depositMethods.find(
+                                (method) =>
+                                  method.code ===
+                                  depositMethodCode,
+                              )?.label ??
+                                depositMethodCode}
+                            </b>
+                            : примерно{" "}
+                            <b>
+                              $
+                              {selectedMethodMinimumUsd.toFixed(
+                                2,
+                              )}
+                            </b>
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              opacity: .7,
+                            }}
+                          >
+                            Минимум будет окончательно
+                            проверен сервером при
+                            создании платежа.
+                          </span>
+                        )}
+                      </div>
+                    ) : null}
+
                     <div
                       style={{
                         display: "grid",
@@ -3480,11 +3621,14 @@ export default function GameApp() {
                                 !method.available ||
                                 depositTelegramRequired
                               }
-                              onClick={() =>
+                              onClick={() => {
+                                setSelectedMethodMinimumUsd(
+                                  null,
+                                );
                                 setDepositMethodCode(
                                   method.code,
-                                )
-                              }
+                                );
+                              }}
                               style={{
                                 width: "100%",
                                 minWidth: 0,
