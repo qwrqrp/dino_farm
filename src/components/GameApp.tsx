@@ -522,6 +522,18 @@ export default function GameApp() {
   }, []);
 
   useEffect(() => {
+    if (!toast) return;
+
+    const timer = window.setTimeout(() => {
+      setToast("");
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [toast]);
+
+  useEffect(() => {
     if (isLoading || loadError) return;
 
     const timer = window.setInterval(() => {
@@ -4457,7 +4469,11 @@ export default function GameApp() {
         )}
       </section>
 
-      <div className="toast" role="status">{toast}</div>
+      {toast ? (
+        <div className="toast" role="status">
+          {toast}
+        </div>
+      ) : null}
 
       <nav className="bottom-nav glass" aria-label="Главная навигация">
         {([
