@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   dinosaurs,
   formatNumber,
@@ -681,7 +681,7 @@ export default function GameApp() {
   const [withdrawWallet, setWithdrawWallet] = useState("");
   const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
   const [cancelingWithdrawalId, setCancelingWithdrawalId] = useState<string | null>(null);
-  const [withdrawalStatusSnapshot, setWithdrawalStatusSnapshot] = useState<Record<string, string>>({});
+  const withdrawalStatusRef = useRef<Record<string, string>>({});
 
   const depositPreview = useMemo(() => {
     const normalized = Number(
@@ -2830,14 +2830,19 @@ export default function GameApp() {
   const loadWithdrawals = async (
     silent = false,
   ) => {
-    if (
-      !silent &&
-      authMode !== "telegram"
-    ) {
-      setToast(
-        "Вывод DNA доступен только через Telegram.",
-      );
+    if (authMode !== "telegram") {
+      if (!silent) {
+        setToast(
+          "Вывод доступен только при входе через Telegram.",
+        );
+      }
       return;
+    }
+
+    if (!silent) {
+      setWithdrawalStatus(
+        "loading",
+      );
     }
 
     try {
@@ -2852,21 +2857,26 @@ export default function GameApp() {
       const data =
         (await response.json()) as {
           ok?: boolean;
-          withdrawals?:
-            WithdrawalItem[];
-          config?: {
-            dnaToUsdt: number;
-            minDna: number;
-          };
           error?: string;
           message?: string;
+          config?:
+            WithdrawalConfigResponse;
+          balance?: {
+            dna: number;
+          };
+          withdrawals?:
+            WithdrawalItem[];
         };
 
-      if (!response.ok || !data.ok) {
+      if (
+        !response.ok ||
+        !data.ok ||
+        !data.config
+      ) {
         throw new Error(
           data.message ||
             data.error ||
-            "Не удалось загрузить заявки",
+            "Не удалось загрузить вывод",
         );
       }
 
@@ -2877,30 +2887,14 @@ export default function GameApp() {
           ? data.withdrawals
           : [];
 
-      if (
-        data.config &&
-        Number.isFinite(
-          data.config.dnaToUsdt,
-        ) &&
-        Number.isFinite(
-          data.config.minDna,
-        )
-      ) {
-        setWithdrawalConfig(
-          data.config,
-        );
-      }
-
-      setWithdrawals(
-        nextWithdrawals,
-      );
-
       if (silent) {
-        for (const item of nextWithdrawals) {
+        for (
+          const item of
+          nextWithdrawals
+        ) {
           const previousStatus =
-            withdrawalStatusSnapshot[
-              item.id
-            ];
+            withdrawalStatusRef
+              .current[item.id];
 
           if (
             previousStatus &&
@@ -2921,7 +2915,8 @@ export default function GameApp() {
                 "🔄 Ваша заявка на вывод DNA одобрена.",
               );
             } else if (
-              item.status === "PAID"
+              item.status ===
+              "PAID"
             ) {
               setToast(
                 `✅ Выплата отправлена: ${item.usdtAmount.toFixed(
@@ -2947,11 +2942,14 @@ export default function GameApp() {
         }
       }
 
-      const snapshot =
+      withdrawalStatusRef.current =
         nextWithdrawals.reduce<
           Record<string, string>
         >(
-          (result, item) => {
+          (
+            result,
+            item,
+          ) => {
             result[item.id] =
               item.status;
             return result;
@@ -2959,8 +2957,25 @@ export default function GameApp() {
           {},
         );
 
-      setWithdrawalStatusSnapshot(
-        snapshot,
+      setWithdrawalConfig(
+        data.config,
+      );
+
+      setWithdrawals(
+        nextWithdrawals,
+      );
+
+      setState(
+        (previous) => ({
+          ...previous,
+          dna:
+            data.balance?.dna ??
+            previous.dna,
+        }),
+      );
+
+      setWithdrawalStatus(
+        "ready",
       );
     } catch (error) {
       console.error(
@@ -2969,10 +2984,14 @@ export default function GameApp() {
       );
 
       if (!silent) {
+        setWithdrawalStatus(
+          "error",
+        );
+
         setToast(
           error instanceof Error
             ? error.message
-            : "Ошибка загрузки заявок",
+            : "Ошибка загрузки вывода",
         );
       }
     }
@@ -3151,13 +3170,10 @@ export default function GameApp() {
           ),
       );
 
-      setWithdrawalStatusSnapshot(
-        (previous) => ({
-          ...previous,
-          [data.withdrawal!.id]:
-            data.withdrawal!.status,
-        }),
-      );
+      withdrawalStatusRef.current[
+        data.withdrawal.id
+      ] =
+        data.withdrawal.status;
 
       setState((previous) => ({
         ...previous,
@@ -3203,8 +3219,10 @@ export default function GameApp() {
     const hasActiveWithdrawal =
       withdrawals.some(
         (item) =>
-          item.status === "PENDING" ||
-          item.status === "APPROVED",
+          item.status ===
+            "PENDING" ||
+          item.status ===
+            "APPROVED",
       );
 
     if (!hasActiveWithdrawal) {
@@ -3258,7 +3276,6 @@ export default function GameApp() {
         interval,
       );
     };
-    // Polling restarts when the active set changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     withdrawalOpen,
@@ -5125,26 +5142,6 @@ export default function GameApp() {
                   <p>
                     Загружаем операции...
                   </p>
-
-                  {withdrawals.some(
-                    (item) =>
-                      item.status ===
-                        "PENDING" ||
-                      item.status ===
-                        "APPROVED",
-                  ) ? (
-                    <p
-                      className="hint"
-                      style={{
-                        marginTop: 6,
-                      }}
-                    >
-                      🔄 Статус активной заявки
-                      обновляется автоматически
-                      примерно каждые 15 секунд.
-                    </p>
-                  ) : null}
-
                 ) : walletHistoryStatus ===
                   "error" ? (
                   <>
@@ -7567,6 +7564,26 @@ export default function GameApp() {
                     <p>
                       Доступно: <strong>{formatNumber(state.dna, 4)} DNA</strong>
                     </p>
+
+                    {withdrawals.some(
+                      (item) =>
+                        item.status ===
+                          "PENDING" ||
+                        item.status ===
+                          "APPROVED",
+                    ) ? (
+                      <p
+                        className="hint"
+                        style={{
+                          marginTop: 6,
+                        }}
+                      >
+                        🔄 Статус активной
+                        заявки обновляется
+                        автоматически примерно
+                        каждые 15 секунд.
+                      </p>
+                    ) : null}
 
                     <label style={{ display: "grid", gap: 6, marginTop: 12, width: "100%", minWidth: 0 }}>
                       <span>Количество DNA</span>
