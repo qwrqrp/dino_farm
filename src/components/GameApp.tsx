@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { dinosaurs, formatNumber, gameConfig, getDinosaurConfig, MAX_DINOSAUR_LEVEL } from "@/lib/game-config";
+import {
+  dinosaurs,
+  formatNumber,
+  gameConfig,
+  getDinosaurConfig,
+  MAX_DINOSAUR_LEVEL,
+  NEST_UPGRADE_TIERS,
+} from "@/lib/game-config";
 
 type Tab = "nest" | "game" | "shop" | "friends" | "menu";
 type Slot = number | null;
@@ -74,6 +81,22 @@ type ShopItem = {
   amount: number;
 };
 
+
+type NestUpgradeInfo = {
+  currentCapacity: number;
+  coins: number;
+  maxCapacity: number;
+  nextUpgrade: {
+    capacity: number;
+    priceCoins: number;
+    addedCapacity: number;
+  } | null;
+  tiers: Array<{
+    capacity: number;
+    priceCoins: number;
+    reached: boolean;
+  }>;
+};
 
 type DailyRewardInfo = {
   canClaim: boolean;
@@ -312,6 +335,10 @@ export default function GameApp() {
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [shopStatus, setShopStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [buyingItemCode, setBuyingItemCode] = useState<string | null>(null);
+  const [nestUpgradeOpen, setNestUpgradeOpen] = useState(false);
+  const [nestUpgradeStatus, setNestUpgradeStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [nestUpgradeInfo, setNestUpgradeInfo] = useState<NestUpgradeInfo | null>(null);
+  const [isUpgradingNest, setIsUpgradingNest] = useState(false);
   const [dailyOpen, setDailyOpen] = useState(false);
   const [dailyStatus, setDailyStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [dailyInfo, setDailyInfo] = useState<DailyRewardInfo | null>(null);
@@ -849,6 +876,168 @@ export default function GameApp() {
       cancelled = true;
     };
   }, [tab]);
+
+  const loadNestUpgrades = async () => {
+    setNestUpgradeStatus("loading");
+
+    try {
+      const response = await fetch("/api/nest-upgrade", {
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      const data = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+        currentCapacity?: number;
+        coins?: number;
+        maxCapacity?: number;
+        nextUpgrade?: NestUpgradeInfo["nextUpgrade"];
+        tiers?: NestUpgradeInfo["tiers"];
+      };
+
+      if (
+        !response.ok ||
+        !data.ok ||
+        typeof data.currentCapacity !== "number" ||
+        typeof data.coins !== "number" ||
+        typeof data.maxCapacity !== "number" ||
+        !Array.isArray(data.tiers)
+      ) {
+        throw new Error(
+          data.message ||
+            data.error ||
+            "Не удалось загрузить улучшения гнезда",
+        );
+      }
+
+      const info: NestUpgradeInfo = {
+        currentCapacity: data.currentCapacity,
+        coins: data.coins,
+        maxCapacity: data.maxCapacity,
+        nextUpgrade: data.nextUpgrade ?? null,
+        tiers: data.tiers,
+      };
+
+      setNestUpgradeInfo(info);
+      setState((previous) => ({
+        ...previous,
+        coins: info.coins,
+        capacity: info.currentCapacity,
+      }));
+      setNestUpgradeStatus("ready");
+    } catch (error) {
+      console.error(
+        "Failed to load nest upgrades",
+        error,
+      );
+      setNestUpgradeStatus("error");
+      setToast(
+        error instanceof Error
+          ? error.message
+          : "Ошибка загрузки улучшений гнезда",
+      );
+    }
+  };
+
+  const openNestUpgrades = () => {
+    setNestUpgradeOpen(true);
+    void loadNestUpgrades();
+  };
+
+  const upgradeNest = async () => {
+    if (
+      isUpgradingNest ||
+      !nestUpgradeInfo?.nextUpgrade
+    ) {
+      return;
+    }
+
+    setIsUpgradingNest(true);
+    setToast("Улучшаем гнездо...");
+
+    try {
+      const response = await fetch("/api/nest-upgrade", {
+        method: "POST",
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      const data = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+        paidCoins?: number;
+        coins?: number;
+        capacity?: number;
+        nextUpgrade?: NestUpgradeInfo["nextUpgrade"];
+      };
+
+      if (
+        !response.ok ||
+        !data.ok ||
+        typeof data.coins !== "number" ||
+        typeof data.capacity !== "number"
+      ) {
+        throw new Error(
+          data.message ||
+            data.error ||
+            "Не удалось улучшить гнездо",
+        );
+      }
+
+      setState((previous) => ({
+        ...previous,
+        coins: data.coins ?? previous.coins,
+        capacity:
+          data.capacity ?? previous.capacity,
+      }));
+
+      setNestUpgradeInfo((previous) =>
+        previous
+          ? {
+              ...previous,
+              coins: data.coins ?? previous.coins,
+              currentCapacity:
+                data.capacity ??
+                previous.currentCapacity,
+              nextUpgrade:
+                data.nextUpgrade ?? null,
+              tiers: previous.tiers.map((tier) => ({
+                ...tier,
+                reached:
+                  (data.capacity ??
+                    previous.currentCapacity) >=
+                  tier.capacity,
+              })),
+            }
+          : previous,
+      );
+
+      setToast(
+        `🪺 Гнездо: ${formatNumber(
+          data.capacity,
+          0,
+        )} яиц · −${formatNumber(
+          data.paidCoins ?? 0,
+          0,
+        )} Coins`,
+      );
+    } catch (error) {
+      console.error(
+        "Failed to upgrade nest",
+        error,
+      );
+      setToast(
+        error instanceof Error
+          ? error.message
+          : "Ошибка улучшения гнезда",
+      );
+    } finally {
+      setIsUpgradingNest(false);
+    }
+  };
 
   const buyShopItem = async (item: ShopItem) => {
     if (buyingItemCode) return;
@@ -1502,6 +1691,14 @@ export default function GameApp() {
               <div className="progress"><div style={{ width: `${progress}%` }} /></div>
               <div className="rate">⚡ {formatNumber(eggsPerHour, 0)} яиц / час</div>
               <button className="primary" onClick={collectEggs} disabled={isLoading || isCollecting || Boolean(loadError)}>{isCollecting ? "⏳ СОБИРАЕМ..." : "🥚 СОБРАТЬ ЯЙЦА"}</button>
+              <button
+                className="coin-button"
+                onClick={openNestUpgrades}
+                disabled={isLoading || Boolean(loadError)}
+                style={{ marginTop: 10, width: "100%" }}
+              >
+                🪺 УЛУЧШИТЬ ГНЕЗДО
+              </button>
             </div>
 
             <div className="stats-grid">
@@ -1509,6 +1706,311 @@ export default function GameApp() {
               <article className="stat-card"><span>Coins / день</span><strong>{formatNumber(eggsPerHour * 24 * gameConfig.eggToCoin, 2)}</strong><small>расчётно</small></article>
               <article className="stat-card"><span>DNA / день</span><strong>{formatNumber(eggsPerHour * 24 * gameConfig.eggToDna, 2)}</strong><small>расчётно</small></article>
             </div>
+
+            {nestUpgradeOpen ? (
+              <div
+                className="form-card"
+                style={{
+                  marginTop: 16,
+                  borderRadius: 20,
+                  background: "#10281e",
+                  border: "1px solid rgba(255,255,255,.08)",
+                  padding: 14,
+                  width: "100%",
+                  minWidth: 0,
+                }}
+              >
+                <div
+                  className="section-head"
+                  style={{
+                    width: "100%",
+                    minWidth: 0,
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <span className="eyebrow">NEST UPGRADE</span>
+                    <h2>🪺 Улучшение гнезда</h2>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button
+                      className="coin-button"
+                      onClick={() => void loadNestUpgrades()}
+                    >
+                      ↻
+                    </button>
+                    <button
+                      className="coin-button"
+                      onClick={() => setNestUpgradeOpen(false)}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+
+                {nestUpgradeStatus === "loading" ||
+                nestUpgradeStatus === "idle" ? (
+                  <p>Загружаем уровни гнезда...</p>
+                ) : nestUpgradeStatus === "error" ? (
+                  <>
+                    <p>Не удалось загрузить улучшения.</p>
+                    <button
+                      className="primary"
+                      onClick={() => void loadNestUpgrades()}
+                    >
+                      ПОВТОРИТЬ
+                    </button>
+                  </>
+                ) : nestUpgradeInfo ? (
+                  <>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(2, minmax(0, 1fr))",
+                        gap: 8,
+                        marginTop: 8,
+                      }}
+                    >
+                      <div
+                        style={{
+                          padding: 11,
+                          borderRadius: 13,
+                          background: "rgba(255,255,255,.04)",
+                        }}
+                      >
+                        <small style={{ opacity: .62 }}>
+                          Вместимость
+                        </small>
+                        <strong
+                          style={{
+                            display: "block",
+                            marginTop: 3,
+                            fontSize: 18,
+                          }}
+                        >
+                          {formatNumber(
+                            nestUpgradeInfo.currentCapacity,
+                            0,
+                          )}
+                        </strong>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: 11,
+                          borderRadius: 13,
+                          background: "rgba(255,255,255,.04)",
+                        }}
+                      >
+                        <small style={{ opacity: .62 }}>
+                          Баланс
+                        </small>
+                        <strong
+                          style={{
+                            display: "block",
+                            marginTop: 3,
+                            fontSize: 18,
+                          }}
+                        >
+                          {formatNumber(state.coins, 0)}
+                        </strong>
+                        <small>Coins</small>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gap: 7,
+                        marginTop: 10,
+                      }}
+                    >
+                      {NEST_UPGRADE_TIERS.map((tier, index) => {
+                        const reached =
+                          nestUpgradeInfo.currentCapacity >=
+                          tier.capacity;
+                        const isNext =
+                          nestUpgradeInfo.nextUpgrade?.capacity ===
+                          tier.capacity;
+
+                        return (
+                          <article
+                            key={tier.capacity}
+                            style={{
+                              padding: 10,
+                              borderRadius: 13,
+                              border: isNext
+                                ? "1px solid rgba(167,243,72,.40)"
+                                : "1px solid rgba(255,255,255,.07)",
+                              background: reached
+                                ? "rgba(112,214,138,.07)"
+                                : isNext
+                                  ? "rgba(167,243,72,.07)"
+                                  : "rgba(255,255,255,.03)",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                gap: 10,
+                                alignItems: "center",
+                              }}
+                            >
+                              <div>
+                                <strong>Уровень {index + 1}</strong>
+                                <small
+                                  style={{
+                                    display: "block",
+                                    marginTop: 3,
+                                    opacity: .65,
+                                  }}
+                                >
+                                  {formatNumber(
+                                    tier.capacity,
+                                    0,
+                                  )}{" "}
+                                  яиц
+                                </small>
+                              </div>
+
+                              <div style={{ textAlign: "right" }}>
+                                {reached ? (
+                                  <strong
+                                    style={{ color: "#92e6a5" }}
+                                  >
+                                    ✓
+                                  </strong>
+                                ) : (
+                                  <>
+                                    <strong>
+                                      {formatNumber(
+                                        tier.priceCoins,
+                                        0,
+                                      )}
+                                    </strong>
+                                    <small
+                                      style={{
+                                        display: "block",
+                                        opacity: .62,
+                                      }}
+                                    >
+                                      Coins
+                                    </small>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+
+                    {nestUpgradeInfo.nextUpgrade ? (
+                      <div
+                        style={{
+                          marginTop: 12,
+                          padding: 12,
+                          borderRadius: 14,
+                          background: "rgba(167,243,72,.08)",
+                          border:
+                            "1px solid rgba(167,243,72,.20)",
+                        }}
+                      >
+                        <small style={{ opacity: .66 }}>
+                          Следующая ступень
+                        </small>
+                        <strong
+                          style={{
+                            display: "block",
+                            marginTop: 4,
+                            fontSize: 18,
+                          }}
+                        >
+                          {formatNumber(
+                            nestUpgradeInfo.nextUpgrade.capacity,
+                            0,
+                          )}{" "}
+                          яиц
+                        </strong>
+
+                        <button
+                          className="primary"
+                          onClick={() => void upgradeNest()}
+                          disabled={
+                            isUpgradingNest ||
+                            state.coins <
+                              nestUpgradeInfo.nextUpgrade
+                                .priceCoins
+                          }
+                          style={{
+                            marginTop: 10,
+                            width: "100%",
+                          }}
+                        >
+                          {isUpgradingNest
+                            ? "⏳ УЛУЧШАЕМ..."
+                            : `УЛУЧШИТЬ ЗА ${formatNumber(
+                                nestUpgradeInfo.nextUpgrade
+                                  .priceCoins,
+                                0,
+                              )} COINS`}
+                        </button>
+
+                        {state.coins <
+                        nestUpgradeInfo.nextUpgrade
+                          .priceCoins ? (
+                          <small
+                            style={{
+                              display: "block",
+                              marginTop: 7,
+                              opacity: .62,
+                            }}
+                          >
+                            Не хватает{" "}
+                            {formatNumber(
+                              nestUpgradeInfo.nextUpgrade
+                                .priceCoins - state.coins,
+                              0,
+                            )}{" "}
+                            Coins
+                          </small>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          marginTop: 12,
+                          padding: 12,
+                          borderRadius: 14,
+                          background:
+                            "rgba(112,214,138,.08)",
+                        }}
+                      >
+                        <strong>
+                          🏆 Гнездо улучшено до максимума
+                        </strong>
+                      </div>
+                    )}
+
+                    <small
+                      style={{
+                        display: "block",
+                        marginTop: 10,
+                        opacity: .58,
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      Можно купить только следующую ступень.
+                      Цена и текущая вместимость проверяются
+                      на сервере перед списанием Coins.
+                    </small>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         )}
 
