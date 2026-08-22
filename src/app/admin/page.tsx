@@ -92,6 +92,45 @@ type AdminPlayerItem = {
   paidUsdt: number;
 };
 
+type AdminDepositItem = {
+  id: string;
+  provider: string;
+  providerPaymentId: string | null;
+  methodCode: string;
+  payCurrency: string;
+  network: string;
+  usdAmount: number;
+  baseCoins: number;
+  bonusPercent: number;
+  bonusCoins: number;
+  creditedCoins: number;
+  status: string;
+  payAmount: number | null;
+  actuallyPaid: number | null;
+  payAddress: string | null;
+  createdAt: string;
+  updatedAt: string;
+  creditedAt: string | null;
+  user: {
+    id: string;
+    telegramId: string | null;
+    username: string | null;
+    firstName: string | null;
+    lastName: string | null;
+  };
+};
+
+type AdminDepositSummary = {
+  total: number;
+  finished: number;
+  pending: number;
+  failed: number;
+  totalUsdCreated: number;
+  paidUsd: number;
+  creditedCoins: number;
+  bonusCoins: number;
+};
+
 type AdminDashboard = {
   generatedAt: string;
   players: {
@@ -200,6 +239,73 @@ function adminPlayerName(player: AdminPlayerItem) {
   return "Игрок";
 }
 
+function adminDepositPlayerName(
+  item: AdminDepositItem,
+) {
+  const fullName = [
+    item.user.firstName,
+    item.user.lastName,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  if (fullName) return fullName;
+  if (item.user.username) {
+    return `@${item.user.username}`;
+  }
+  if (item.user.telegramId) {
+    return `Telegram ${item.user.telegramId}`;
+  }
+  return item.user.id;
+}
+
+function adminDepositStatus(status: string) {
+  const normalized =
+    status.toUpperCase();
+
+  if (normalized === "FINISHED") {
+    return {
+      label: "Зачислено",
+      icon: "✅",
+      tone: "paid" as const,
+    };
+  }
+
+  if (
+    normalized === "FAILED" ||
+    normalized === "EXPIRED" ||
+    normalized === "REFUNDED" ||
+    normalized === "CREATE_FAILED"
+  ) {
+    return {
+      label:
+        normalized === "EXPIRED"
+          ? "Истёк"
+          : normalized === "REFUNDED"
+            ? "Возврат"
+            : "Ошибка",
+      icon: "❌",
+      tone: "rejected" as const,
+    };
+  }
+
+  return {
+    label:
+      normalized === "PARTIALLY_PAID"
+        ? "Частично"
+        : normalized === "CONFIRMING"
+          ? "Подтверждается"
+          : normalized === "CONFIRMED"
+            ? "Подтверждено"
+            : normalized === "SENDING"
+              ? "Отправляется"
+              : "Ожидает",
+    icon: "⏳",
+    tone: "approved" as const,
+  };
+}
+
 export default function AdminPage() {
   const [key, setKey] = useState("");
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -209,7 +315,7 @@ export default function AdminPage() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [summary, setSummary] = useState<Summary>(EMPTY_SUMMARY);
   const [filter, setFilter] = useState("ACTIVE");
-  const [section, setSection] = useState<"withdrawals" | "leaderboard" | "history" | "players" | "dashboard">("withdrawals");
+  const [section, setSection] = useState<"withdrawals" | "leaderboard" | "history" | "players" | "dashboard" | "deposits">("withdrawals");
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardPlayer[]>([]);
   const [leaderboardTotalPlayers, setLeaderboardTotalPlayers] = useState(0);
@@ -227,6 +333,20 @@ export default function AdminPage() {
   const [playerSearch, setPlayerSearch] = useState("");
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [dashboard, setDashboard] = useState<AdminDashboard | null>(null);
+  const [depositsLoading, setDepositsLoading] = useState(false);
+  const [adminDeposits, setAdminDeposits] = useState<AdminDepositItem[]>([]);
+  const [depositSummary, setDepositSummary] = useState<AdminDepositSummary>({
+    total: 0,
+    finished: 0,
+    pending: 0,
+    failed: 0,
+    totalUsdCreated: 0,
+    paidUsd: 0,
+    creditedCoins: 0,
+    bonusCoins: 0,
+  });
+  const [depositFilter, setDepositFilter] = useState<"ALL" | "FINISHED" | "PENDING" | "FAILED">("ALL");
+  const [depositSearch, setDepositSearch] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -464,6 +584,79 @@ export default function AdminPage() {
     }
   }, []);
 
+  const loadAdminDeposits = useCallback(
+    async (
+      filter:
+        | "ALL"
+        | "FINISHED"
+        | "PENDING"
+        | "FAILED" =
+          depositFilter,
+      search = depositSearch,
+    ) => {
+      setDepositsLoading(true);
+      setMessage("");
+
+      try {
+        const response = await fetch(
+          `/api/admin/deposits?filter=${encodeURIComponent(
+            filter,
+          )}&q=${encodeURIComponent(
+            search.trim(),
+          )}`,
+          {
+            cache: "no-store",
+            credentials: "include",
+          },
+        );
+
+        if (response.status === 401) {
+          setAuthenticated(false);
+          setAdminDeposits([]);
+          return;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          throw new Error(
+            data.message ||
+              data.error ||
+              "Ошибка загрузки пополнений",
+          );
+        }
+
+        setAdminDeposits(
+          Array.isArray(data.deposits)
+            ? data.deposits
+            : [],
+        );
+
+        setDepositSummary(
+          data.summary || {
+            total: 0,
+            finished: 0,
+            pending: 0,
+            failed: 0,
+            totalUsdCreated: 0,
+            paidUsd: 0,
+            creditedCoins: 0,
+            bonusCoins: 0,
+          },
+        );
+      } catch (error) {
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Ошибка загрузки пополнений",
+        );
+      } finally {
+        setDepositsLoading(false);
+      }
+    },
+    [depositFilter, depositSearch],
+  );
+
   const login = async () => {
     if (!key.trim()) return;
 
@@ -632,7 +825,9 @@ export default function AdminPage() {
             <h1 style={styles.title}>
               {section === "dashboard"
                 ? "Обзор проекта"
-                : section === "leaderboard"
+                : section === "deposits"
+                  ? "Криптопополнения"
+                  : section === "leaderboard"
                   ? "Таблица лидеров"
                   : section === "history"
                     ? "История игры"
@@ -647,7 +842,9 @@ export default function AdminPage() {
               onClick={() =>
                 section === "dashboard"
                   ? void loadDashboard()
-                  : section === "leaderboard"
+                  : section === "deposits"
+                    ? void loadAdminDeposits()
+                    : section === "leaderboard"
                     ? void loadLeaderboard()
                     : section === "history"
                       ? void loadHistory()
@@ -689,6 +886,27 @@ export default function AdminPage() {
             }}
           >
             📊 Обзор
+          </button>
+
+
+          <button
+            onClick={() => {
+              setSection("deposits");
+              setDepositFilter("ALL");
+              setDepositSearch("");
+              void loadAdminDeposits(
+                "ALL",
+                "",
+              );
+            }}
+            style={{
+              ...styles.filterButton,
+              ...(section === "deposits"
+                ? styles.filterButtonActive
+                : {}),
+            }}
+          >
+            💳 Пополнения
           </button>
 
           <button
@@ -751,6 +969,515 @@ export default function AdminPage() {
             👥 Игроки
           </button>
         </section>
+
+        {section === "deposits" ? (
+          <>
+            <section style={styles.summaryGrid}>
+              <div style={styles.summaryCard}>
+                <span style={styles.muted}>
+                  Всего платежей
+                </span>
+                <b style={styles.summaryNumber}>
+                  {depositSummary.total}
+                </b>
+              </div>
+
+              <div style={styles.summaryCard}>
+                <span style={styles.muted}>
+                  ✅ Зачислено
+                </span>
+                <b style={styles.summaryNumber}>
+                  {depositSummary.finished}
+                </b>
+              </div>
+
+              <div style={styles.summaryCard}>
+                <span style={styles.muted}>
+                  ⏳ Ожидают
+                </span>
+                <b style={styles.summaryNumber}>
+                  {depositSummary.pending}
+                </b>
+              </div>
+
+              <div style={styles.summaryCard}>
+                <span style={styles.muted}>
+                  ❌ Ошибка / истёк
+                </span>
+                <b style={styles.summaryNumber}>
+                  {depositSummary.failed}
+                </b>
+              </div>
+            </section>
+
+            <section style={styles.card}>
+              <div style={styles.playerName}>
+                💰 Финансы пополнений
+              </div>
+
+              <div style={styles.detailGrid}>
+                <div>
+                  <span style={styles.muted}>
+                    Успешно оплачено
+                  </span>
+                  <div style={styles.detailValue}>
+                    $
+                    {depositSummary.paidUsd.toLocaleString(
+                      "ru-RU",
+                      {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      },
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <span style={styles.muted}>
+                    Начислено Coins
+                  </span>
+                  <div style={styles.detailValue}>
+                    {depositSummary.creditedCoins.toLocaleString(
+                      "ru-RU",
+                      {
+                        maximumFractionDigits: 0,
+                      },
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <span style={styles.muted}>
+                    Из них бонусных
+                  </span>
+                  <div style={styles.detailValue}>
+                    {depositSummary.bonusCoins.toLocaleString(
+                      "ru-RU",
+                      {
+                        maximumFractionDigits: 0,
+                      },
+                    )}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section style={styles.card}>
+              <div style={styles.playerName}>
+                🔎 Поиск платежа
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  marginTop: 10,
+                  flexWrap: "wrap",
+                }}
+              >
+                <input
+                  value={depositSearch}
+                  onChange={(event) =>
+                    setDepositSearch(
+                      event.target.value,
+                    )
+                  }
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      void loadAdminDeposits(
+                        depositFilter,
+                        depositSearch,
+                      );
+                    }
+                  }}
+                  placeholder="Имя, username, Telegram ID или Payment ID"
+                  style={{
+                    ...styles.input,
+                    flex: "1 1 260px",
+                    marginTop: 0,
+                  }}
+                />
+
+                <button
+                  onClick={() =>
+                    void loadAdminDeposits(
+                      depositFilter,
+                      depositSearch,
+                    )
+                  }
+                  style={styles.primaryButton}
+                >
+                  НАЙТИ
+                </button>
+
+                {depositSearch ? (
+                  <button
+                    onClick={() => {
+                      setDepositSearch("");
+                      void loadAdminDeposits(
+                        depositFilter,
+                        "",
+                      );
+                    }}
+                    style={styles.secondaryButton}
+                  >
+                    СБРОСИТЬ
+                  </button>
+                ) : null}
+              </div>
+            </section>
+
+            <section style={styles.filters}>
+              {[
+                ["ALL", "Все"],
+                ["FINISHED", "✅ Зачислено"],
+                ["PENDING", "⏳ Ожидают"],
+                ["FAILED", "❌ Ошибка"],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  onClick={() => {
+                    const nextFilter =
+                      value as
+                        | "ALL"
+                        | "FINISHED"
+                        | "PENDING"
+                        | "FAILED";
+
+                    setDepositFilter(
+                      nextFilter,
+                    );
+
+                    void loadAdminDeposits(
+                      nextFilter,
+                      depositSearch,
+                    );
+                  }}
+                  style={{
+                    ...styles.filterButton,
+                    ...(depositFilter === value
+                      ? styles.filterButtonActive
+                      : {}),
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </section>
+
+            {message ? (
+              <div style={styles.notice}>
+                {message}
+              </div>
+            ) : null}
+
+            {depositsLoading ? (
+              <div style={styles.empty}>
+                Загружаем пополнения...
+              </div>
+            ) : adminDeposits.length ===
+              0 ? (
+              <div style={styles.empty}>
+                Пополнения не найдены.
+              </div>
+            ) : (
+              <section style={styles.list}>
+                {adminDeposits.map(
+                  (item) => {
+                    const status =
+                      adminDepositStatus(
+                        item.status,
+                      );
+
+                    const toneStyle =
+                      status.tone === "paid"
+                        ? styles.paid
+                        : status.tone ===
+                            "rejected"
+                          ? styles.rejected
+                          : styles.approved;
+
+                    return (
+                      <article
+                        key={item.id}
+                        style={styles.card}
+                      >
+                        <div
+                          style={
+                            styles.cardTop
+                          }
+                        >
+                          <div>
+                            <div
+                              style={
+                                styles.playerName
+                              }
+                            >
+                              👤{" "}
+                              {adminDepositPlayerName(
+                                item,
+                              )}
+                            </div>
+
+                            <div
+                              style={
+                                styles.muted
+                              }
+                            >
+                              {item.user.username
+                                ? `@${item.user.username} · `
+                                : ""}
+                              Telegram ID:{" "}
+                              {item.user.telegramId ||
+                                "—"}
+                            </div>
+                          </div>
+
+                          <span
+                            style={{
+                              ...styles.status,
+                              ...toneStyle,
+                            }}
+                          >
+                            {status.icon}{" "}
+                            {status.label}
+                          </span>
+                        </div>
+
+                        <div
+                          style={
+                            styles.amountRow
+                          }
+                        >
+                          <div>
+                            <span
+                              style={
+                                styles.muted
+                              }
+                            >
+                              Сумма
+                            </span>
+                            <div
+                              style={
+                                styles.amount
+                              }
+                            >
+                              $
+                              {item.usdAmount.toFixed(
+                                2,
+                              )}
+                            </div>
+                          </div>
+
+                          <div>
+                            <span
+                              style={
+                                styles.muted
+                              }
+                            >
+                              Оплата
+                            </span>
+                            <div
+                              style={
+                                styles.amount
+                              }
+                            >
+                              {item.payCurrency.toUpperCase()}{" "}
+                              · {item.network}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div
+                          style={
+                            styles.detailGrid
+                          }
+                        >
+                          <div>
+                            <span
+                              style={
+                                styles.muted
+                              }
+                            >
+                              Базовые Coins
+                            </span>
+                            <div
+                              style={
+                                styles.detailValue
+                              }
+                            >
+                              {item.baseCoins.toLocaleString(
+                                "ru-RU",
+                                {
+                                  maximumFractionDigits: 0,
+                                },
+                              )}
+                            </div>
+                          </div>
+
+                          <div>
+                            <span
+                              style={
+                                styles.muted
+                              }
+                            >
+                              Бонус
+                            </span>
+                            <div
+                              style={
+                                styles.detailValue
+                              }
+                            >
+                              {item.bonusPercent >
+                              0
+                                ? `+${item.bonusPercent}% · ${item.bonusCoins.toLocaleString(
+                                    "ru-RU",
+                                    {
+                                      maximumFractionDigits: 0,
+                                    },
+                                  )} Coins`
+                                : "—"}
+                            </div>
+                          </div>
+
+                          <div>
+                            <span
+                              style={
+                                styles.muted
+                              }
+                            >
+                              Зачислено
+                            </span>
+                            <div
+                              style={
+                                styles.detailValue
+                              }
+                            >
+                              {item.creditedCoins.toLocaleString(
+                                "ru-RU",
+                                {
+                                  maximumFractionDigits: 0,
+                                },
+                              )}{" "}
+                              Coins
+                            </div>
+                          </div>
+
+                          <div>
+                            <span
+                              style={
+                                styles.muted
+                              }
+                            >
+                              Точная сумма
+                            </span>
+                            <div
+                              style={
+                                styles.detailValue
+                              }
+                            >
+                              {item.payAmount ===
+                              null
+                                ? "—"
+                                : `${item.payAmount} ${item.payCurrency.toUpperCase()}`}
+                            </div>
+                          </div>
+
+                          <div>
+                            <span
+                              style={
+                                styles.muted
+                              }
+                            >
+                              Фактически получено
+                            </span>
+                            <div
+                              style={
+                                styles.detailValue
+                              }
+                            >
+                              {item.actuallyPaid ===
+                              null
+                                ? "—"
+                                : `${item.actuallyPaid} ${item.payCurrency.toUpperCase()}`}
+                            </div>
+                          </div>
+
+                          <div>
+                            <span
+                              style={
+                                styles.muted
+                              }
+                            >
+                              Создан
+                            </span>
+                            <div
+                              style={
+                                styles.detailValue
+                              }
+                            >
+                              {new Date(
+                                item.createdAt,
+                              ).toLocaleString(
+                                "ru-RU",
+                              )}
+                            </div>
+                          </div>
+
+                          <div>
+                            <span
+                              style={
+                                styles.muted
+                              }
+                            >
+                              Payment ID
+                            </span>
+                            <div
+                              style={{
+                                ...styles.detailValue,
+                                wordBreak:
+                                  "break-all",
+                              }}
+                            >
+                              {item.providerPaymentId ||
+                                "—"}
+                            </div>
+                          </div>
+
+                          <div>
+                            <span
+                              style={
+                                styles.muted
+                              }
+                            >
+                              Internal ID
+                            </span>
+                            <div
+                              style={{
+                                ...styles.detailValue,
+                                wordBreak:
+                                  "break-all",
+                              }}
+                            >
+                              {item.id}
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  },
+                )}
+              </section>
+            )}
+
+            <div style={styles.notice}>
+              Раздел только для контроля. Coins
+              автоматически начисляются только
+              серверной системой пополнений после
+              подтверждённого криптоплатежа.
+            </div>
+          </>
+        ) : null}
 
         {section === "dashboard" ? (
           <>
