@@ -843,6 +843,306 @@ async function creditFinishedDeposit(
   );
 }
 
+export async function syncKnownDepositFromProvider(
+  depositId: string,
+  payload: NowPaymentPayload,
+) {
+  const deposit =
+    await prisma.deposit.findUnique({
+      where: {
+        id: depositId,
+      },
+    });
+
+  if (!deposit) {
+    throw new Error(
+      "DEPOSIT_NOT_FOUND",
+    );
+  }
+
+  const payloadPaymentId =
+    payload.payment_id === undefined
+      ? ""
+      : String(
+          payload.payment_id,
+        ).trim();
+
+  if (
+    deposit.providerPaymentId &&
+    payloadPaymentId &&
+    deposit.providerPaymentId !==
+      payloadPaymentId
+  ) {
+    throw new Error(
+      "DEPOSIT_PAYMENT_ID_MISMATCH",
+    );
+  }
+
+  // This path is used only after our server itself fetched
+  // GET /payment/{providerPaymentId} using the stored payment id
+  // and the merchant API key. Payment ID is therefore the primary
+  // identity check. Price is still checked when NOWPayments returns it.
+  const providerPrice =
+    payload.price_amount ===
+      undefined
+      ? null
+      : Number(
+          payload.price_amount,
+        );
+
+  if (
+    providerPrice !== null &&
+    Number.isFinite(
+      providerPrice,
+    ) &&
+    Math.abs(
+      providerPrice -
+        Number(deposit.usdAmount),
+    ) > 0.05
+  ) {
+    throw new Error(
+      "DEPOSIT_PRICE_MISMATCH",
+    );
+  }
+
+  const status =
+    normalizeProviderStatus(
+      payload.payment_status,
+    );
+
+  if (status === "FINISHED") {
+    return creditFinishedDepositDirect(
+      deposit.id,
+      payload,
+    );
+  }
+
+  const refreshed =
+    await prisma.deposit.update({
+      where: {
+        id: deposit.id,
+      },
+      data:
+        providerUpdateData(payload),
+    });
+
+  const balance =
+    await prisma.balance.findUnique({
+      where: {
+        userId: deposit.userId,
+      },
+      select: {
+        coins: true,
+      },
+    });
+
+  return {
+    deposit: refreshed,
+    credited: false,
+    balanceCoins:
+      balance?.coins ?? 0,
+  };
+}
+
+async function creditFinishedDepositDirect(
+  depositId: string,
+  payload: NowPaymentPayload,
+) {
+  const MAX_RETRIES = 3;
+
+  for (
+    let attempt = 1;
+    attempt <= MAX_RETRIES;
+    attempt += 1
+  ) {
+    try {
+      return await prisma.$transaction(
+        async (tx) => {
+          const deposit =
+            await tx.deposit.findUnique({
+              where: {
+                id: depositId,
+              },
+            });
+
+          if (!deposit) {
+            throw new Error(
+              "DEPOSIT_NOT_FOUND",
+            );
+          }
+
+          const payloadPaymentId =
+            payload.payment_id ===
+              undefined
+              ? ""
+              : String(
+                  payload.payment_id,
+                ).trim();
+
+          if (
+            deposit.providerPaymentId &&
+            payloadPaymentId &&
+            deposit.providerPaymentId !==
+              payloadPaymentId
+          ) {
+            throw new Error(
+              "DEPOSIT_PAYMENT_ID_MISMATCH",
+            );
+          }
+
+          const update =
+            providerUpdateData(
+              payload,
+            );
+
+          // Idempotency: if this exact deposit was already credited,
+          // never increment Coins again.
+          if (deposit.creditedAt) {
+            const balance =
+              await tx.balance.findUnique({
+                where: {
+                  userId:
+                    deposit.userId,
+                },
+                select: {
+                  coins: true,
+                },
+              });
+
+            const refreshed =
+              await tx.deposit.update({
+                where: {
+                  id: deposit.id,
+                },
+                data: {
+                  ...update,
+                  status: "FINISHED",
+                },
+              });
+
+            return {
+              deposit: refreshed,
+              credited: false,
+              balanceCoins:
+                balance?.coins ?? 0,
+            };
+          }
+
+          // First-deposit bonus is determined only by prior deposits
+          // that were actually credited.
+          const successfulBefore =
+            await tx.deposit.count({
+              where: {
+                userId:
+                  deposit.userId,
+                creditedAt: {
+                  not: null,
+                },
+                NOT: {
+                  id: deposit.id,
+                },
+              },
+            });
+
+          const bonusPercent =
+            successfulBefore === 0
+              ? FIRST_DEPOSIT_BONUS_PERCENT
+              : 0;
+
+          const bonusCoins =
+            Math.round(
+              deposit.baseCoins *
+                (bonusPercent / 100),
+            );
+
+          const creditedCoins =
+            deposit.baseCoins +
+            bonusCoins;
+
+          const balance =
+            await tx.balance.upsert({
+              where: {
+                userId:
+                  deposit.userId,
+              },
+              update: {
+                coins: {
+                  increment:
+                    creditedCoins,
+                },
+              },
+              create: {
+                id: randomUUID(),
+                userId:
+                  deposit.userId,
+                coins:
+                  creditedCoins,
+                dna: 0,
+              },
+              select: {
+                coins: true,
+              },
+            });
+
+          const refreshed =
+            await tx.deposit.update({
+              where: {
+                id: deposit.id,
+              },
+              data: {
+                ...update,
+                status: "FINISHED",
+                bonusPercent,
+                bonusCoins,
+                creditedCoins,
+                creditedAt:
+                  new Date(),
+              },
+            });
+
+          return {
+            deposit: refreshed,
+            credited: true,
+            balanceCoins:
+              balance.coins,
+          };
+        },
+        {
+          isolationLevel:
+            Prisma.TransactionIsolationLevel
+              .Serializable,
+        },
+      );
+    } catch (error) {
+      const code =
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error
+          ? String(
+              (
+                error as {
+                  code?: unknown;
+                }
+              ).code ?? "",
+            )
+          : "";
+
+      if (
+        code === "P2034" &&
+        attempt < MAX_RETRIES
+      ) {
+        continue;
+      }
+
+      throw error;
+    }
+  }
+
+  throw new Error(
+    "DEPOSIT_CREDIT_RETRY_EXHAUSTED",
+  );
+}
+
 export async function syncDepositFromProvider(
   payload: NowPaymentPayload,
 ) {
