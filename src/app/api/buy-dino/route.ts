@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getPlayerContext } from "@/lib/player";
 import { dinosaurs } from "@/lib/game-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const DEMO_USER_ID = "demo-user-1";
 const BOARD_SIZE = 16;
 const DINO_LEVEL = 1;
 const DINO_PRICE = dinosaurs[DINO_LEVEL - 1].buyPrice;
@@ -51,11 +51,11 @@ export async function GET() {
   });
 }
 
-async function purchaseDino() {
+async function purchaseDino(userId: string) {
   return prisma.$transaction(
     async (tx) => {
       const user = await tx.user.findUnique({
-        where: { id: DEMO_USER_ID },
+        where: { id: userId },
         include: {
           balance: true,
           dinosaurs: {
@@ -65,7 +65,7 @@ async function purchaseDino() {
       });
 
       if (!user || !user.balance) {
-        throw new Error("DEMO_STATE_NOT_FOUND");
+        throw new Error("PLAYER_STATE_NOT_FOUND");
       }
 
       const occupied = new Set(
@@ -94,7 +94,7 @@ async function purchaseDino() {
       }
 
       const balance = await tx.balance.update({
-        where: { userId: DEMO_USER_ID },
+        where: { userId },
         data: {
           coins: { decrement: DINO_PRICE },
         },
@@ -103,7 +103,7 @@ async function purchaseDino() {
       const dinosaur = await tx.dinosaur.create({
         data: {
           id: randomUUID(),
-          userId: DEMO_USER_ID,
+          userId,
           level: DINO_LEVEL,
           boardSlot: emptySlot,
         },
@@ -139,9 +139,11 @@ async function purchaseDino() {
 
 export async function POST() {
   try {
+    const player = await getPlayerContext();
+
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       try {
-        const result = await purchaseDino();
+        const result = await purchaseDino(player.userId);
 
         return NextResponse.json(
           { ok: true, ...result },
@@ -164,9 +166,9 @@ export async function POST() {
     console.error("POST /api/buy-dino failed:", error);
 
     if (error instanceof Error) {
-      if (error.message === "DEMO_STATE_NOT_FOUND") {
+      if (error.message === "PLAYER_STATE_NOT_FOUND") {
         return NextResponse.json(
-          { ok: false, error: "Demo user state not found" },
+          { ok: false, error: "Player state not found" },
           { status: 404 },
         );
       }
