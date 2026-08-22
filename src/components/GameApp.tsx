@@ -43,6 +43,27 @@ type GameStateResponse = {
   board: Slot[];
 };
 
+type ReferralResponse = {
+  ok: boolean;
+  enabled: boolean;
+  reason?: string;
+  invitedCount: number;
+  totalBonusCoins: number;
+  inviterRewardCoins: number;
+  inviteeRewardCoins: number;
+  inviteLink: string | null;
+  recent: Array<{
+    id: string;
+    createdAt: string;
+    rewardCoins: number;
+    friend: {
+      id: string;
+      username: string | null;
+      firstName: string | null;
+    };
+  }>;
+};
+
 const EMPTY_BOARD: Slot[] = Array(16).fill(null);
 
 const INITIAL_STATE: SaveState = {
@@ -58,6 +79,7 @@ type TelegramWebApp = {
   initData?: string;
   ready?: () => void;
   expand?: () => void;
+  openTelegramLink?: (url: string) => void;
 };
 
 function getTelegramWebApp(): TelegramWebApp | undefined {
@@ -81,6 +103,8 @@ export default function GameApp() {
   const [isBuying, setIsBuying] = useState(false);
   const [isMerging, setIsMerging] = useState(false);
   const [authMode, setAuthMode] = useState<"telegram" | "demo" | "unknown">("unknown");
+  const [referralInfo, setReferralInfo] = useState<ReferralResponse | null>(null);
+  const [referralStatus, setReferralStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
 
   const eggsPerHour = useMemo(() => {
     return state.board.reduce((sum: number, level) => {
@@ -415,6 +439,80 @@ export default function GameApp() {
     }
   };
 
+  useEffect(() => {
+    if (tab !== "friends" || authMode !== "telegram" || referralStatus !== "idle") {
+      return;
+    }
+
+    let cancelled = false;
+    setReferralStatus("loading");
+
+    async function loadReferrals() {
+      try {
+        const response = await fetch("/api/referrals", {
+          cache: "no-store",
+          credentials: "include",
+        });
+
+        const data = (await response.json()) as ReferralResponse & {
+          error?: string;
+        };
+
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || "Не удалось загрузить рефералов");
+        }
+
+        if (cancelled) return;
+        setReferralInfo(data);
+        setReferralStatus("ready");
+      } catch (error) {
+        console.error("Failed to load referrals", error);
+        if (cancelled) return;
+        setReferralStatus("error");
+      }
+    }
+
+    void loadReferrals();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, authMode, referralStatus]);
+
+  const inviteFriend = async () => {
+    const inviteLink = referralInfo?.inviteLink;
+
+    if (!inviteLink) {
+      if (authMode !== "telegram") {
+        setToast("Откройте игру через Telegram, чтобы получить реферальную ссылку");
+      } else if (referralInfo?.reason === "BOT_USERNAME_NOT_CONFIGURED") {
+        setToast("Нужно добавить TELEGRAM_BOT_USERNAME в Vercel");
+      } else {
+        setToast("Реферальная ссылка пока недоступна");
+      }
+      return;
+    }
+
+    const shareUrl =
+      `https://t.me/share/url?url=${encodeURIComponent(inviteLink)}` +
+      `&text=${encodeURIComponent("Присоединяйся к моей ферме динозавров 🦖")}`;
+
+    const webApp = getTelegramWebApp();
+
+    if (webApp?.openTelegramLink) {
+      webApp.openTelegramLink(shareUrl);
+      setToast("Открыто меню отправки приглашения ✓");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setToast("Реферальная ссылка скопирована ✓");
+    } catch {
+      window.open(shareUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
   const exchangeDna = () => {
     if (state.dna < 1) return setToast("Недостаточно DNA");
 
@@ -522,14 +620,41 @@ export default function GameApp() {
             <div className="invite-card">
               <div className="invite-art">👥🦕</div>
               <h3>Стройте ферму вместе</h3>
-              <p>В production здесь будет Telegram deep-link <code>startapp=ref_USERID</code>.</p>
-              <button className="primary" onClick={() => setToast("Referral link появится после Telegram integration")}>ПРИГЛАСИТЬ ДРУГА</button>
+              {authMode !== "telegram" ? (
+                <p>Откройте игру через Telegram, чтобы получить личную ссылку приглашения.</p>
+              ) : referralStatus === "loading" ? (
+                <p>Загружаем вашу реферальную ссылку...</p>
+              ) : referralInfo?.enabled ? (
+                <>
+                  <p>Друг получает +{formatNumber(referralInfo.inviteeRewardCoins, 0)} Coins, а вы +{formatNumber(referralInfo.inviterRewardCoins, 0)} Coins после его первого входа.</p>
+                  <p><code>{referralInfo.inviteLink}</code></p>
+                </>
+              ) : (
+                <p>Реферальная ссылка ещё не настроена. Проверьте TELEGRAM_BOT_USERNAME в Vercel.</p>
+              )}
+              <button
+                className="primary"
+                onClick={inviteFriend}
+                disabled={authMode !== "telegram" || referralStatus === "loading"}
+              >
+                ПРИГЛАСИТЬ ДРУГА
+              </button>
             </div>
             <div className="stats-grid">
-              <article className="stat-card"><span>Приглашено</span><strong>0</strong></article>
-              <article className="stat-card"><span>Активные</span><strong>0</strong></article>
-              <article className="stat-card"><span>Бонусы</span><strong>0</strong></article>
+              <article className="stat-card"><span>Приглашено</span><strong>{referralInfo?.invitedCount ?? 0}</strong></article>
+              <article className="stat-card"><span>Бонус за друга</span><strong>+{formatNumber(referralInfo?.inviterRewardCoins ?? 500, 0)}</strong><small>Coins</small></article>
+              <article className="stat-card"><span>Начислено</span><strong>{formatNumber(referralInfo?.totalBonusCoins ?? 0, 0)}</strong><small>Coins</small></article>
             </div>
+            {referralInfo?.recent?.length ? (
+              <div className="card">
+                <strong>Последние приглашённые</strong>
+                {referralInfo.recent.slice(0, 5).map((item) => (
+                  <p key={item.id}>
+                    👤 {item.friend.firstName || item.friend.username || "Игрок"} · +{formatNumber(item.rewardCoins, 0)} Coins
+                  </p>
+                ))}
+              </div>
+            ) : null}
           </div>
         )}
 
