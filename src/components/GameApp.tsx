@@ -74,6 +74,26 @@ type ShopItem = {
   amount: number;
 };
 
+
+type WithdrawalConfigResponse = {
+  currency: string;
+  usdtPerDna: number;
+  minDna: number;
+};
+
+type WithdrawalItem = {
+  id: string;
+  currency: string;
+  network: string;
+  walletAddress: string;
+  dnaAmount: number;
+  rateUsdtPerDna: number;
+  usdtAmount: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 const EMPTY_BOARD: Slot[] = Array(16).fill(null);
 
 const INITIAL_STATE: SaveState = {
@@ -117,6 +137,14 @@ export default function GameApp() {
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [shopStatus, setShopStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [buyingItemCode, setBuyingItemCode] = useState<string | null>(null);
+  const [withdrawalOpen, setWithdrawalOpen] = useState(false);
+  const [withdrawalStatus, setWithdrawalStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [withdrawalConfig, setWithdrawalConfig] = useState<WithdrawalConfigResponse | null>(null);
+  const [withdrawals, setWithdrawals] = useState<WithdrawalItem[]>([]);
+  const [withdrawDna, setWithdrawDna] = useState("1");
+  const [withdrawNetwork, setWithdrawNetwork] = useState("");
+  const [withdrawWallet, setWithdrawWallet] = useState("");
+  const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
 
   const eggsPerHour = useMemo(() => {
     return state.board.reduce((sum: number, level) => {
@@ -622,9 +650,141 @@ export default function GameApp() {
     }
   };
 
-  const openDnaWithdrawal = () => {
-    setToast("DNA нельзя купить или обменять на Coins. Вывод DNA в деньги будет подключён отдельным защищённым серверным модулем.");
+  const loadWithdrawals = async () => {
+    if (authMode !== "telegram") {
+      setToast("Вывод доступен только при входе через Telegram.");
+      return;
+    }
+
+    setWithdrawalStatus("loading");
+
+    try {
+      const response = await fetch("/api/withdrawals", {
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      const data = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+        config?: WithdrawalConfigResponse;
+        balance?: { dna: number };
+        withdrawals?: WithdrawalItem[];
+      };
+
+      if (!response.ok || !data.ok || !data.config) {
+        throw new Error(data.message || data.error || "Не удалось загрузить вывод");
+      }
+
+      setWithdrawalConfig(data.config);
+      setWithdrawals(Array.isArray(data.withdrawals) ? data.withdrawals : []);
+      setState((previous) => ({
+        ...previous,
+        dna: data.balance?.dna ?? previous.dna,
+      }));
+      setWithdrawalStatus("ready");
+    } catch (error) {
+      console.error("Failed to load withdrawals", error);
+      setWithdrawalStatus("error");
+      setToast(error instanceof Error ? error.message : "Ошибка загрузки вывода");
+    }
   };
+
+  const openDnaWithdrawal = () => {
+    if (authMode !== "telegram") {
+      setToast("Вывод DNA доступен только при входе через Telegram.");
+      return;
+    }
+
+    setWithdrawalOpen(true);
+    void loadWithdrawals();
+  };
+
+  const submitWithdrawal = async () => {
+    if (isSubmittingWithdrawal || !withdrawalConfig) return;
+
+    const dnaAmount = Number(withdrawDna);
+
+    if (!Number.isFinite(dnaAmount) || dnaAmount < withdrawalConfig.minDna) {
+      setToast(`Минимальная сумма вывода — ${withdrawalConfig.minDna} DNA.`);
+      return;
+    }
+
+    if (dnaAmount > state.dna) {
+      setToast("Недостаточно DNA для вывода.");
+      return;
+    }
+
+    if (!withdrawNetwork.trim()) {
+      setToast("Укажите сеть USDT.");
+      return;
+    }
+
+    if (!withdrawWallet.trim()) {
+      setToast("Укажите адрес USDT-кошелька.");
+      return;
+    }
+
+    setIsSubmittingWithdrawal(true);
+    setToast("Создаём заявку на вывод...");
+
+    try {
+      const requestKey =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `withdraw-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+      const response = await fetch("/api/withdrawals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dnaAmount,
+          network: withdrawNetwork.trim(),
+          walletAddress: withdrawWallet.trim(),
+          requestKey,
+        }),
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      const data = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+        withdrawal?: WithdrawalItem;
+        balance?: { dna: number };
+      };
+
+      if (!response.ok || !data.ok || !data.withdrawal) {
+        throw new Error(data.message || data.error || "Не удалось создать заявку");
+      }
+
+      setState((previous) => ({
+        ...previous,
+        dna: data.balance?.dna ?? previous.dna,
+      }));
+
+      setWithdrawals((previous) => [
+        data.withdrawal as WithdrawalItem,
+        ...previous.filter((item) => item.id !== data.withdrawal?.id),
+      ]);
+
+      setWithdrawDna(String(withdrawalConfig.minDna));
+      setToast(
+        `Заявка создана: ${formatNumber(data.withdrawal.dnaAmount, 4)} DNA → ${data.withdrawal.usdtAmount.toFixed(8)} USDT. Статус PENDING.`,
+      );
+    } catch (error) {
+      console.error("Failed to submit withdrawal", error);
+      setToast(error instanceof Error ? error.message : "Ошибка создания заявки");
+    } finally {
+      setIsSubmittingWithdrawal(false);
+    }
+  };
+
+  const withdrawalPreview = withdrawalConfig
+    ? Math.max(0, Number(withdrawDna) || 0) * withdrawalConfig.usdtPerDna
+    : 0;
 
 
   const progress = Math.min(100, (state.eggs / Math.max(1, state.capacity)) * 100);
@@ -791,13 +951,120 @@ export default function GameApp() {
         {tab === "menu" && (
           <div className="screen">
             <span className="eyebrow">TOOLS</span><h2>Меню</h2>
+
             <div className="menu-list">
-              <button onClick={openDnaWithdrawal}><span>🧬 Вывод DNA</span><b>→ деньги</b></button>
+              <button onClick={openDnaWithdrawal}><span>🧬 Вывод DNA</span><b>→ USDT</b></button>
               <button onClick={() => setToast("Profit Plan будет вынесен в отдельный калькулятор")}><span>📊 Profit Plan</span><b>›</b></button>
               <button onClick={() => setToast("Задания появятся после server-side игровых операций")}><span>✅ Задания</span><b>›</b></button>
               <button onClick={() => setToast("Рулетка отключена до server-side реализации")}><span>🎰 Рулетка</span><b>OFF</b></button>
               <button onClick={() => window.location.reload()}><span>🔄 Перезагрузить из Neon</span><b>›</b></button>
             </div>
+
+            {withdrawalOpen ? (
+              <div className="card" style={{ marginTop: 16 }}>
+                <div className="section-head">
+                  <div>
+                    <span className="eyebrow">WITHDRAWAL</span>
+                    <h2>DNA → USDT</h2>
+                  </div>
+                  <button
+                    className="coin-button"
+                    onClick={() => setWithdrawalOpen(false)}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {withdrawalStatus === "loading" || withdrawalStatus === "idle" ? (
+                  <p>Загружаем параметры вывода...</p>
+                ) : withdrawalStatus === "error" ? (
+                  <>
+                    <p>Не удалось загрузить заявки.</p>
+                    <button className="primary" onClick={() => void loadWithdrawals()}>
+                      ПОВТОРИТЬ
+                    </button>
+                  </>
+                ) : withdrawalConfig ? (
+                  <>
+                    <p>
+                      Курс: <strong>1 DNA = {withdrawalConfig.usdtPerDna.toFixed(4)} USDT</strong>
+                    </p>
+                    <p>
+                      Минимальный вывод: <strong>{withdrawalConfig.minDna} DNA</strong>
+                    </p>
+                    <p>
+                      Доступно: <strong>{formatNumber(state.dna, 4)} DNA</strong>
+                    </p>
+
+                    <label style={{ display: "grid", gap: 6, marginTop: 12 }}>
+                      <span>Количество DNA</span>
+                      <input
+                        type="number"
+                        min={withdrawalConfig.minDna}
+                        step="0.0001"
+                        value={withdrawDna}
+                        onChange={(event) => setWithdrawDna(event.target.value)}
+                        style={{ width: "100%", padding: 12, borderRadius: 12 }}
+                      />
+                    </label>
+
+                    <label style={{ display: "grid", gap: 6, marginTop: 12 }}>
+                      <span>Сеть USDT</span>
+                      <input
+                        type="text"
+                        value={withdrawNetwork}
+                        onChange={(event) => setWithdrawNetwork(event.target.value)}
+                        placeholder="Например: TON / TRC20 / BEP20"
+                        maxLength={32}
+                        style={{ width: "100%", padding: 12, borderRadius: 12 }}
+                      />
+                    </label>
+
+                    <label style={{ display: "grid", gap: 6, marginTop: 12 }}>
+                      <span>Адрес USDT-кошелька</span>
+                      <input
+                        type="text"
+                        value={withdrawWallet}
+                        onChange={(event) => setWithdrawWallet(event.target.value)}
+                        placeholder="Введите адрес кошелька"
+                        maxLength={180}
+                        autoComplete="off"
+                        style={{ width: "100%", padding: 12, borderRadius: 12 }}
+                      />
+                    </label>
+
+                    <div className="card" style={{ marginTop: 12 }}>
+                      <strong>К получению</strong>
+                      <p>{withdrawalPreview.toFixed(8)} USDT</p>
+                      <small>
+                        Заявка проходит ручную проверку. DNA резервируется сразу после создания заявки.
+                      </small>
+                    </div>
+
+                    <button
+                      className="primary"
+                      onClick={submitWithdrawal}
+                      disabled={isSubmittingWithdrawal}
+                    >
+                      {isSubmittingWithdrawal ? "⏳ СОЗДАЁМ..." : "💸 СОЗДАТЬ ЗАЯВКУ"}
+                    </button>
+
+                    <div className="card" style={{ marginTop: 16 }}>
+                      <strong>Последние заявки</strong>
+                      {withdrawals.length === 0 ? (
+                        <p>Заявок пока нет.</p>
+                      ) : (
+                        withdrawals.slice(0, 8).map((item) => (
+                          <p key={item.id}>
+                            {item.dnaAmount} DNA → {item.usdtAmount.toFixed(8)} USDT · {item.network} · <strong>{item.status}</strong>
+                          </p>
+                        ))
+                      )}
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         )}
       </section>
