@@ -1390,7 +1390,6 @@ export default function GameApp() {
               </div>
             ) : (
               <div className="menu-list">
-              <button onClick={openProfile}><span>👤 Мой профиль</span><b>СТАТИСТИКА</b></button>
                 {shopItems.map((item) => (
                   <button
                     key={item.id}
@@ -1468,6 +1467,7 @@ export default function GameApp() {
             <span className="eyebrow">TOOLS</span><h2>Меню</h2>
 
             <div className="menu-list">
+              <button onClick={openProfile}><span>👤 Мой профиль</span><b>СТАТИСТИКА</b></button>
               <button onClick={openDnaWithdrawal}><span>🧬 Вывод DNA</span><b>→ USDT</b></button>
               <button onClick={() => setLevelsOpen((value) => !value)}><span>📈 Уровни динозавров</span><b>Lv.1–16</b></button>
               <button onClick={() => setProfitPlanOpen((value) => !value)}><span>📊 Profit Plan</span><b>МОЯ ФЕРМА</b></button>
