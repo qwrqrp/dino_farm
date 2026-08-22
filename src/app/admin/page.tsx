@@ -347,6 +347,8 @@ export default function AdminPage() {
   });
   const [depositFilter, setDepositFilter] = useState<"ALL" | "FINISHED" | "PENDING" | "FAILED">("ALL");
   const [depositSearch, setDepositSearch] = useState("");
+  const [depositSyncingId, setDepositSyncingId] = useState<string | null>(null);
+  const [depositProviderInfo, setDepositProviderInfo] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -656,6 +658,107 @@ export default function AdminPage() {
     },
     [depositFilter, depositSearch],
   );
+
+  const syncAdminDeposit = async (
+    item: AdminDepositItem,
+  ) => {
+    if (depositSyncingId) {
+      return;
+    }
+
+    setDepositSyncingId(item.id);
+    setMessage("");
+
+    try {
+      const response = await fetch(
+        "/api/admin/deposits/sync",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            depositId: item.id,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(
+          data.message ||
+            data.error ||
+            "Ошибка синхронизации платежа",
+        );
+      }
+
+      const providerStatus =
+        String(
+          data.provider?.status ??
+            "unknown",
+        );
+
+      const actuallyPaid =
+        data.provider?.actuallyPaid;
+
+      setDepositProviderInfo(
+        (previous) => ({
+          ...previous,
+          [item.id]:
+            `NOWPayments: ${providerStatus}${
+              actuallyPaid !== null &&
+              actuallyPaid !== undefined
+                ? ` · получено ${actuallyPaid} ${String(
+                    data.provider?.payCurrency ??
+                      item.payCurrency,
+                  ).toUpperCase()}`
+                : ""
+            }`,
+        }),
+      );
+
+      if (
+        String(
+          data.deposit?.status ?? "",
+        ).toUpperCase() ===
+        "FINISHED"
+      ) {
+        setMessage(
+          data.credited
+            ? `✅ Платёж зачислен: +${Number(
+                data.deposit
+                  ?.creditedCoins ?? 0,
+              ).toLocaleString(
+                "ru-RU",
+                {
+                  maximumFractionDigits: 0,
+                },
+              )} Coins`
+            : "✅ Платёж уже был зачислен ранее.",
+        );
+      } else {
+        setMessage(
+          `NOWPayments сейчас возвращает статус: ${providerStatus}`,
+        );
+      }
+
+      await loadAdminDeposits(
+        depositFilter,
+        depositSearch,
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Ошибка синхронизации платежа",
+      );
+    } finally {
+      setDepositSyncingId(null);
+    }
+  };
 
   const login = async () => {
     if (!key.trim()) return;
@@ -1462,6 +1565,50 @@ export default function AdminPage() {
                               {item.id}
                             </div>
                           </div>
+                        </div>
+
+                        {depositProviderInfo[
+                          item.id
+                        ] ? (
+                          <div
+                            style={{
+                              ...styles.notice,
+                              marginTop: 12,
+                            }}
+                          >
+                            {
+                              depositProviderInfo[
+                                item.id
+                              ]
+                            }
+                          </div>
+                        ) : null}
+
+                        <div
+                          style={{
+                            marginTop: 12,
+                          }}
+                        >
+                          <button
+                            onClick={() =>
+                              void syncAdminDeposit(
+                                item,
+                              )
+                            }
+                            disabled={
+                              depositSyncingId !==
+                                null
+                            }
+                            style={{
+                              ...styles.primaryButton,
+                              width: "100%",
+                            }}
+                          >
+                            {depositSyncingId ===
+                            item.id
+                              ? "⏳ СИНХРОНИЗИРУЕМ..."
+                              : "🔄 СИНХРОНИЗИРОВАТЬ С NOWPAYMENTS"}
+                          </button>
                         </div>
                       </article>
                     );
