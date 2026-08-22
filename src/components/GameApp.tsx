@@ -75,6 +75,20 @@ type ShopItem = {
 };
 
 
+type DailyRewardInfo = {
+  canClaim: boolean;
+  nextClaimAt: string | null;
+  streak: number;
+  nextDay: number;
+  nextRewardCoins: number;
+  rewards: number[];
+  totalClaims: number;
+  totalCoins: number;
+  balance?: {
+    coins: number;
+  };
+};
+
 type WithdrawalConfigResponse = {
   currency: string;
   usdtPerDna: number;
@@ -166,6 +180,27 @@ function shortWallet(value: string) {
   return `${value.slice(0, 8)}…${value.slice(-6)}`;
 }
 
+function formatDailyRemaining(nextClaimAt: string | null) {
+  if (!nextClaimAt) return "Доступен сейчас";
+
+  const remaining = new Date(nextClaimAt).getTime() - Date.now();
+
+  if (!Number.isFinite(remaining) || remaining <= 0) {
+    return "Доступен сейчас";
+  }
+
+  const hours = Math.floor(remaining / (60 * 60 * 1000));
+  const minutes = Math.ceil(
+    (remaining % (60 * 60 * 1000)) / (60 * 1000),
+  );
+
+  if (hours <= 0) {
+    return `Через ${minutes} мин`;
+  }
+
+  return `Через ${hours} ч ${minutes} мин`;
+}
+
 const EMPTY_BOARD: Slot[] = Array(16).fill(null);
 
 const INITIAL_STATE: SaveState = {
@@ -209,6 +244,10 @@ export default function GameApp() {
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [shopStatus, setShopStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [buyingItemCode, setBuyingItemCode] = useState<string | null>(null);
+  const [dailyOpen, setDailyOpen] = useState(false);
+  const [dailyStatus, setDailyStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [dailyInfo, setDailyInfo] = useState<DailyRewardInfo | null>(null);
+  const [isClaimingDaily, setIsClaimingDaily] = useState(false);
   const [withdrawalOpen, setWithdrawalOpen] = useState(false);
   const [withdrawalStatus, setWithdrawalStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [withdrawalConfig, setWithdrawalConfig] = useState<WithdrawalConfigResponse | null>(null);
@@ -722,6 +761,108 @@ export default function GameApp() {
     }
   };
 
+  const loadDailyReward = async () => {
+    if (authMode !== "telegram") {
+      setToast("Ежедневный бонус доступен только через Telegram.");
+      return;
+    }
+
+    setDailyStatus("loading");
+
+    try {
+      const response = await fetch("/api/daily-reward", {
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      const data = (await response.json()) as DailyRewardInfo & {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+      };
+
+      if (!response.ok || !data.ok) {
+        throw new Error(
+          data.message || data.error || "Не удалось загрузить ежедневный бонус",
+        );
+      }
+
+      setDailyInfo(data);
+      setState((previous) => ({
+        ...previous,
+        coins: data.balance?.coins ?? previous.coins,
+      }));
+      setDailyStatus("ready");
+    } catch (error) {
+      console.error("Failed to load daily reward", error);
+      setDailyStatus("error");
+      setToast(
+        error instanceof Error
+          ? error.message
+          : "Ошибка загрузки ежедневного бонуса",
+      );
+    }
+  };
+
+  const openDailyReward = () => {
+    if (authMode !== "telegram") {
+      setToast("Ежедневный бонус доступен только через Telegram.");
+      return;
+    }
+
+    setDailyOpen(true);
+    void loadDailyReward();
+  };
+
+  const claimDailyReward = async () => {
+    if (isClaimingDaily) return;
+
+    setIsClaimingDaily(true);
+    setToast("Получаем ежедневный бонус...");
+
+    try {
+      const response = await fetch("/api/daily-reward", {
+        method: "POST",
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      const data = (await response.json()) as DailyRewardInfo & {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+        claimedCoins?: number;
+      };
+
+      if (!response.ok || !data.ok) {
+        throw new Error(
+          data.message || data.error || "Не удалось получить бонус",
+        );
+      }
+
+      setDailyInfo(data);
+      setState((previous) => ({
+        ...previous,
+        coins: data.balance?.coins ?? previous.coins,
+      }));
+
+      setToast(
+        `🎁 Ежедневный бонус: +${formatNumber(data.claimedCoins ?? 0, 0)} Coins`,
+      );
+    } catch (error) {
+      console.error("Failed to claim daily reward", error);
+      setToast(
+        error instanceof Error
+          ? error.message
+          : "Ошибка получения ежедневного бонуса",
+      );
+
+      void loadDailyReward();
+    } finally {
+      setIsClaimingDaily(false);
+    }
+  };
+
   const loadWithdrawals = async () => {
     if (authMode !== "telegram") {
       setToast("Вывод доступен только при входе через Telegram.");
@@ -1027,10 +1168,220 @@ export default function GameApp() {
             <div className="menu-list">
               <button onClick={openDnaWithdrawal}><span>🧬 Вывод DNA</span><b>→ USDT</b></button>
               <button onClick={() => setToast("Profit Plan будет вынесен в отдельный калькулятор")}><span>📊 Profit Plan</span><b>›</b></button>
-              <button onClick={() => setToast("Задания появятся после server-side игровых операций")}><span>✅ Задания</span><b>›</b></button>
+              <button onClick={openDailyReward}><span>🎁 Ежедневный бонус</span><b>{dailyInfo?.canClaim ? "ЗАБРАТЬ" : "›"}</b></button>
+              <button onClick={() => setToast("Задания сделаем следующим игровым этапом")}><span>✅ Задания</span><b>›</b></button>
               <button onClick={() => setToast("Рулетка отключена до server-side реализации")}><span>🎰 Рулетка</span><b>OFF</b></button>
               <button onClick={() => window.location.reload()}><span>🔄 Перезагрузить из Neon</span><b>›</b></button>
             </div>
+
+            {dailyOpen ? (
+              <div
+                className="form-card"
+                style={{
+                  marginTop: 16,
+                  borderRadius: 20,
+                  background: "#10281e",
+                  border: "1px solid rgba(255,255,255,.08)",
+                  padding: 14,
+                  width: "100%",
+                  minWidth: 0,
+                }}
+              >
+                <div
+                  className="section-head"
+                  style={{ width: "100%", minWidth: 0 }}
+                >
+                  <div>
+                    <span className="eyebrow">DAILY REWARD</span>
+                    <h2>🎁 Ежедневный бонус</h2>
+                  </div>
+
+                  <button
+                    className="coin-button"
+                    onClick={() => setDailyOpen(false)}
+                    style={{ flex: "0 0 auto" }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {dailyStatus === "loading" || dailyStatus === "idle" ? (
+                  <p>Загружаем ежедневный бонус...</p>
+                ) : dailyStatus === "error" ? (
+                  <>
+                    <p>Не удалось загрузить бонус.</p>
+                    <button
+                      className="primary"
+                      onClick={() => void loadDailyReward()}
+                    >
+                      ПОВТОРИТЬ
+                    </button>
+                  </>
+                ) : dailyInfo ? (
+                  <>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 8,
+                        width: "100%",
+                        marginTop: 8,
+                      }}
+                    >
+                      <div
+                        style={{
+                          padding: 12,
+                          borderRadius: 14,
+                          background: "rgba(255,255,255,.05)",
+                        }}
+                      >
+                        <small style={{ opacity: .68 }}>
+                          Следующая награда
+                        </small>
+                        <div
+                          style={{
+                            marginTop: 4,
+                            fontSize: 22,
+                            fontWeight: 900,
+                          }}
+                        >
+                          +{formatNumber(dailyInfo.nextRewardCoins, 0)}
+                        </div>
+                        <small>Coins</small>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: 12,
+                          borderRadius: 14,
+                          background: "rgba(255,255,255,.05)",
+                        }}
+                      >
+                        <small style={{ opacity: .68 }}>
+                          Серия
+                        </small>
+                        <div
+                          style={{
+                            marginTop: 4,
+                            fontSize: 22,
+                            fontWeight: 900,
+                          }}
+                        >
+                          {dailyInfo.streak}/7
+                        </div>
+                        <small>
+                          {dailyInfo.canClaim
+                            ? "Можно забрать"
+                            : formatDailyRemaining(dailyInfo.nextClaimAt)}
+                        </small>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+                        gap: 5,
+                        marginTop: 12,
+                        width: "100%",
+                      }}
+                    >
+                      {dailyInfo.rewards.map((reward, index) => {
+                        const day = index + 1;
+                        const completed =
+                          dailyInfo.streak > 0 &&
+                          day <= dailyInfo.streak;
+                        const next = day === dailyInfo.nextDay;
+
+                        return (
+                          <div
+                            key={day}
+                            style={{
+                              minWidth: 0,
+                              padding: "8px 3px",
+                              borderRadius: 11,
+                              textAlign: "center",
+                              border: next
+                                ? "1px solid rgba(167,243,72,.70)"
+                                : "1px solid rgba(255,255,255,.07)",
+                              background: next
+                                ? "rgba(167,243,72,.12)"
+                                : completed
+                                  ? "rgba(85,190,112,.12)"
+                                  : "rgba(255,255,255,.035)",
+                            }}
+                          >
+                            <small
+                              style={{
+                                display: "block",
+                                opacity: .64,
+                                fontSize: 9,
+                              }}
+                            >
+                              Д{day}
+                            </small>
+                            <strong
+                              style={{
+                                display: "block",
+                                marginTop: 3,
+                                fontSize: 10,
+                                overflow: "hidden",
+                              }}
+                            >
+                              {completed ? "✓" : reward}
+                            </strong>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <p
+                      style={{
+                        margin: "12px 0 0",
+                        opacity: .74,
+                        fontSize: 12,
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      Награда выдаётся только в Coins. Новый бонус доступен
+                      через 24 часа. Если пропустить более 48 часов, серия
+                      начинается с первого дня.
+                    </p>
+
+                    <button
+                      className="primary"
+                      onClick={claimDailyReward}
+                      disabled={
+                        isClaimingDaily || !dailyInfo.canClaim
+                      }
+                      style={{ marginTop: 12 }}
+                    >
+                      {isClaimingDaily
+                        ? "⏳ ПОЛУЧАЕМ..."
+                        : dailyInfo.canClaim
+                          ? `🎁 ЗАБРАТЬ +${formatNumber(
+                              dailyInfo.nextRewardCoins,
+                              0,
+                            )} COINS`
+                          : `⏱ ${formatDailyRemaining(
+                              dailyInfo.nextClaimAt,
+                            )}`}
+                    </button>
+
+                    <small
+                      style={{
+                        display: "block",
+                        marginTop: 9,
+                        opacity: .65,
+                      }}
+                    >
+                      Всего получено: {dailyInfo.totalClaims} бонусов ·{" "}
+                      {formatNumber(dailyInfo.totalCoins, 0)} Coins
+                    </small>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
 
             {withdrawalOpen ? (
               <div
