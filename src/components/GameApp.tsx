@@ -92,6 +92,55 @@ type DinoCatalogItem = {
   unlockRequirement: string | null;
 };
 
+type DepositMethodItem = {
+  code: string;
+  coin: string;
+  network: string;
+  label: string;
+  providerCurrency: string;
+  available: boolean;
+};
+
+type DepositItem = {
+  id: string;
+  provider: string;
+  providerPaymentId: string | null;
+  methodCode: string;
+  payCurrency: string;
+  network: string;
+  usdAmount: number;
+  baseCoins: number;
+  bonusPercent: number;
+  bonusCoins: number;
+  creditedCoins: number;
+  status: string;
+  payAmount: number | null;
+  actuallyPaid: number | null;
+  payAddress: string | null;
+  createdAt: string;
+  updatedAt: string;
+  creditedAt: string | null;
+};
+
+type DepositConfig = {
+  minUsd: number;
+  maxUsd: number;
+  coinsPerUsd: number;
+  firstDepositBonusPercent: number;
+};
+
+type DepositLoadResponse = {
+  ok: boolean;
+  telegramRequired?: boolean;
+  providerConfigured?: boolean;
+  config?: DepositConfig;
+  firstDepositEligible?: boolean;
+  methods?: DepositMethodItem[];
+  deposits?: DepositItem[];
+  error?: string;
+  message?: string;
+};
+
 type NestUpgradeInfo = {
   currentCapacity: number;
   coins: number;
@@ -281,6 +330,90 @@ function shortWallet(value: string) {
   return `${value.slice(0, 8)}…${value.slice(-6)}`;
 }
 
+function depositStatusMeta(status: string) {
+  const normalized = status.toUpperCase();
+
+  if (normalized === "FINISHED") {
+    return {
+      label: "Зачислено",
+      icon: "✅",
+      color: "#a8f58e",
+    };
+  }
+
+  if (
+    normalized === "CONFIRMING" ||
+    normalized === "CONFIRMED" ||
+    normalized === "SENDING"
+  ) {
+    return {
+      label: "Подтверждается",
+      icon: "🔄",
+      color: "#9bd8ff",
+    };
+  }
+
+  if (
+    normalized === "WAITING" ||
+    normalized === "PARTIALLY_PAID" ||
+    normalized === "CREATING"
+  ) {
+    return {
+      label:
+        normalized === "PARTIALLY_PAID"
+          ? "Оплачено частично"
+          : "Ожидает оплату",
+      icon: "⏳",
+      color: "#ffd76a",
+    };
+  }
+
+  if (
+    normalized === "FAILED" ||
+    normalized === "CREATE_FAILED" ||
+    normalized === "EXPIRED"
+  ) {
+    return {
+      label:
+        normalized === "EXPIRED"
+          ? "Истёк"
+          : "Ошибка",
+      icon: "❌",
+      color: "#ffabb4",
+    };
+  }
+
+  if (normalized === "REFUNDED") {
+    return {
+      label: "Возвращено",
+      icon: "↩️",
+      color: "#ffcf8e",
+    };
+  }
+
+  return {
+    label: status,
+    icon: "•",
+    color: "#dce7df",
+  };
+}
+
+function formatDepositDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Дата неизвестна";
+  }
+
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
 function formatDailyRemaining(nextClaimAt: string | null) {
   if (!nextClaimAt) return "Доступен сейчас";
 
@@ -359,6 +492,19 @@ export default function GameApp() {
   const [referralStatus, setReferralStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [shopStatus, setShopStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [shopSection, setShopSection] = useState<"dinos" | "deposit">("dinos");
+  const [depositStatus, setDepositStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [depositConfig, setDepositConfig] = useState<DepositConfig | null>(null);
+  const [depositMethods, setDepositMethods] = useState<DepositMethodItem[]>([]);
+  const [depositHistory, setDepositHistory] = useState<DepositItem[]>([]);
+  const [firstDepositEligible, setFirstDepositEligible] = useState(false);
+  const [depositProviderConfigured, setDepositProviderConfigured] = useState(false);
+  const [depositTelegramRequired, setDepositTelegramRequired] = useState(false);
+  const [depositAmount, setDepositAmount] = useState("3");
+  const [depositMethodCode, setDepositMethodCode] = useState("");
+  const [activeDeposit, setActiveDeposit] = useState<DepositItem | null>(null);
+  const [isCreatingDeposit, setIsCreatingDeposit] = useState(false);
+  const [isCheckingDeposit, setIsCheckingDeposit] = useState(false);
   const [dinoCatalog, setDinoCatalog] = useState<DinoCatalogItem[]>([]);
   const [dinoUnlockedLevel, setDinoUnlockedLevel] = useState(1);
   const [buyingItemCode, setBuyingItemCode] = useState<string | null>(null);
@@ -391,6 +537,63 @@ export default function GameApp() {
   const [withdrawNetwork, setWithdrawNetwork] = useState("");
   const [withdrawWallet, setWithdrawWallet] = useState("");
   const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
+
+  const depositPreview = useMemo(() => {
+    const normalized = Number(
+      depositAmount
+        .trim()
+        .replace(",", "."),
+    );
+
+    const amountUsd =
+      Number.isFinite(normalized)
+        ? normalized
+        : 0;
+
+    const coinsPerUsd =
+      depositConfig?.coinsPerUsd ??
+      10_000;
+
+    const baseCoins =
+      amountUsd > 0
+        ? Math.round(
+            amountUsd * coinsPerUsd,
+          )
+        : 0;
+
+    const bonusPercent =
+      firstDepositEligible
+        ? depositConfig
+            ?.firstDepositBonusPercent ??
+          20
+        : 0;
+
+    const bonusCoins =
+      Math.round(
+        baseCoins *
+          (bonusPercent / 100),
+      );
+
+    return {
+      amountUsd,
+      baseCoins,
+      bonusPercent,
+      bonusCoins,
+      totalCoins:
+        baseCoins + bonusCoins,
+      valid:
+        Boolean(depositConfig) &&
+        amountUsd >=
+          (depositConfig?.minUsd ?? 3) &&
+        amountUsd <=
+          (depositConfig?.maxUsd ??
+            20_000),
+    };
+  }, [
+    depositAmount,
+    depositConfig,
+    firstDepositEligible,
+  ]);
 
   const eggsPerHour = useMemo(() => {
     return state.board.reduce((sum: number, level) => {
@@ -1056,6 +1259,301 @@ export default function GameApp() {
       window.open(shareUrl, "_blank", "noopener,noreferrer");
     }
   };
+
+  const loadDeposits = async (
+    silent = false,
+  ) => {
+    if (!silent) {
+      setDepositStatus("loading");
+    }
+
+    try {
+      const response = await fetch(
+        "/api/deposits",
+        {
+          cache: "no-store",
+          credentials: "include",
+        },
+      );
+
+      const data =
+        (await response.json()) as
+          DepositLoadResponse;
+
+      if (!response.ok || !data.ok) {
+        throw new Error(
+          data.message ||
+            data.error ||
+            "Не удалось загрузить пополнения",
+        );
+      }
+
+      setDepositConfig(
+        data.config ?? null,
+      );
+      setDepositMethods(
+        Array.isArray(data.methods)
+          ? data.methods
+          : [],
+      );
+      setDepositHistory(
+        Array.isArray(data.deposits)
+          ? data.deposits
+          : [],
+      );
+      setFirstDepositEligible(
+        Boolean(
+          data.firstDepositEligible,
+        ),
+      );
+      setDepositProviderConfigured(
+        Boolean(
+          data.providerConfigured,
+        ),
+      );
+      setDepositTelegramRequired(
+        Boolean(
+          data.telegramRequired,
+        ),
+      );
+
+      if (!depositMethodCode) {
+        const firstAvailable =
+          data.methods?.find(
+            (method) =>
+              method.available,
+          );
+
+        if (firstAvailable) {
+          setDepositMethodCode(
+            firstAvailable.code,
+          );
+        }
+      }
+
+      setDepositStatus("ready");
+    } catch (error) {
+      console.error(
+        "Failed to load deposits",
+        error,
+      );
+
+      setDepositStatus("error");
+
+      if (!silent) {
+        setToast(
+          error instanceof Error
+            ? error.message
+            : "Ошибка пополнений",
+        );
+      }
+    }
+  };
+
+  const createDeposit = async () => {
+    if (
+      isCreatingDeposit ||
+      !depositPreview.valid ||
+      !depositMethodCode
+    ) {
+      return;
+    }
+
+    setIsCreatingDeposit(true);
+
+    try {
+      const response = await fetch(
+        "/api/deposits",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            amountUsd:
+              depositPreview.amountUsd,
+            methodCode:
+              depositMethodCode,
+          }),
+          credentials: "include",
+        },
+      );
+
+      const data =
+        (await response.json()) as {
+          ok?: boolean;
+          deposit?: DepositItem;
+          error?: string;
+          message?: string;
+        };
+
+      if (
+        !response.ok ||
+        !data.ok ||
+        !data.deposit
+      ) {
+        throw new Error(
+          data.message ||
+            data.error ||
+            "Не удалось создать платёж",
+        );
+      }
+
+      setActiveDeposit(
+        data.deposit,
+      );
+      setToast(
+        "Платёж создан. Отправьте точную сумму на указанный адрес.",
+      );
+
+      await loadDeposits(true);
+    } catch (error) {
+      console.error(
+        "Failed to create deposit",
+        error,
+      );
+
+      setToast(
+        error instanceof Error
+          ? error.message
+          : "Ошибка создания платежа",
+      );
+    } finally {
+      setIsCreatingDeposit(false);
+    }
+  };
+
+  const checkDeposit = async (
+    deposit: DepositItem,
+  ) => {
+    if (isCheckingDeposit) {
+      return;
+    }
+
+    setIsCheckingDeposit(true);
+
+    try {
+      const response = await fetch(
+        `/api/deposits/status?id=${encodeURIComponent(
+          deposit.id,
+        )}`,
+        {
+          cache: "no-store",
+          credentials: "include",
+        },
+      );
+
+      const data =
+        (await response.json()) as {
+          ok?: boolean;
+          credited?: boolean;
+          deposit?: DepositItem;
+          balance?: {
+            coins: number;
+          } | null;
+          error?: string;
+          message?: string;
+        };
+
+      if (
+        !response.ok ||
+        !data.ok ||
+        !data.deposit
+      ) {
+        throw new Error(
+          data.message ||
+            data.error ||
+            "Не удалось проверить платёж",
+        );
+      }
+
+      setActiveDeposit(
+        data.deposit,
+      );
+
+      if (
+        data.balance &&
+        Number.isFinite(
+          data.balance.coins,
+        )
+      ) {
+        setState((previous) => ({
+          ...previous,
+          coins:
+            data.balance?.coins ??
+            previous.coins,
+        }));
+      }
+
+      if (
+        data.deposit.status ===
+        "FINISHED"
+      ) {
+        setToast(
+          data.credited
+            ? `Пополнение зачислено: +${formatNumber(
+                data.deposit
+                  .creditedCoins,
+                0,
+              )} Coins ✓`
+            : "Платёж уже зачислен ✓",
+        );
+      } else {
+        const status =
+          depositStatusMeta(
+            data.deposit.status,
+          );
+
+        setToast(
+          `${status.icon} ${status.label}`,
+        );
+      }
+
+      await loadDeposits(true);
+    } catch (error) {
+      console.error(
+        "Failed to check deposit",
+        error,
+      );
+
+      setToast(
+        error instanceof Error
+          ? error.message
+          : "Ошибка проверки платежа",
+      );
+    } finally {
+      setIsCheckingDeposit(false);
+    }
+  };
+
+  const copyDepositValue = async (
+    value: string,
+    label: string,
+  ) => {
+    try {
+      await navigator.clipboard.writeText(
+        value,
+      );
+      setToast(`${label} скопирован ✓`);
+    } catch {
+      setToast(
+        `Не удалось скопировать ${label.toLowerCase()}`,
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (
+      tab !== "shop" ||
+      shopSection !== "deposit"
+    ) {
+      return;
+    }
+
+    void loadDeposits();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, shopSection]);
 
   useEffect(() => {
     if (tab !== "shop") return;
@@ -2394,88 +2892,849 @@ export default function GameApp() {
 
         {tab === "shop" && (
           <div className="screen">
-            <span className="eyebrow">DINO SHOP</span><h2>Магазин динозавров</h2>
-            <p className="hint">
-              Lv.1 доступен сразу. Lv.2–Lv.16 открываются для прямой
-              покупки только после того, как вы сами получили этот уровень
-              через merge.
-            </p>
-            <div className="card">
-              <strong>🔓 Открыто до Lv.{dinoUnlockedLevel}</strong>
-              <p>
-                Прямая покупка не открывает следующий уровень. Чтобы
-                разблокировать новый уровень магазина, нужно сделать merge.
-              </p>
+            <span className="eyebrow">DINO SHOP</span>
+            <h2>Магазин</h2>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(2, minmax(0, 1fr))",
+                gap: 8,
+                marginBottom: 14,
+              }}
+            >
+              <button
+                className={
+                  shopSection === "dinos"
+                    ? "primary"
+                    : "coin-button"
+                }
+                onClick={() =>
+                  setShopSection("dinos")
+                }
+              >
+                🦖 ДИНОЗАВРЫ
+              </button>
+
+              <button
+                className={
+                  shopSection === "deposit"
+                    ? "primary"
+                    : "coin-button"
+                }
+                onClick={() =>
+                  setShopSection(
+                    "deposit",
+                  )
+                }
+              >
+                💳 ПОПОЛНИТЬ
+              </button>
             </div>
 
-            {shopStatus === "loading" || shopStatus === "idle" ? (
-              <div className="card"><strong>Загружаем товары...</strong></div>
-            ) : shopStatus === "error" ? (
-              <div className="card">
-                <strong>Не удалось загрузить магазин</strong>
-                <p>Обновите страницу и попробуйте ещё раз.</p>
-                <button className="primary" onClick={() => window.location.reload()}>ПОВТОРИТЬ</button>
-              </div>
-            ) : (
-              <div className="menu-list">
-                {dinoCatalog.map((item) => (
-                  <button
-                    key={item.level}
-                    onClick={() =>
-                      buyCatalogDino(item)
-                    }
-                    disabled={
-                      isBuying ||
-                      isLoading ||
-                      Boolean(loadError)
-                    }
-                    style={
-                      item.unlocked
-                        ? undefined
-                        : {
-                            opacity: .48,
-                            cursor: "not-allowed",
+            {shopSection === "dinos" ? (
+              <>
+                <h2
+                  style={{
+                    fontSize: 20,
+                    marginTop: 0,
+                  }}
+                >
+                  Магазин динозавров
+                </h2>
+
+                <p className="hint">
+                  Lv.1 доступен сразу. Lv.2–Lv.16
+                  открываются для прямой покупки
+                  только после того, как вы сами
+                  получили этот уровень через
+                  merge.
+                </p>
+
+                <div className="card">
+                  <strong>
+                    🔓 Открыто до Lv.
+                    {dinoUnlockedLevel}
+                  </strong>
+                  <p>
+                    Прямая покупка не открывает
+                    следующий уровень. Чтобы
+                    разблокировать новый уровень
+                    магазина, нужно сделать merge.
+                  </p>
+                </div>
+
+                {shopStatus === "loading" ||
+                shopStatus === "idle" ? (
+                  <div className="card">
+                    <strong>
+                      Загружаем товары...
+                    </strong>
+                  </div>
+                ) : shopStatus === "error" ? (
+                  <div className="card">
+                    <strong>
+                      Не удалось загрузить магазин
+                    </strong>
+                    <p>
+                      Обновите страницу и попробуйте
+                      ещё раз.
+                    </p>
+                    <button
+                      className="primary"
+                      onClick={() =>
+                        window.location.reload()
+                      }
+                    >
+                      ПОВТОРИТЬ
+                    </button>
+                  </div>
+                ) : (
+                  <div className="menu-list">
+                    {dinoCatalog.map(
+                      (item) => (
+                        <button
+                          key={item.level}
+                          onClick={() =>
+                            buyCatalogDino(
+                              item,
+                            )
                           }
-                    }
-                  >
-                    <span>
-                      <strong>
-                        {item.unlocked
-                          ? "🦖"
-                          : "🔒"}{" "}
-                        {item.title}
-                      </strong>
-                      <small>
-                        {item.unlocked
-                          ? `${formatNumber(
-                              item.dailyCoins,
-                              2,
-                            )} Coins + ${formatNumber(
-                              item.dailyDna,
-                              2,
-                            )} DNA / день`
-                          : item.unlockRequirement}
-                      </small>
-                    </span>
+                          disabled={
+                            isBuying ||
+                            isLoading ||
+                            Boolean(
+                              loadError,
+                            )
+                          }
+                          style={
+                            item.unlocked
+                              ? undefined
+                              : {
+                                  opacity:
+                                    .48,
+                                  cursor:
+                                    "not-allowed",
+                                }
+                          }
+                        >
+                          <span>
+                            <strong>
+                              {item.unlocked
+                                ? "🦖"
+                                : "🔒"}{" "}
+                              {item.title}
+                            </strong>
+                            <small>
+                              {item.unlocked
+                                ? `${formatNumber(
+                                    item.dailyCoins,
+                                    2,
+                                  )} Coins + ${formatNumber(
+                                    item.dailyDna,
+                                    2,
+                                  )} DNA / день`
+                                : item.unlockRequirement}
+                            </small>
+                          </span>
 
-                    <b>
-                      {item.unlocked
-                        ? `🪙 ${formatNumber(
-                            item.priceCoins,
+                          <b>
+                            {item.unlocked
+                              ? `🪙 ${formatNumber(
+                                  item.priceCoins,
+                                  0,
+                                )}`
+                              : "ЗАКРЫТО"}
+                          </b>
+                        </button>
+                      ),
+                    )}
+                  </div>
+                )}
+
+                <div className="card">
+                  <strong>
+                    Ваш баланс
+                  </strong>
+                  <p>
+                    🪙{" "}
+                    {formatNumber(
+                      state.coins,
+                      2,
+                    )}{" "}
+                    Coins · 🧬{" "}
+                    {formatNumber(
+                      state.dna,
+                      2,
+                    )}{" "}
+                    DNA
+                  </p>
+                  <p>
+                    🪺 Вместимость:{" "}
+                    {formatNumber(
+                      state.capacity,
+                      0,
+                    )}{" "}
+                    яиц
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2
+                  style={{
+                    fontSize: 20,
+                    marginTop: 0,
+                  }}
+                >
+                  💳 Пополнение баланса
+                </h2>
+
+                <p className="hint">
+                  Курс:{" "}
+                  <strong>
+                    $1 ={" "}
+                    {formatNumber(
+                      depositConfig
+                        ?.coinsPerUsd ??
+                        10_000,
+                      0,
+                    )}{" "}
+                    Coins
+                  </strong>
+                  . Coins начисляются только после
+                  подтверждения криптоплатежа.
+                </p>
+
+                {depositStatus === "loading" ||
+                depositStatus === "idle" ? (
+                  <div className="card">
+                    <strong>
+                      Загружаем способы оплаты...
+                    </strong>
+                  </div>
+                ) : null}
+
+                {depositTelegramRequired ? (
+                  <div className="card">
+                    <strong>
+                      🔐 Откройте игру через Telegram
+                    </strong>
+                    <p>
+                      Пополнение реального баланса
+                      недоступно в демо-режиме
+                      браузера.
+                    </p>
+                  </div>
+                ) : null}
+
+                {!depositProviderConfigured &&
+                depositStatus === "ready" ? (
+                  <div className="card">
+                    <strong>
+                      ⚙️ Криптоплатежи ещё не
+                      подключены
+                    </strong>
+                    <p>
+                      Администратору нужно добавить
+                      ключи платёжного провайдера.
+                    </p>
+                  </div>
+                ) : null}
+
+                {depositConfig ? (
+                  <div className="card">
+                    <strong>
+                      Сумма пополнения
+                    </strong>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        marginTop: 10,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 22,
+                          fontWeight: 900,
+                        }}
+                      >
+                        $
+                      </span>
+
+                      <input
+                        type="number"
+                        min={
+                          depositConfig.minUsd
+                        }
+                        max={
+                          depositConfig.maxUsd
+                        }
+                        step="0.01"
+                        value={depositAmount}
+                        onChange={(event) =>
+                          setDepositAmount(
+                            event.target.value,
+                          )
+                        }
+                        style={{
+                          width: "100%",
+                          padding:
+                            "12px 14px",
+                          borderRadius: 12,
+                          border:
+                            "1px solid rgba(255,255,255,.14)",
+                          background:
+                            "rgba(255,255,255,.06)",
+                          color: "inherit",
+                          fontSize: 18,
+                          fontWeight: 800,
+                          outline: "none",
+                        }}
+                      />
+                    </div>
+
+                    <small
+                      style={{
+                        display: "block",
+                        marginTop: 7,
+                        opacity: .65,
+                      }}
+                    >
+                      От $
+                      {depositConfig.minUsd} до $
+                      {depositConfig.maxUsd.toLocaleString(
+                        "ru-RU",
+                      )}
+                    </small>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(3, minmax(0, 1fr))",
+                        gap: 7,
+                        marginTop: 12,
+                      }}
+                    >
+                      <div
+                        style={{
+                          padding: 10,
+                          borderRadius: 13,
+                          background:
+                            "rgba(255,255,255,.04)",
+                        }}
+                      >
+                        <small
+                          style={{
+                            opacity: .65,
+                          }}
+                        >
+                          Coins
+                        </small>
+                        <strong
+                          style={{
+                            display: "block",
+                            marginTop: 4,
+                          }}
+                        >
+                          {formatNumber(
+                            depositPreview.baseCoins,
                             0,
-                          )}`
-                        : "ЗАКРЫТО"}
-                    </b>
-                  </button>
-                ))}
-              </div>
-            )}
+                          )}
+                        </strong>
+                      </div>
 
-            <div className="card">
-              <strong>Ваш баланс</strong>
-              <p>🪙 {formatNumber(state.coins, 2)} Coins · 🧬 {formatNumber(state.dna, 2)} DNA</p>
-              <p>🪺 Вместимость: {formatNumber(state.capacity, 0)} яиц</p>
-            </div>
+                      <div
+                        style={{
+                          padding: 10,
+                          borderRadius: 13,
+                          background:
+                            firstDepositEligible
+                              ? "rgba(167,243,72,.08)"
+                              : "rgba(255,255,255,.04)",
+                        }}
+                      >
+                        <small
+                          style={{
+                            opacity: .65,
+                          }}
+                        >
+                          Бонус
+                        </small>
+                        <strong
+                          style={{
+                            display: "block",
+                            marginTop: 4,
+                          }}
+                        >
+                          +
+                          {formatNumber(
+                            depositPreview.bonusCoins,
+                            0,
+                          )}
+                        </strong>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: 10,
+                          borderRadius: 13,
+                          background:
+                            "rgba(167,243,72,.10)",
+                          border:
+                            "1px solid rgba(167,243,72,.20)",
+                        }}
+                      >
+                        <small
+                          style={{
+                            opacity: .65,
+                          }}
+                        >
+                          Итого
+                        </small>
+                        <strong
+                          style={{
+                            display: "block",
+                            marginTop: 4,
+                          }}
+                        >
+                          {formatNumber(
+                            depositPreview.totalCoins,
+                            0,
+                          )}
+                        </strong>
+                      </div>
+                    </div>
+
+                    {firstDepositEligible ? (
+                      <p
+                        style={{
+                          marginBottom: 0,
+                        }}
+                      >
+                        🎁 Первое успешно оплаченное
+                        пополнение: +
+                        {depositPreview.bonusPercent}%
+                        Coins.
+                      </p>
+                    ) : (
+                      <p
+                        style={{
+                          marginBottom: 0,
+                          opacity: .68,
+                        }}
+                      >
+                        Бонус за первое пополнение
+                        уже использован.
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+
+                {depositConfig &&
+                depositMethods.length > 0 ? (
+                  <div className="card">
+                    <strong>
+                      Выберите криптовалюту
+                    </strong>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gap: 7,
+                        marginTop: 10,
+                      }}
+                    >
+                      {depositMethods.map(
+                        (method) => {
+                          const selected =
+                            depositMethodCode ===
+                            method.code;
+
+                          return (
+                            <button
+                              key={
+                                method.code
+                              }
+                              className={
+                                selected
+                                  ? "primary"
+                                  : "coin-button"
+                              }
+                              disabled={
+                                !method.available ||
+                                depositTelegramRequired
+                              }
+                              onClick={() =>
+                                setDepositMethodCode(
+                                  method.code,
+                                )
+                              }
+                              style={{
+                                width: "100%",
+                                display: "flex",
+                                alignItems:
+                                  "center",
+                                justifyContent:
+                                  "space-between",
+                                gap: 10,
+                                opacity:
+                                  method.available
+                                    ? 1
+                                    : .45,
+                              }}
+                            >
+                              <span>
+                                {method.label}
+                              </span>
+
+                              <small>
+                                {method.available
+                                  ? selected
+                                    ? "✓"
+                                    : ""
+                                  : "недоступно"}
+                              </small>
+                            </button>
+                          );
+                        },
+                      )}
+                    </div>
+
+                    <button
+                      className="primary"
+                      disabled={
+                        !depositPreview.valid ||
+                        !depositMethodCode ||
+                        isCreatingDeposit ||
+                        depositTelegramRequired ||
+                        !depositProviderConfigured
+                      }
+                      onClick={() =>
+                        void createDeposit()
+                      }
+                      style={{
+                        width: "100%",
+                        marginTop: 12,
+                      }}
+                    >
+                      {isCreatingDeposit
+                        ? "⏳ СОЗДАЁМ ПЛАТЁЖ..."
+                        : "ОПЛАТИТЬ"}
+                    </button>
+                  </div>
+                ) : null}
+
+                {activeDeposit ? (
+                  <div className="card">
+                    <strong>
+                      🧾 Текущий платёж
+                    </strong>
+
+                    <p>
+                      Статус:{" "}
+                      <b
+                        style={{
+                          color:
+                            depositStatusMeta(
+                              activeDeposit.status,
+                            ).color,
+                        }}
+                      >
+                        {
+                          depositStatusMeta(
+                            activeDeposit.status,
+                          ).icon
+                        }{" "}
+                        {
+                          depositStatusMeta(
+                            activeDeposit.status,
+                          ).label
+                        }
+                      </b>
+                    </p>
+
+                    <div
+                      style={{
+                        padding: 12,
+                        borderRadius: 14,
+                        background:
+                          "rgba(255,255,255,.04)",
+                        marginTop: 10,
+                      }}
+                    >
+                      <small
+                        style={{
+                          opacity: .65,
+                        }}
+                      >
+                        Отправить точно
+                      </small>
+
+                      <strong
+                        style={{
+                          display: "block",
+                          fontSize: 20,
+                          marginTop: 4,
+                          wordBreak:
+                            "break-word",
+                        }}
+                      >
+                        {activeDeposit.payAmount ??
+                          "—"}{" "}
+                        {activeDeposit.payCurrency.toUpperCase()}
+                      </strong>
+
+                      {activeDeposit.payAmount !==
+                      null ? (
+                        <button
+                          className="coin-button"
+                          onClick={() =>
+                            void copyDepositValue(
+                              String(
+                                activeDeposit.payAmount,
+                              ),
+                              "Сумма",
+                            )
+                          }
+                          style={{
+                            width: "100%",
+                            marginTop: 8,
+                          }}
+                        >
+                          📋 СКОПИРОВАТЬ СУММУ
+                        </button>
+                      ) : null}
+                    </div>
+
+                    <div
+                      style={{
+                        padding: 12,
+                        borderRadius: 14,
+                        background:
+                          "rgba(255,255,255,.04)",
+                        marginTop: 8,
+                      }}
+                    >
+                      <small
+                        style={{
+                          opacity: .65,
+                        }}
+                      >
+                        Адрес ·{" "}
+                        {activeDeposit.network}
+                      </small>
+
+                      <strong
+                        style={{
+                          display: "block",
+                          marginTop: 5,
+                          wordBreak:
+                            "break-all",
+                          fontSize: 13,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {activeDeposit.payAddress ??
+                          "—"}
+                      </strong>
+
+                      {activeDeposit.payAddress ? (
+                        <button
+                          className="coin-button"
+                          onClick={() =>
+                            void copyDepositValue(
+                              activeDeposit.payAddress ??
+                                "",
+                              "Адрес",
+                            )
+                          }
+                          style={{
+                            width: "100%",
+                            marginTop: 8,
+                          }}
+                        >
+                          📋 СКОПИРОВАТЬ АДРЕС
+                        </button>
+                      ) : null}
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 10,
+                        padding: 10,
+                        borderRadius: 12,
+                        background:
+                          "rgba(255,193,7,.08)",
+                        fontSize: 12,
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      ⚠️ Отправляйте только{" "}
+                      <b>
+                        {activeDeposit.payCurrency.toUpperCase()}
+                      </b>{" "}
+                      по сети{" "}
+                      <b>
+                        {activeDeposit.network}
+                      </b>
+                      . Другая монета или сеть может
+                      привести к потере средств.
+                    </div>
+
+                    <button
+                      className="primary"
+                      onClick={() =>
+                        void checkDeposit(
+                          activeDeposit,
+                        )
+                      }
+                      disabled={
+                        isCheckingDeposit ||
+                        activeDeposit.status ===
+                          "FINISHED"
+                      }
+                      style={{
+                        width: "100%",
+                        marginTop: 12,
+                      }}
+                    >
+                      {activeDeposit.status ===
+                      "FINISHED"
+                        ? "✅ ЗАЧИСЛЕНО"
+                        : isCheckingDeposit
+                          ? "⏳ ПРОВЕРЯЕМ..."
+                          : "ПРОВЕРИТЬ ОПЛАТУ"}
+                    </button>
+                  </div>
+                ) : null}
+
+                <div className="card">
+                  <strong>
+                    Ваш баланс
+                  </strong>
+                  <p>
+                    🪙{" "}
+                    {formatNumber(
+                      state.coins,
+                      2,
+                    )}{" "}
+                    Coins
+                  </p>
+                </div>
+
+                {depositHistory.length >
+                0 ? (
+                  <div className="card">
+                    <strong>
+                      История пополнений
+                    </strong>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gap: 8,
+                        marginTop: 10,
+                      }}
+                    >
+                      {depositHistory.map(
+                        (item) => {
+                          const meta =
+                            depositStatusMeta(
+                              item.status,
+                            );
+
+                          return (
+                            <button
+                              key={item.id}
+                              className="coin-button"
+                              onClick={() =>
+                                setActiveDeposit(
+                                  item,
+                                )
+                              }
+                              style={{
+                                width: "100%",
+                                display: "grid",
+                                gridTemplateColumns:
+                                  "1fr auto",
+                                gap: 8,
+                                textAlign:
+                                  "left",
+                                alignItems:
+                                  "center",
+                              }}
+                            >
+                              <span>
+                                <strong>
+                                  $
+                                  {item.usdAmount.toFixed(
+                                    2,
+                                  )}{" "}
+                                  ·{" "}
+                                  {item.payCurrency.toUpperCase()}
+                                </strong>
+                                <small
+                                  style={{
+                                    display:
+                                      "block",
+                                    opacity:
+                                      .65,
+                                    marginTop:
+                                      3,
+                                  }}
+                                >
+                                  {formatDepositDate(
+                                    item.createdAt,
+                                  )}
+                                </small>
+                              </span>
+
+                              <b
+                                style={{
+                                  color:
+                                    meta.color,
+                                  whiteSpace:
+                                    "nowrap",
+                                }}
+                              >
+                                {meta.icon}{" "}
+                                {meta.label}
+                              </b>
+                            </button>
+                          );
+                        },
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="card">
+                  <strong>
+                    🔒 Как начисляются Coins
+                  </strong>
+                  <p>
+                    Нажатие «Оплатить» Coins не
+                    начисляет. Баланс меняется только
+                    после подтверждения платежа
+                    сервером.
+                  </p>
+                  <p
+                    style={{
+                      marginBottom: 0,
+                    }}
+                  >
+                    Один и тот же платёж не может
+                    быть зачислен дважды.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         )}
 
