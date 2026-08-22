@@ -329,6 +329,13 @@ export default function GameApp() {
   const [isCollecting, setIsCollecting] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
   const [isMerging, setIsMerging] = useState(false);
+  const [pendingMerge, setPendingMerge] = useState<{
+    fromSlot: number;
+    toSlot: number;
+    level: number;
+    resultLevel: number;
+    mergeFee: number;
+  } | null>(null);
   const [authMode, setAuthMode] = useState<"telegram" | "demo" | "unknown">("unknown");
   const [referralInfo, setReferralInfo] = useState<ReferralResponse | null>(null);
   const [referralStatus, setReferralStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
@@ -745,8 +752,39 @@ export default function GameApp() {
       return;
     }
 
-    const fromSlot = selected;
-    const toSlot = index;
+    setPendingMerge({
+      fromSlot: selected,
+      toSlot: index,
+      level,
+      resultLevel: level + 1,
+      mergeFee,
+    });
+  };
+
+  const cancelMerge = () => {
+    if (isMerging) return;
+    setPendingMerge(null);
+    setSelected(null);
+  };
+
+  const confirmMerge = async () => {
+    if (!pendingMerge || isMerging) return;
+
+    const {
+      fromSlot,
+      toSlot,
+      resultLevel,
+      mergeFee,
+    } = pendingMerge;
+
+    if (state.coins < mergeFee) {
+      setPendingMerge(null);
+      setSelected(null);
+      setToast(
+        `Для merge в Lv.${resultLevel} нужно ${formatNumber(mergeFee, 0)} Coins`,
+      );
+      return;
+    }
 
     setIsMerging(true);
     setToast("Объединяем динозавров на сервере...");
@@ -790,18 +828,18 @@ export default function GameApp() {
             : previous.board,
       }));
 
-      setSelected(null);
       setToast(
-        `MERGE ✓ Lv.${data.merged?.level ?? level + 1} · комиссия ${formatNumber(
+        `MERGE ✓ Lv.${data.merged?.level ?? resultLevel} · комиссия ${formatNumber(
           data.mergeFee ?? mergeFee,
           0,
         )} Coins`,
       );
     } catch (error) {
       console.error("Failed to merge dinosaur", error);
-      setSelected(null);
       setToast(error instanceof Error ? error.message : "Ошибка merge");
     } finally {
+      setPendingMerge(null);
+      setSelected(null);
       setIsMerging(false);
     }
   };
@@ -4503,6 +4541,155 @@ export default function GameApp() {
           </div>
         )}
       </section>
+
+      {pendingMerge ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Подтверждение merge"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            display: "grid",
+            placeItems: "center",
+            padding: 18,
+            background: "rgba(3,12,8,.76)",
+            backdropFilter: "blur(5px)",
+          }}
+          onClick={cancelMerge}
+        >
+          <div
+            style={{
+              width: "min(100%, 380px)",
+              borderRadius: 22,
+              padding: 18,
+              background: "#10281e",
+              border: "1px solid rgba(255,255,255,.12)",
+              boxShadow: "0 18px 60px rgba(0,0,0,.45)",
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <span className="eyebrow">CONFIRM MERGE</span>
+            <h2 style={{ marginBottom: 8 }}>🦖 Подтвердить merge?</h2>
+
+            <p
+              style={{
+                margin: "0 0 14px",
+                opacity: .72,
+                fontSize: 13,
+                lineHeight: 1.45,
+              }}
+            >
+              Два динозавра Lv.{pendingMerge.level} будут объединены
+              без возможности отмены.
+            </p>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gap: 7,
+                alignItems: "center",
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  padding: 10,
+                  borderRadius: 13,
+                  background: "rgba(255,255,255,.04)",
+                }}
+              >
+                <div style={{ fontSize: 24 }}>🦖</div>
+                <strong>Lv.{pendingMerge.level}</strong>
+              </div>
+
+              <div style={{ fontSize: 22, opacity: .72 }}>+</div>
+
+              <div
+                style={{
+                  padding: 10,
+                  borderRadius: 13,
+                  background: "rgba(255,255,255,.04)",
+                }}
+              >
+                <div style={{ fontSize: 24 }}>🦖</div>
+                <strong>Lv.{pendingMerge.level}</strong>
+              </div>
+            </div>
+
+            <div
+              style={{
+                margin: "10px 0",
+                textAlign: "center",
+                fontSize: 22,
+              }}
+            >
+              ↓
+            </div>
+
+            <div
+              style={{
+                padding: 12,
+                borderRadius: 14,
+                background: "rgba(167,243,72,.08)",
+                border: "1px solid rgba(167,243,72,.22)",
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: 28 }}>🦖</div>
+              <strong style={{ fontSize: 18 }}>
+                Получите Lv.{pendingMerge.resultLevel}
+              </strong>
+            </div>
+
+            <div
+              style={{
+                marginTop: 10,
+                padding: 12,
+                borderRadius: 14,
+                background: "rgba(255,255,255,.04)",
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+            >
+              <span style={{ opacity: .68 }}>Комиссия</span>
+              <strong>
+                {formatNumber(pendingMerge.mergeFee, 0)} Coins
+              </strong>
+            </div>
+
+            <div
+              style={{
+                marginTop: 14,
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gap: 8,
+              }}
+            >
+              <button
+                className="coin-button"
+                onClick={cancelMerge}
+                disabled={isMerging}
+                style={{ width: "100%" }}
+              >
+                ОТМЕНА
+              </button>
+
+              <button
+                className="primary"
+                onClick={() => void confirmMerge()}
+                disabled={isMerging}
+                style={{ width: "100%" }}
+              >
+                {isMerging ? "⏳ MERGE..." : "ПОДТВЕРДИТЬ"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {toast ? (
         <div className="toast" role="status">
