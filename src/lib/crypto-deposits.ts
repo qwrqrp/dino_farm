@@ -395,49 +395,104 @@ export async function getMinimumUsdForMethod(
   method: DepositMethod,
 ) {
   try {
-    const params = new URLSearchParams({
-      currency_from: "usd",
-      currency_to:
-        method.providerCurrency,
-      fiat_equivalent: "usd",
-      is_fixed_rate: "False",
-      is_fee_paid_by_user: "False",
-    });
+    // Correct NOWPayments preflight:
+    // 1) convert $1 USD into the selected pay currency;
+    // 2) ask the minimum with currency_from = selected pay currency.
+    //
+    // currency_to is omitted by default so NOWPayments uses the
+    // merchant account's Primary balance / payout configuration.
+    const estimateParams =
+      new URLSearchParams({
+        amount: "1",
+        currency_from: "usd",
+        currency_to:
+          method.providerCurrency,
+      });
 
-    const data = (await nowPaymentsFetch(
-      `/min-amount?${params.toString()}`,
-    )) as {
-      min_amount?: unknown;
-      fiat_equivalent?: unknown;
-    };
+    const estimate =
+      (await nowPaymentsFetch(
+        `/estimate?${estimateParams.toString()}`,
+      )) as {
+        estimated_amount?: unknown;
+      };
 
-    const minAmount =
-      Number(data.min_amount);
+    const cryptoPerUsd =
+      Number(
+        estimate.estimated_amount,
+      );
 
     if (
-      !Number.isFinite(minAmount) ||
-      minAmount <= 0
+      !Number.isFinite(cryptoPerUsd) ||
+      cryptoPerUsd <= 0
     ) {
       return null;
     }
 
-    // currency_from=usd means min_amount is already USD.
-    // Round UP to cents, then add a small safety buffer because
-    // NOWPayments minimums can change with rates/network fees.
-    const roundedUp =
-      Math.ceil(minAmount * 100) / 100;
+    const minimumParams =
+      new URLSearchParams({
+        currency_from:
+          method.providerCurrency,
+        is_fixed_rate: "False",
+        is_fee_paid_by_user: "False",
+      });
 
-    return Math.ceil(
-      roundedUp * 1.02 * 100,
-    ) / 100;
+    const payoutCurrency =
+      process.env
+        .NOWPAYMENTS_PAYOUT_CURRENCY
+        ?.trim()
+        .toLowerCase();
+
+    if (payoutCurrency) {
+      minimumParams.set(
+        "currency_to",
+        payoutCurrency,
+      );
+    }
+
+    const minimum =
+      (await nowPaymentsFetch(
+        `/min-amount?${minimumParams.toString()}`,
+      )) as {
+        min_amount?: unknown;
+      };
+
+    const minimumCrypto =
+      Number(minimum.min_amount);
+
+    if (
+      !Number.isFinite(
+        minimumCrypto,
+      ) ||
+      minimumCrypto <= 0
+    ) {
+      return null;
+    }
+
+    const minimumUsd =
+      minimumCrypto /
+      cryptoPerUsd;
+
+    if (
+      !Number.isFinite(minimumUsd) ||
+      minimumUsd <= 0
+    ) {
+      return null;
+    }
+
+    // Small 1% safety margin for moving rates / network minimum.
+    return (
+      Math.ceil(
+        minimumUsd * 1.01 * 100,
+      ) / 100
+    );
   } catch (error) {
     console.error(
       `Failed to load minimum amount for ${method.code}:`,
       error,
     );
 
-    // Do not block all payments if the preflight endpoint
-    // is temporarily unavailable. Provider POST remains final.
+    // The provider will still perform the final validation
+    // when POST /payment is called.
     return null;
   }
 }
