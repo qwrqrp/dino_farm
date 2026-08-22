@@ -92,6 +92,41 @@ type AdminPlayerItem = {
   paidUsdt: number;
 };
 
+type AdminDashboard = {
+  generatedAt: string;
+  players: {
+    total: number;
+    new24h: number;
+  };
+  economy: {
+    coins: number;
+    dna: number;
+  };
+  farm: {
+    dinosaurs: number;
+    maxDinoLevel: number;
+    nestCapacity: number;
+    averageNestCapacity: number;
+    eggsInNests: number;
+    totalEggsCollected: number;
+  };
+  activity: {
+    referrals: number;
+    taskClaims: number;
+    achievementClaims: number;
+  };
+  withdrawals: {
+    pending: number;
+    approved: number;
+    paid: number;
+    rejected: number;
+    pendingDna: number;
+    approvedDna: number;
+    paidDna: number;
+    paidUsdt: number;
+  };
+};
+
 const EMPTY_SUMMARY: Summary = {
   pending: 0,
   approved: 0,
@@ -174,7 +209,7 @@ export default function AdminPage() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [summary, setSummary] = useState<Summary>(EMPTY_SUMMARY);
   const [filter, setFilter] = useState("ACTIVE");
-  const [section, setSection] = useState<"withdrawals" | "leaderboard" | "history" | "players">("withdrawals");
+  const [section, setSection] = useState<"withdrawals" | "leaderboard" | "history" | "players" | "dashboard">("withdrawals");
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardPlayer[]>([]);
   const [leaderboardTotalPlayers, setLeaderboardTotalPlayers] = useState(0);
@@ -190,6 +225,8 @@ export default function AdminPage() {
   const [players, setPlayers] = useState<AdminPlayerItem[]>([]);
   const [playersTotal, setPlayersTotal] = useState(0);
   const [playerSearch, setPlayerSearch] = useState("");
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [dashboard, setDashboard] = useState<AdminDashboard | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -386,6 +423,47 @@ export default function AdminPage() {
     [playerSearch],
   );
 
+  const loadDashboard = useCallback(async () => {
+    setDashboardLoading(true);
+    setMessage("");
+
+    try {
+      const response = await fetch(
+        "/api/admin/dashboard",
+        {
+          cache: "no-store",
+          credentials: "include",
+        },
+      );
+
+      if (response.status === 401) {
+        setAuthenticated(false);
+        setDashboard(null);
+        return;
+      }
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(
+          data.message ||
+            data.error ||
+            "Ошибка загрузки обзора",
+        );
+      }
+
+      setDashboard(data as AdminDashboard);
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Ошибка загрузки обзора",
+      );
+    } finally {
+      setDashboardLoading(false);
+    }
+  }, []);
+
   const login = async () => {
     if (!key.trim()) return;
 
@@ -552,26 +630,30 @@ export default function AdminPage() {
           <div>
             <div style={styles.eyebrow}>DINO FARM</div>
             <h1 style={styles.title}>
-              {section === "leaderboard"
-                ? "Таблица лидеров"
-                : section === "history"
-                  ? "История игры"
-                  : section === "players"
-                    ? "Игроки"
-                    : "Заявки на вывод"}
+              {section === "dashboard"
+                ? "Обзор проекта"
+                : section === "leaderboard"
+                  ? "Таблица лидеров"
+                  : section === "history"
+                    ? "История игры"
+                    : section === "players"
+                      ? "Игроки"
+                      : "Заявки на вывод"}
             </h1>
           </div>
 
           <div style={styles.headerActions}>
             <button
               onClick={() =>
-                section === "leaderboard"
-                  ? void loadLeaderboard()
-                  : section === "history"
-                    ? void loadHistory()
-                    : section === "players"
-                      ? void loadPlayers()
-                      : void load()
+                section === "dashboard"
+                  ? void loadDashboard()
+                  : section === "leaderboard"
+                    ? void loadLeaderboard()
+                    : section === "history"
+                      ? void loadHistory()
+                      : section === "players"
+                        ? void loadPlayers()
+                        : void load()
               }
               style={styles.secondaryButton}
             >
@@ -594,6 +676,21 @@ export default function AdminPage() {
             marginBottom: 14,
           }}
         >
+          <button
+            onClick={() => {
+              setSection("dashboard");
+              void loadDashboard();
+            }}
+            style={{
+              ...styles.filterButton,
+              ...(section === "dashboard"
+                ? styles.filterButtonActive
+                : {}),
+            }}
+          >
+            📊 Обзор
+          </button>
+
           <button
             onClick={() => setSection("withdrawals")}
             style={{
@@ -654,6 +751,262 @@ export default function AdminPage() {
             👥 Игроки
           </button>
         </section>
+
+        {section === "dashboard" ? (
+          <>
+            {message ? (
+              <div style={styles.notice}>
+                {message}
+              </div>
+            ) : null}
+
+            {dashboardLoading ? (
+              <div style={styles.empty}>
+                Загружаем обзор проекта...
+              </div>
+            ) : !dashboard ? (
+              <div style={styles.empty}>
+                Нажмите «Обновить», чтобы загрузить данные.
+              </div>
+            ) : (
+              <>
+                <section style={styles.summaryGrid}>
+                  <div style={styles.summaryCard}>
+                    <span style={styles.muted}>
+                      👥 Игроков
+                    </span>
+                    <b style={styles.summaryNumber}>
+                      {dashboard.players.total}
+                    </b>
+                    <small style={styles.muted}>
+                      +{dashboard.players.new24h} за 24 часа
+                    </small>
+                  </div>
+
+                  <div style={styles.summaryCard}>
+                    <span style={styles.muted}>
+                      🪙 Coins в системе
+                    </span>
+                    <b style={styles.summaryNumber}>
+                      {dashboard.economy.coins.toLocaleString(
+                        "ru-RU",
+                        {
+                          maximumFractionDigits: 2,
+                        },
+                      )}
+                    </b>
+                  </div>
+
+                  <div style={styles.summaryCard}>
+                    <span style={styles.muted}>
+                      🧬 DNA в системе
+                    </span>
+                    <b style={styles.summaryNumber}>
+                      {dashboard.economy.dna.toLocaleString(
+                        "ru-RU",
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        },
+                      )}
+                    </b>
+                  </div>
+
+                  <div style={styles.summaryCard}>
+                    <span style={styles.muted}>
+                      🦖 Динозавров
+                    </span>
+                    <b style={styles.summaryNumber}>
+                      {dashboard.farm.dinosaurs}
+                    </b>
+                    <small style={styles.muted}>
+                      max Lv.{dashboard.farm.maxDinoLevel}
+                    </small>
+                  </div>
+                </section>
+
+                <section style={styles.list}>
+                  <article style={styles.card}>
+                    <div style={styles.playerName}>
+                      🌱 Фермы
+                    </div>
+
+                    <div style={styles.detailGrid}>
+                      <div>
+                        <span style={styles.muted}>
+                          Собрано яиц всего
+                        </span>
+                        <div style={styles.detailValue}>
+                          {dashboard.farm.totalEggsCollected.toLocaleString(
+                            "ru-RU",
+                            {
+                              maximumFractionDigits: 0,
+                            },
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Сейчас в гнёздах
+                        </span>
+                        <div style={styles.detailValue}>
+                          {dashboard.farm.eggsInNests.toLocaleString(
+                            "ru-RU",
+                            {
+                              maximumFractionDigits: 2,
+                            },
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Общая вместимость
+                        </span>
+                        <div style={styles.detailValue}>
+                          {dashboard.farm.nestCapacity.toLocaleString(
+                            "ru-RU",
+                            {
+                              maximumFractionDigits: 0,
+                            },
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Среднее гнездо
+                        </span>
+                        <div style={styles.detailValue}>
+                          {dashboard.farm.averageNestCapacity.toLocaleString(
+                            "ru-RU",
+                            {
+                              maximumFractionDigits: 0,
+                            },
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+
+                  <article style={styles.card}>
+                    <div style={styles.playerName}>
+                      🎯 Активность
+                    </div>
+
+                    <div style={styles.detailGrid}>
+                      <div>
+                        <span style={styles.muted}>
+                          Рефералов
+                        </span>
+                        <div style={styles.detailValue}>
+                          {dashboard.activity.referrals}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Наград за задания
+                        </span>
+                        <div style={styles.detailValue}>
+                          {dashboard.activity.taskClaims}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Достижений получено
+                        </span>
+                        <div style={styles.detailValue}>
+                          {dashboard.activity.achievementClaims}
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+
+                  <article style={styles.card}>
+                    <div style={styles.playerName}>
+                      💸 Выводы DNA → USDT
+                    </div>
+
+                    <div style={styles.detailGrid}>
+                      <div>
+                        <span style={styles.muted}>
+                          Ожидают
+                        </span>
+                        <div style={styles.detailValue}>
+                          {dashboard.withdrawals.pending}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Одобрено
+                        </span>
+                        <div style={styles.detailValue}>
+                          {dashboard.withdrawals.approved}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Оплачено
+                        </span>
+                        <div style={styles.detailValue}>
+                          {dashboard.withdrawals.paid}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Отклонено
+                        </span>
+                        <div style={styles.detailValue}>
+                          {dashboard.withdrawals.rejected}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          DNA в ожидании
+                        </span>
+                        <div style={styles.detailValue}>
+                          {dashboard.withdrawals.pendingDna.toLocaleString(
+                            "ru-RU",
+                            {
+                              maximumFractionDigits: 4,
+                            },
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Выплачено USDT
+                        </span>
+                        <div style={styles.detailValue}>
+                          {dashboard.withdrawals.paidUsdt.toFixed(
+                            8,
+                          )}{" "}
+                          USDT
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                </section>
+
+                <div style={styles.notice}>
+                  Данные только для администратора и только
+                  для просмотра. Обновлено{" "}
+                  {new Date(
+                    dashboard.generatedAt,
+                  ).toLocaleString("ru-RU")}.
+                </div>
+              </>
+            )}
+          </>
+        ) : null}
 
         {section === "withdrawals" ? (
           <>
