@@ -60,6 +60,7 @@ export default function GameApp() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isCollecting, setIsCollecting] = useState(false);
+  const [isBuying, setIsBuying] = useState(false);
 
   const eggsPerHour = useMemo(() => {
     return state.board.reduce((sum: number, level) => {
@@ -199,18 +200,62 @@ export default function GameApp() {
     }
   };
 
-  const buyDino = () => {
-    const emptyIndex = state.board.findIndex((x) => x === null);
-    if (emptyIndex === -1) return setToast("Игровая доска заполнена");
-    if (state.coins < 100) return setToast("Недостаточно Coins");
+  const buyDino = async () => {
+    if (isBuying) return;
 
-    setState((s) => {
-      const board = [...s.board];
-      board[emptyIndex] = 1;
-      return { ...s, board, coins: s.coins - 100 };
-    });
+    setIsBuying(true);
+    setToast("Покупаем динозавра на сервере...");
 
-    setToast("Динозавр Level 1 куплен локально");
+    try {
+      const response = await fetch("/api/buy-dino", {
+        method: "POST",
+        cache: "no-store",
+      });
+
+      const raw = await response.text();
+      const contentType = response.headers.get("content-type") ?? "";
+
+      if (!contentType.includes("application/json")) {
+        throw new Error(`API вернул не JSON (HTTP ${response.status})`);
+      }
+
+      const data = JSON.parse(raw) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+        coins?: number;
+        price?: number;
+        dinosaur?: {
+          id: string;
+          level: number;
+          boardSlot: number | null;
+        };
+        board?: Slot[];
+      };
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || data.error || "Не удалось купить динозавра");
+      }
+
+      setState((previous) => ({
+        ...previous,
+        coins: data.coins ?? previous.coins,
+        board:
+          Array.isArray(data.board) && data.board.length === 16
+            ? data.board
+            : previous.board,
+      }));
+
+      setSelected(null);
+      setToast(
+        `Динозавр Level ${data.dinosaur?.level ?? 1} куплен за ${formatNumber(data.price ?? 100, 0)} Coins ✓`,
+      );
+    } catch (error) {
+      console.error("Failed to buy dinosaur", error);
+      setToast(error instanceof Error ? error.message : "Ошибка покупки динозавра");
+    } finally {
+      setIsBuying(false);
+    }
   };
 
   const chooseSlot = (index: number) => {
@@ -307,9 +352,9 @@ export default function GameApp() {
           <div className="screen">
             <div className="section-head">
               <div><span className="eyebrow">MERGE FARM</span><h2>Игровая доска</h2></div>
-              <button className="coin-button" onClick={buyDino} disabled={isLoading || Boolean(loadError)}>+ 🦕 100</button>
+              <button className="coin-button" onClick={buyDino} disabled={isLoading || isBuying || Boolean(loadError)}>{isBuying ? "⏳ ПОКУПКА..." : "+ 🦕 100"}</button>
             </div>
-            <p className="hint">Данные загружены из Neon. Сбор яиц уже сохраняется на сервере; покупка и merge пока локальные.</p>
+            <p className="hint">Данные загружены из Neon. Сбор яиц и покупка динозавра сохраняются на сервере; merge пока локальный.</p>
             <div className="board">
               {state.board.map((level, index) => (
                 <button
