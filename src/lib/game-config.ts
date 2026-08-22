@@ -8,8 +8,10 @@ export const gameConfig = {
   // Current game does NOT exchange DNA to Coins in the client.
   dnaToCoins: 1.1,
 
-  eggToCoin: 5.28 / 72,
-  eggToDna: 5.28 / 72,
+  // Economy rule:
+  // 1 collected egg = 0.005 Coins + 0.005 DNA.
+  eggToCoin: 0.005,
+  eggToDna: 0.005,
 
   initialNestCapacity: 250_000,
   demoStartingCoins: 50_000,
@@ -17,34 +19,44 @@ export const gameConfig = {
 } as const;
 
 /**
- * Single source of truth for dinosaur production.
- * Index 0 = Lv.1, index 15 = Lv.16.
+ * Exact user-defined daily income for ONE dinosaur of each level.
+ * Each value is paid in BOTH currencies:
+ * Lv.1 = 0.36 Coins/day + 0.36 DNA/day, etc.
  */
-export const DINOSAUR_EGGS_PER_HOUR = [
-  3,
-  7,
-  15,
-  31,
-  63,
-  127,
-  255,
-  511,
-  1_000,
-  2_000,
-  4_000,
-  8_100,
-  16_300,
-  32_700,
-  65_500,
-  135_000,
+export const DINOSAUR_DAILY_INCOME = [
+  0.36,
+  0.84,
+  1.8,
+  3.72,
+  7.56,
+  15.24,
+  30.6,
+  61.32,
+  122.76,
+  245.64,
+  491.4,
+  982.92,
+  1965,
+  3932,
+  7864,
+  16200,
 ] as const;
 
-export const dinosaurs = DINOSAUR_EGGS_PER_HOUR.map(
-  (eggsPerHour, index) => ({
+/**
+ * Production in eggs/hour is derived from the exact daily income.
+ * Because each egg gives 0.005 Coins and 0.005 DNA:
+ * eggs/hour = daily income / 0.005 / 24.
+ */
+export const dinosaurs = DINOSAUR_DAILY_INCOME.map(
+  (dailyIncome, index) => ({
     level: index + 1,
-    eggsPerHour,
+    dailyCoins: dailyIncome,
+    dailyDna: dailyIncome,
+    eggsPerHour:
+      dailyIncome / gameConfig.eggToCoin / 24,
+
     // Only Lv.1 is directly purchased now.
-    // This is the theoretical equivalent price of the level in Lv.1 copies.
+    // This is the theoretical number of Lv.1 dinosaurs needed through merges.
     buyPrice: 100 * 2 ** index,
     levelOneCopies: 2 ** index,
   }),
