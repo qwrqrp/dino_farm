@@ -256,6 +256,7 @@ type WithdrawalItem = {
   status: string;
   createdAt: string;
   updatedAt: string;
+  note: string | null;
 };
 
 type WalletHistoryItem = {
@@ -292,7 +293,10 @@ type WalletHistorySummary = {
   paidDna: number;
 };
 
-function withdrawalStatusMeta(status: string) {
+function withdrawalStatusMeta(
+  status: string,
+  note?: string | null,
+) {
   if (status === "PENDING") {
     return {
       label: "Ожидает проверки",
@@ -324,11 +328,19 @@ function withdrawalStatusMeta(status: string) {
   }
 
   if (status === "REJECTED") {
+    const canceledByPlayer =
+      note ===
+      "CANCELED_BY_PLAYER";
+
     return {
-      label: "Отклонено · DNA возвращена",
+      label: canceledByPlayer
+        ? "Отменено · DNA возвращена"
+        : "Отклонено · DNA возвращена",
       icon: "↩️",
-      background: "rgba(255, 92, 108, .14)",
-      border: "rgba(255, 92, 108, .30)",
+      background:
+        "rgba(255, 92, 108, .14)",
+      border:
+        "rgba(255, 92, 108, .30)",
       color: "#ffabb4",
     };
   }
@@ -668,6 +680,7 @@ export default function GameApp() {
   const [withdrawNetwork, setWithdrawNetwork] = useState("");
   const [withdrawWallet, setWithdrawWallet] = useState("");
   const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
+  const [cancelingWithdrawalId, setCancelingWithdrawalId] = useState<string | null>(null);
 
   const depositPreview = useMemo(() => {
     const normalized = Number(
@@ -2942,6 +2955,121 @@ export default function GameApp() {
       setToast(error instanceof Error ? error.message : "Ошибка создания заявки");
     } finally {
       setIsSubmittingWithdrawal(false);
+    }
+  };
+
+  const cancelWithdrawal = async (
+    item: WithdrawalItem,
+  ) => {
+    if (
+      cancelingWithdrawalId ||
+      item.status !== "PENDING"
+    ) {
+      return;
+    }
+
+    const confirmed =
+      window.confirm(
+        `Отменить заявку на ${formatNumber(
+          item.dnaAmount,
+          4,
+        )} DNA?\n\nЗарезервированная DNA будет возвращена на игровой баланс.`,
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setCancelingWithdrawalId(
+      item.id,
+    );
+
+    try {
+      const response = await fetch(
+        "/api/withdrawals/cancel",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            withdrawalId:
+              item.id,
+          }),
+          cache: "no-store",
+          credentials: "include",
+        },
+      );
+
+      const data =
+        (await response.json()) as {
+          ok?: boolean;
+          message?: string;
+          error?: string;
+          balance?: {
+            dna: number;
+          };
+          withdrawal?:
+            WithdrawalItem;
+        };
+
+      if (
+        !response.ok ||
+        !data.ok ||
+        !data.withdrawal
+      ) {
+        throw new Error(
+          data.message ||
+            data.error ||
+            "Не удалось отменить заявку",
+        );
+      }
+
+      setWithdrawals(
+        (previous) =>
+          previous.map(
+            (withdrawal) =>
+              withdrawal.id ===
+              data.withdrawal?.id
+                ? (
+                    data.withdrawal as
+                      WithdrawalItem
+                  )
+                : withdrawal,
+          ),
+      );
+
+      setState((previous) => ({
+        ...previous,
+        dna:
+          data.balance?.dna ??
+          previous.dna,
+      }));
+
+      setToast(
+        `↩️ Заявка отменена. ${formatNumber(
+          data.withdrawal.dnaAmount,
+          4,
+        )} DNA возвращено на баланс.`,
+      );
+    } catch (error) {
+      console.error(
+        "Failed to cancel withdrawal",
+        error,
+      );
+
+      setToast(
+        error instanceof Error
+          ? error.message
+          : "Ошибка отмены заявки",
+      );
+
+      void loadWithdrawals();
+    } finally {
+      setCancelingWithdrawalId(
+        null,
+      );
     }
   };
 
@@ -7342,7 +7470,10 @@ export default function GameApp() {
                           }}
                         >
                           {withdrawals.slice(0, 12).map((item) => {
-                            const status = withdrawalStatusMeta(item.status);
+                            const status = withdrawalStatusMeta(
+                              item.status,
+                              item.note,
+                            );
 
                             return (
                               <article
@@ -7487,6 +7618,33 @@ export default function GameApp() {
                                   </small>
                                 ) : null}
 
+                                {item.status === "PENDING" ? (
+                                  <button
+                                    className="coin-button"
+                                    disabled={
+                                      cancelingWithdrawalId !==
+                                      null
+                                    }
+                                    onClick={() =>
+                                      void cancelWithdrawal(
+                                        item,
+                                      )
+                                    }
+                                    style={{
+                                      width: "100%",
+                                      maxWidth: "none",
+                                      marginTop: 9,
+                                      borderColor:
+                                        "rgba(255,92,108,.34)",
+                                    }}
+                                  >
+                                    {cancelingWithdrawalId ===
+                                    item.id
+                                      ? "⏳ ОТМЕНЯЕМ..."
+                                      : "↩️ ОТМЕНИТЬ ЗАЯВКУ"}
+                                  </button>
+                                ) : null}
+
                                 {item.status === "APPROVED" ? (
                                   <small
                                     style={{
@@ -7522,7 +7680,10 @@ export default function GameApp() {
                                       lineHeight: 1.4,
                                     }}
                                   >
-                                    Заявка отклонена. Зарезервированная DNA возвращена на игровой баланс.
+                                    {item.note ===
+                                    "CANCELED_BY_PLAYER"
+                                      ? "Вы отменили эту заявку. Зарезервированная DNA возвращена на игровой баланс."
+                                      : "Заявка отклонена. Зарезервированная DNA возвращена на игровой баланс."}
                                   </small>
                                 ) : null}
                               </article>
