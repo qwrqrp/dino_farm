@@ -472,10 +472,42 @@ export default function GameApp() {
           ? data.board
           : [...EMPTY_BOARD];
 
+        const initialEggsPerHour = board.reduce(
+          (sum: number, level) => {
+            if (!level) return sum;
+            return (
+              sum +
+              (getDinosaurConfig(level)?.eggsPerHour ?? 0)
+            );
+          },
+          0,
+        );
+
+        const lastProductionAtMs =
+          data.nest.lastProductionAt
+            ? new Date(
+                data.nest.lastProductionAt,
+              ).getTime()
+            : Date.now();
+
+        const elapsedHours =
+          Number.isFinite(lastProductionAtMs)
+            ? Math.max(
+                0,
+                Date.now() - lastProductionAtMs,
+              ) / 3_600_000
+            : 0;
+
+        const accumulatedEggs = Math.min(
+          data.nest.capacity,
+          data.nest.currentEggs +
+            initialEggsPerHour * elapsedHours,
+        );
+
         setState({
           coins: data.balance.coins,
           dna: data.balance.dna,
-          eggs: data.nest.currentEggs,
+          eggs: accumulatedEggs,
           capacity: data.nest.capacity,
           board,
           lastTick: Date.now(),
@@ -1699,7 +1731,10 @@ export default function GameApp() {
               <div className="jungle">🌿🌴🌿</div>
               <div className="nest-visual">🪺<span className="egg">🥚</span></div>
               <h1>Гнездо</h1>
-              <p>{formatNumber(state.eggs, 0)} / {formatNumber(state.capacity, 0)} яиц</p>
+              <p>
+                {formatNumber(state.eggs, 2)} /{" "}
+                {formatNumber(state.capacity, 0)} яиц
+              </p>
               <div className="progress"><div style={{ width: `${progress}%` }} /></div>
               <div className="rate">⚡ {formatNumber(eggsPerHour, 0)} яиц / час</div>
               <button className="primary" onClick={collectEggs} disabled={isLoading || isCollecting || Boolean(loadError)}>{isCollecting ? "⏳ СОБИРАЕМ..." : "🥚 СОБРАТЬ ЯЙЦА"}</button>
