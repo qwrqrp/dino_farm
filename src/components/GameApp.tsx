@@ -1,0 +1,268 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { dinosaurs, formatNumber, gameConfig } from "@/lib/game-config";
+
+type Tab = "nest" | "game" | "shop" | "friends" | "menu";
+type Slot = number | null;
+
+type SaveState = {
+  coins: number;
+  dna: number;
+  eggs: number;
+  board: Slot[];
+  lastTick: number;
+};
+
+const STORAGE_KEY = "dino-farm-clean-v1";
+const EMPTY_BOARD: Slot[] = [1, 1, 2, null, 1, null, null, null, null, null, null, null, null, null, null, null];
+
+function loadState(): SaveState {
+  if (typeof window === "undefined") {
+    return {
+      coins: gameConfig.demoStartingCoins,
+      dna: gameConfig.demoStartingDna,
+      eggs: 12340,
+      board: EMPTY_BOARD,
+      lastTick: Date.now(),
+    };
+  }
+
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) throw new Error("no save");
+    const parsed = JSON.parse(raw) as SaveState;
+    if (!Array.isArray(parsed.board) || parsed.board.length !== 16) throw new Error("invalid save");
+    return parsed;
+  } catch {
+    return {
+      coins: gameConfig.demoStartingCoins,
+      dna: gameConfig.demoStartingDna,
+      eggs: 12340,
+      board: [...EMPTY_BOARD],
+      lastTick: Date.now(),
+    };
+  }
+}
+
+export default function GameApp() {
+  const [tab, setTab] = useState<Tab>("nest");
+  const [state, setState] = useState<SaveState>(() => loadState());
+  const [selected, setSelected] = useState<number | null>(null);
+  const [depositUsd, setDepositUsd] = useState(10);
+  const [toast, setToast] = useState("Добро пожаловать на ферму!");
+
+  const eggsPerHour = useMemo(() => {
+    return state.board.reduce((sum: number, level) => {
+      if (!level) return sum;
+      return sum + dinosaurs[level - 1].eggsPerHour;
+    }, 0);
+  }, [state.board]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setState((previous) => {
+        const now = Date.now();
+        const elapsedHours = Math.max(0, now - previous.lastTick) / 3_600_000;
+        const produced = eggsPerHour * elapsedHours;
+        return {
+          ...previous,
+          eggs: Math.min(gameConfig.initialNestCapacity, previous.eggs + produced),
+          lastTick: now,
+        };
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [eggsPerHour]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }, [state]);
+
+  const collectEggs = () => {
+    if (state.eggs < 1) {
+      setToast("В гнезде пока нет яиц");
+      return;
+    }
+    const coins = state.eggs * gameConfig.eggToCoin;
+    const dna = state.eggs * gameConfig.eggToDna;
+    setState((s) => ({ ...s, eggs: 0, coins: s.coins + coins, dna: s.dna + dna }));
+    setToast(`Собрано: +${formatNumber(coins)} Coins и +${formatNumber(dna)} DNA`);
+  };
+
+  const buyDino = () => {
+    const emptyIndex = state.board.findIndex((x) => x === null);
+    if (emptyIndex === -1) return setToast("Игровая доска заполнена");
+    if (state.coins < 100) return setToast("Недостаточно Coins");
+    setState((s) => {
+      const board = [...s.board];
+      board[emptyIndex] = 1;
+      return { ...s, board, coins: s.coins - 100 };
+    });
+    setToast("Динозавр Level 1 куплен");
+  };
+
+  const chooseSlot = (index: number) => {
+    const level = state.board[index];
+    if (!level) {
+      setSelected(null);
+      return;
+    }
+    if (selected === null) {
+      setSelected(index);
+      return;
+    }
+    if (selected === index) {
+      setSelected(null);
+      return;
+    }
+    const firstLevel = state.board[selected];
+    if (firstLevel === level && level < 16) {
+      setState((s) => {
+        const board = [...s.board];
+        board[selected] = null;
+        board[index] = level + 1;
+        return { ...s, board };
+      });
+      setSelected(null);
+      setToast(`MERGE! Получен динозавр Level ${level + 1}`);
+    } else {
+      setSelected(index);
+      setToast("Для merge выберите двух динозавров одинакового уровня");
+    }
+  };
+
+  const exchangeDna = () => {
+    if (state.dna < 1) return setToast("Недостаточно DNA");
+    const amount = Math.min(10, state.dna);
+    setState((s) => ({ ...s, dna: s.dna - amount, coins: s.coins + amount * gameConfig.dnaToCoins }));
+    setToast(`${formatNumber(amount)} DNA обменено на ${formatNumber(amount * gameConfig.dnaToCoins)} Coins`);
+  };
+
+  const progress = Math.min(100, (state.eggs / gameConfig.initialNestCapacity) * 100);
+  const depositCoins = depositUsd * gameConfig.usdToCoins;
+  const depositBonus = depositCoins * gameConfig.firstDepositBonus;
+
+  return (
+    <main className="app-shell">
+      <header className="hud glass">
+        <div className="avatar">🦖</div>
+        <div className="profile">
+          <strong>Dino Farmer</strong>
+          <span>Level 1 · Demo</span>
+        </div>
+        <div className="balances">
+          <span>🪙 {formatNumber(state.coins, 0)}</span>
+          <span>🧬 {formatNumber(state.dna, 1)}</span>
+        </div>
+      </header>
+
+      <section className="content">
+        {tab === "nest" && (
+          <div className="screen nest-screen">
+            <div className="hero-card">
+              <div className="sun">☀️</div>
+              <div className="jungle">🌿🌴🌿</div>
+              <div className="nest-visual">🪺<span className="egg">🥚</span></div>
+              <h1>Гнездо</h1>
+              <p>{formatNumber(state.eggs, 0)} / {formatNumber(gameConfig.initialNestCapacity, 0)} яиц</p>
+              <div className="progress"><div style={{ width: `${progress}%` }} /></div>
+              <div className="rate">⚡ {formatNumber(eggsPerHour, 0)} яиц / час</div>
+              <button className="primary" onClick={collectEggs}>🥚 СОБРАТЬ ЯЙЦА</button>
+            </div>
+
+            <div className="stats-grid">
+              <article className="stat-card"><span>За день</span><strong>{formatNumber(eggsPerHour * 24, 0)}</strong><small>яиц</small></article>
+              <article className="stat-card"><span>Coins / день</span><strong>{formatNumber(eggsPerHour * 24 * gameConfig.eggToCoin)}</strong><small>расчётно</small></article>
+              <article className="stat-card"><span>DNA / день</span><strong>{formatNumber(eggsPerHour * 24 * gameConfig.eggToDna)}</strong><small>расчётно</small></article>
+            </div>
+          </div>
+        )}
+
+        {tab === "game" && (
+          <div className="screen">
+            <div className="section-head">
+              <div><span className="eyebrow">MERGE FARM</span><h2>Игровая доска</h2></div>
+              <button className="coin-button" onClick={buyDino}>+ 🦕 100</button>
+            </div>
+            <p className="hint">Нажмите на двух одинаковых динозавров, чтобы объединить их.</p>
+            <div className="board">
+              {state.board.map((level, index) => (
+                <button
+                  key={index}
+                  className={`slot ${selected === index ? "selected" : ""}`}
+                  onClick={() => chooseSlot(index)}
+                  aria-label={level ? `Динозавр уровня ${level}` : "Пустая клетка"}
+                >
+                  {level ? <><span className="dino">🦖</span><b>Lv.{level}</b></> : <span className="plus">+</span>}
+                </button>
+              ))}
+            </div>
+            <div className="card"><strong>Общее производство</strong><span>{formatNumber(eggsPerHour, 0)} яиц / час</span></div>
+          </div>
+        )}
+
+        {tab === "shop" && (
+          <div className="screen">
+            <span className="eyebrow">SHOP</span><h2>Пополнение</h2>
+            <div className="card form-card">
+              <label htmlFor="deposit">Сумма USD</label>
+              <input id="deposit" type="number" min={3} max={20000} value={depositUsd} onChange={(e) => setDepositUsd(Math.max(3, Math.min(20000, Number(e.target.value) || 3)))} />
+              <div className="quote"><span>Coins</span><strong>{formatNumber(depositCoins, 0)}</strong></div>
+              <div className="quote bonus"><span>Первый бонус +20%</span><strong>+{formatNumber(depositBonus, 0)}</strong></div>
+              <div className="quote total"><span>Итого</span><strong>{formatNumber(depositCoins + depositBonus, 0)}</strong></div>
+              <button className="primary" onClick={() => setToast("Платежи будут подключены после стабильного demo-deploy")}>ПРОДОЛЖИТЬ</button>
+              <small>Demo: реальные платежи отключены.</small>
+            </div>
+          </div>
+        )}
+
+        {tab === "friends" && (
+          <div className="screen">
+            <span className="eyebrow">REFERRALS</span><h2>Друзья</h2>
+            <div className="invite-card">
+              <div className="invite-art">👥🦕</div>
+              <h3>Стройте ферму вместе</h3>
+              <p>В production здесь будет Telegram deep-link <code>startapp=ref_USERID</code>.</p>
+              <button className="primary" onClick={() => setToast("Referral link появится после Telegram integration")}>ПРИГЛАСИТЬ ДРУГА</button>
+            </div>
+            <div className="stats-grid">
+              <article className="stat-card"><span>Приглашено</span><strong>0</strong></article>
+              <article className="stat-card"><span>Активные</span><strong>0</strong></article>
+              <article className="stat-card"><span>Бонусы</span><strong>0</strong></article>
+            </div>
+          </div>
+        )}
+
+        {tab === "menu" && (
+          <div className="screen">
+            <span className="eyebrow">TOOLS</span><h2>Меню</h2>
+            <div className="menu-list">
+              <button onClick={exchangeDna}><span>🧬 DNA → Coins</span><b>1 : 1.1</b></button>
+              <button onClick={() => setToast("Profit Plan будет вынесен в отдельный калькулятор")}><span>📊 Profit Plan</span><b>›</b></button>
+              <button onClick={() => setToast("Задания появятся на этапе backend")}><span>✅ Задания</span><b>›</b></button>
+              <button onClick={() => setToast("Рулетка отключена до server-side реализации")}><span>🎰 Рулетка</span><b>OFF</b></button>
+              <button onClick={() => { localStorage.removeItem(STORAGE_KEY); window.location.reload(); }}><span>♻️ Сбросить demo</span><b>›</b></button>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <div className="toast" role="status">{toast}</div>
+
+      <nav className="bottom-nav glass" aria-label="Главная навигация">
+        {([
+          ["nest", "🪺", "Гнездо"],
+          ["game", "🎮", "Игра"],
+          ["shop", "🛒", "Магазин"],
+          ["friends", "👥", "Друзья"],
+          ["menu", "☰", "Меню"],
+        ] as const).map(([key, icon, label]) => (
+          <button key={key} className={tab === key ? "active" : ""} onClick={() => setTab(key)}>
+            <span>{icon}</span><small>{label}</small>
+          </button>
+        ))}
+      </nav>
+    </main>
+  );
+}
