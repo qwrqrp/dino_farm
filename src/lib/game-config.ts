@@ -24,6 +24,26 @@ export const gameConfig = {
  * Each value is paid in BOTH currencies:
  * Lv.1 = 0.36 Coins/day + 0.36 DNA/day, etc.
  */
+
+export const NEST_UPGRADE_TIERS = [
+  { capacity: 250_000, priceCoins: 0 },
+  { capacity: 500_000, priceCoins: 25_000 },
+  { capacity: 1_000_000, priceCoins: 75_000 },
+  { capacity: 2_000_000, priceCoins: 200_000 },
+  { capacity: 5_000_000, priceCoins: 600_000 },
+  { capacity: 10_000_000, priceCoins: 1_500_000 },
+] as const;
+
+export function getNextNestUpgrade(
+  currentCapacity: number,
+) {
+  return (
+    NEST_UPGRADE_TIERS.find(
+      (tier) => tier.capacity > currentCapacity,
+    ) ?? null
+  );
+}
+
 export const DINOSAUR_DAILY_INCOME = [
   0.36,
   0.84,
