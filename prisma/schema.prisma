@@ -26,6 +26,8 @@ model User {
   shopPurchases   ShopPurchase[]
   withdrawals     Withdrawal[]
   dailyReward     DailyReward?
+  gameStats       GameStats?
+  taskClaims      TaskClaim[]
 }
 
 model Balance {
@@ -138,4 +140,28 @@ model DailyReward {
   updatedAt     DateTime  @default(now()) @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+
+model GameStats {
+  id                 String   @id
+  userId             String   @unique
+  totalEggsCollected Float    @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now()) @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TaskClaim {
+  id          String   @id
+  userId      String
+  taskCode    String
+  rewardCoins Float
+  claimedAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, taskCode])
+  @@index([userId])
 }
