@@ -82,6 +82,16 @@ type ShopItem = {
 };
 
 
+type DinoCatalogItem = {
+  level: number;
+  title: string;
+  priceCoins: number;
+  dailyCoins: number;
+  dailyDna: number;
+  unlocked: boolean;
+  unlockRequirement: string | null;
+};
+
 type NestUpgradeInfo = {
   currentCapacity: number;
   coins: number;
@@ -329,12 +339,14 @@ export default function GameApp() {
   const [isCollecting, setIsCollecting] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
   const [pendingPurchase, setPendingPurchase] = useState<{
-    source: "quick" | "shop";
+    source: "quick" | "shop" | "catalog";
     title: string;
     priceCoins: number;
+    level?: number;
     item?: ShopItem;
   } | null>(null);
   const [isMerging, setIsMerging] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
   const [pendingMerge, setPendingMerge] = useState<{
     fromSlot: number;
     toSlot: number;
@@ -347,6 +359,8 @@ export default function GameApp() {
   const [referralStatus, setReferralStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [shopItems, setShopItems] = useState<ShopItem[]>([]);
   const [shopStatus, setShopStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [dinoCatalog, setDinoCatalog] = useState<DinoCatalogItem[]>([]);
+  const [dinoUnlockedLevel, setDinoUnlockedLevel] = useState(1);
   const [buyingItemCode, setBuyingItemCode] = useState<string | null>(null);
   const [nestUpgradeOpen, setNestUpgradeOpen] = useState(false);
   const [nestUpgradeStatus, setNestUpgradeStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
@@ -653,7 +667,7 @@ export default function GameApp() {
     }
   };
 
-  const executeBuyDino = async () => {
+  const executeBuyDino = async (level = 1) => {
     if (isBuying) return;
 
     setIsBuying(true);
@@ -662,6 +676,10 @@ export default function GameApp() {
     try {
       const response = await fetch("/api/buy-dino", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ level }),
         cache: "no-store",
         credentials: "include",
       });
@@ -702,7 +720,12 @@ export default function GameApp() {
 
       setSelected(null);
       setToast(
-        `Динозавр Level ${data.dinosaur?.level ?? 1} куплен за ${formatNumber(data.price ?? 100, 0)} Coins ✓`,
+        `Динозавр Lv.${data.dinosaur?.level ?? level} куплен за ${formatNumber(
+          data.price ??
+            getDinosaurConfig(level)?.buyPrice ??
+            0,
+          0,
+        )} Coins ✓`,
       );
     } catch (error) {
       console.error("Failed to buy dinosaur", error);
@@ -733,22 +756,107 @@ export default function GameApp() {
       source: "quick",
       title: "Динозавр Lv.1",
       priceCoins,
+      level: 1,
     });
   };
 
+  const moveDinosaur = async (
+    fromSlot: number,
+    toSlot: number,
+  ) => {
+    if (isMoving || isMerging) return;
+
+    setIsMoving(true);
+    setToast("Перемещаем динозавра...");
+
+    try {
+      const response = await fetch(
+        "/api/move-dino",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fromSlot,
+            toSlot,
+          }),
+          cache: "no-store",
+          credentials: "include",
+        },
+      );
+
+      const data = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+        moved?: {
+          id: string;
+          level: number;
+          boardSlot: number | null;
+        };
+        board?: Slot[];
+      };
+
+      if (!response.ok || !data.ok) {
+        throw new Error(
+          data.message ||
+            data.error ||
+            "Не удалось переместить динозавра",
+        );
+      }
+
+      setState((previous) => ({
+        ...previous,
+        board:
+          Array.isArray(data.board) &&
+          data.board.length === 16
+            ? data.board
+            : previous.board,
+      }));
+
+      setSelected(null);
+      setToast(
+        `🦖 Lv.${data.moved?.level ?? "?"} перемещён в клетку ${toSlot + 1} ✓`,
+      );
+    } catch (error) {
+      console.error(
+        "Failed to move dinosaur",
+        error,
+      );
+      setSelected(null);
+      setToast(
+        error instanceof Error
+          ? error.message
+          : "Ошибка перемещения",
+      );
+    } finally {
+      setIsMoving(false);
+    }
+  };
+
   const chooseSlot = async (index: number) => {
-    if (isMerging) return;
+    if (isMerging || isMoving) return;
 
     const level = state.board[index];
 
     if (!level) {
-      setSelected(null);
+      if (selected !== null) {
+        await moveDinosaur(
+          selected,
+          index,
+        );
+      } else {
+        setSelected(null);
+      }
       return;
     }
 
     if (selected === null) {
       setSelected(index);
-      setToast(`Выбран динозавр Level ${level}. Выберите второго такого же уровня.`);
+      setToast(
+        `Выбран динозавр Lv.${level}. Нажмите пустую клетку для перемещения или такого же динозавра для merge.`,
+      );
       return;
     }
 
@@ -761,7 +869,9 @@ export default function GameApp() {
 
     if (firstLevel !== level) {
       setSelected(index);
-      setToast("Для merge выберите двух динозавров одинакового уровня");
+      setToast(
+        `Выбран Lv.${level}. Для merge нужен второй Lv.${level}, либо нажмите пустую клетку для перемещения.`,
+      );
       return;
     }
 
@@ -956,29 +1066,55 @@ export default function GameApp() {
       setShopStatus("loading");
 
       try {
-        const response = await fetch("/api/shop", {
-          cache: "no-store",
-          credentials: "include",
-        });
+        const response = await fetch(
+          "/api/buy-dino",
+          {
+            cache: "no-store",
+            credentials: "include",
+          },
+        );
 
         const data = (await response.json()) as {
           ok?: boolean;
-          items?: ShopItem[];
+          catalog?: DinoCatalogItem[];
+          unlockedLevel?: number;
           error?: string;
+          message?: string;
         };
 
-        if (!response.ok || !data.ok || !Array.isArray(data.items)) {
-          throw new Error(data.error || "Не удалось загрузить магазин");
+        if (
+          !response.ok ||
+          !data.ok ||
+          !Array.isArray(data.catalog)
+        ) {
+          throw new Error(
+            data.message ||
+              data.error ||
+              "Не удалось загрузить магазин",
+          );
         }
 
         if (cancelled) return;
-        setShopItems(data.items);
+
+        setDinoCatalog(data.catalog);
+        setDinoUnlockedLevel(
+          data.unlockedLevel ?? 1,
+        );
         setShopStatus("ready");
       } catch (error) {
-        console.error("Failed to load shop", error);
+        console.error(
+          "Failed to load dinosaur shop",
+          error,
+        );
+
         if (cancelled) return;
+
         setShopStatus("error");
-        setToast(error instanceof Error ? error.message : "Ошибка магазина");
+        setToast(
+          error instanceof Error
+            ? error.message
+            : "Ошибка магазина",
+        );
       }
     }
 
@@ -1151,6 +1287,48 @@ export default function GameApp() {
     }
   };
 
+  const buyCatalogDino = (
+    item: DinoCatalogItem,
+  ) => {
+    if (isBuying || buyingItemCode) return;
+
+    if (!item.unlocked) {
+      setToast(
+        item.unlockRequirement ||
+          `Сначала получите Lv.${item.level} через merge`,
+      );
+      return;
+    }
+
+    if (
+      !state.board.some(
+        (slot) => slot === null,
+      )
+    ) {
+      setToast(
+        "На игровой доске нет свободной клетки.",
+      );
+      return;
+    }
+
+    if (state.coins < item.priceCoins) {
+      setToast(
+        `Для покупки Lv.${item.level} нужно ${formatNumber(
+          item.priceCoins,
+          0,
+        )} Coins`,
+      );
+      return;
+    }
+
+    setPendingPurchase({
+      source: "catalog",
+      title: item.title,
+      priceCoins: item.priceCoins,
+      level: item.level,
+    });
+  };
+
   const executeBuyShopItem = async (item: ShopItem) => {
     if (buyingItemCode) return;
 
@@ -1254,9 +1432,13 @@ export default function GameApp() {
         pendingPurchase.source === "shop" &&
         pendingPurchase.item
       ) {
-        await executeBuyShopItem(pendingPurchase.item);
+        await executeBuyShopItem(
+          pendingPurchase.item,
+        );
       } else {
-        await executeBuyDino();
+        await executeBuyDino(
+          pendingPurchase.level ?? 1,
+        );
       }
     } finally {
       setPendingPurchase(null);
@@ -2212,11 +2394,18 @@ export default function GameApp() {
 
         {tab === "shop" && (
           <div className="screen">
-            <span className="eyebrow">SHOP</span><h2>Магазин</h2>
-            <p className="hint">Цены загружаются из Neon. Клиент отправляет только код товара — стоимость и эффект проверяются на сервере.</p>
+            <span className="eyebrow">DINO SHOP</span><h2>Магазин динозавров</h2>
+            <p className="hint">
+              Lv.1 доступен сразу. Lv.2–Lv.16 открываются для прямой
+              покупки только после того, как вы сами получили этот уровень
+              через merge.
+            </p>
             <div className="card">
-              <strong>🧬 DNA не продаётся</strong>
-              <p>DNA — ценная игровая валюта, которая зарабатывается в игре и предназначена для последующего вывода/конвертации в деньги. Купить DNA за Coins нельзя.</p>
+              <strong>🔓 Открыто до Lv.{dinoUnlockedLevel}</strong>
+              <p>
+                Прямая покупка не открывает следующий уровень. Чтобы
+                разблокировать новый уровень магазина, нужно сделать merge.
+              </p>
             </div>
 
             {shopStatus === "loading" || shopStatus === "idle" ? (
@@ -2229,20 +2418,53 @@ export default function GameApp() {
               </div>
             ) : (
               <div className="menu-list">
-                {shopItems.map((item) => (
+                {dinoCatalog.map((item) => (
                   <button
-                    key={item.id}
-                    onClick={() => buyShopItem(item)}
-                    disabled={Boolean(buyingItemCode) || isLoading || Boolean(loadError)}
+                    key={item.level}
+                    onClick={() =>
+                      buyCatalogDino(item)
+                    }
+                    disabled={
+                      isBuying ||
+                      isLoading ||
+                      Boolean(loadError)
+                    }
+                    style={
+                      item.unlocked
+                        ? undefined
+                        : {
+                            opacity: .48,
+                            cursor: "not-allowed",
+                          }
+                    }
                   >
                     <span>
-                      <strong>{item.kind === "DINO" ? "🦕 " : "🪺 "}{item.title}</strong>
-                      <small>{item.description || "Игровой товар"}</small>
+                      <strong>
+                        {item.unlocked
+                          ? "🦖"
+                          : "🔒"}{" "}
+                        {item.title}
+                      </strong>
+                      <small>
+                        {item.unlocked
+                          ? `${formatNumber(
+                              item.dailyCoins,
+                              2,
+                            )} Coins + ${formatNumber(
+                              item.dailyDna,
+                              2,
+                            )} DNA / день`
+                          : item.unlockRequirement}
+                      </small>
                     </span>
+
                     <b>
-                      {buyingItemCode === item.code
-                        ? "⏳"
-                        : `🪙 ${formatNumber(item.priceCoins, 0)}`}
+                      {item.unlocked
+                        ? `🪙 ${formatNumber(
+                            item.priceCoins,
+                            0,
+                          )}`
+                        : "ЗАКРЫТО"}
                     </b>
                   </button>
                 ))}
@@ -4688,6 +4910,7 @@ export default function GameApp() {
                 }}
               >
                 Динозавр будет добавлен на свободную клетку.
+                Этот уровень уже разблокирован вашим прогрессом merge.
               </small>
             </div>
 
@@ -4902,7 +5125,7 @@ export default function GameApp() {
               <button
                 className="coin-button"
                 onClick={cancelMerge}
-                disabled={isMerging}
+                disabled={isMerging || isMoving}
                 style={{ width: "100%" }}
               >
                 ОТМЕНА
@@ -4911,7 +5134,7 @@ export default function GameApp() {
               <button
                 className="primary"
                 onClick={() => void confirmMerge()}
-                disabled={isMerging}
+                disabled={isMerging || isMoving}
                 style={{ width: "100%" }}
               >
                 {isMerging ? "⏳ MERGE..." : "ПОДТВЕРДИТЬ"}
