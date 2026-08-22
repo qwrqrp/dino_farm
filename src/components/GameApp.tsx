@@ -10,47 +10,55 @@ type SaveState = {
   coins: number;
   dna: number;
   eggs: number;
+  capacity: number;
   board: Slot[];
   lastTick: number;
 };
 
-const STORAGE_KEY = "dino-farm-clean-v1";
-const EMPTY_BOARD: Slot[] = [1, 1, 2, null, 1, null, null, null, null, null, null, null, null, null, null, null];
+type GameStateResponse = {
+  user: {
+    id: string;
+    username: string | null;
+    firstName: string | null;
+    lastName: string | null;
+  };
+  balance: {
+    coins: number;
+    dna: number;
+  };
+  nest: {
+    currentEggs: number;
+    capacity: number;
+    lastProductionAt: string | null;
+  };
+  dinosaurs: Array<{
+    id: string;
+    level: number;
+    boardSlot: number | null;
+  }>;
+  board: Slot[];
+};
 
-function loadState(): SaveState {
-  if (typeof window === "undefined") {
-    return {
-      coins: gameConfig.demoStartingCoins,
-      dna: gameConfig.demoStartingDna,
-      eggs: 12340,
-      board: EMPTY_BOARD,
-      lastTick: Date.now(),
-    };
-  }
+const EMPTY_BOARD: Slot[] = Array(16).fill(null);
 
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) throw new Error("no save");
-    const parsed = JSON.parse(raw) as SaveState;
-    if (!Array.isArray(parsed.board) || parsed.board.length !== 16) throw new Error("invalid save");
-    return parsed;
-  } catch {
-    return {
-      coins: gameConfig.demoStartingCoins,
-      dna: gameConfig.demoStartingDna,
-      eggs: 12340,
-      board: [...EMPTY_BOARD],
-      lastTick: Date.now(),
-    };
-  }
-}
+const INITIAL_STATE: SaveState = {
+  coins: 0,
+  dna: 0,
+  eggs: 0,
+  capacity: gameConfig.initialNestCapacity,
+  board: EMPTY_BOARD,
+  lastTick: Date.now(),
+};
 
 export default function GameApp() {
   const [tab, setTab] = useState<Tab>("nest");
-  const [state, setState] = useState<SaveState>(() => loadState());
+  const [state, setState] = useState<SaveState>(INITIAL_STATE);
   const [selected, setSelected] = useState<number | null>(null);
   const [depositUsd, setDepositUsd] = useState(10);
-  const [toast, setToast] = useState("Добро пожаловать на ферму!");
+  const [toast, setToast] = useState("Загрузка данных фермы...");
+  const [playerName, setPlayerName] = useState("Dino Farmer");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const eggsPerHour = useMemo(() => {
     return state.board.reduce((sum: number, level) => {
@@ -60,63 +68,135 @@ export default function GameApp() {
   }, [state.board]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function loadGameState() {
+      try {
+        const response = await fetch("/api/game-state", {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = (await response.json()) as GameStateResponse;
+
+        if (cancelled) return;
+
+        const board = Array.isArray(data.board) && data.board.length === 16
+          ? data.board
+          : [...EMPTY_BOARD];
+
+        setState({
+          coins: data.balance.coins,
+          dna: data.balance.dna,
+          eggs: data.nest.currentEggs,
+          capacity: data.nest.capacity,
+          board,
+          lastTick: Date.now(),
+        });
+
+        const name =
+          data.user.firstName?.trim() ||
+          data.user.username?.trim() ||
+          "Dino Farmer";
+
+        setPlayerName(name);
+        setLoadError(null);
+        setToast("Данные загружены из Neon ✓");
+      } catch (error) {
+        console.error("Failed to load /api/game-state", error);
+
+        if (cancelled) return;
+
+        setLoadError("Не удалось загрузить данные из базы");
+        setToast("Ошибка загрузки Neon");
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+
+    void loadGameState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isLoading || loadError) return;
+
     const timer = window.setInterval(() => {
       setState((previous) => {
         const now = Date.now();
         const elapsedHours = Math.max(0, now - previous.lastTick) / 3_600_000;
         const produced = eggsPerHour * elapsedHours;
+
         return {
           ...previous,
-          eggs: Math.min(gameConfig.initialNestCapacity, previous.eggs + produced),
+          eggs: Math.min(previous.capacity, previous.eggs + produced),
           lastTick: now,
         };
       });
     }, 1000);
-    return () => window.clearInterval(timer);
-  }, [eggsPerHour]);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state]);
+    return () => window.clearInterval(timer);
+  }, [eggsPerHour, isLoading, loadError]);
 
   const collectEggs = () => {
     if (state.eggs < 1) {
       setToast("В гнезде пока нет яиц");
       return;
     }
+
     const coins = state.eggs * gameConfig.eggToCoin;
     const dna = state.eggs * gameConfig.eggToDna;
-    setState((s) => ({ ...s, eggs: 0, coins: s.coins + coins, dna: s.dna + dna }));
-    setToast(`Собрано: +${formatNumber(coins)} Coins и +${formatNumber(dna)} DNA`);
+
+    setState((s) => ({
+      ...s,
+      eggs: 0,
+      coins: s.coins + coins,
+      dna: s.dna + dna,
+    }));
+
+    setToast(`Собрано локально: +${formatNumber(coins)} Coins и +${formatNumber(dna)} DNA`);
   };
 
   const buyDino = () => {
     const emptyIndex = state.board.findIndex((x) => x === null);
     if (emptyIndex === -1) return setToast("Игровая доска заполнена");
     if (state.coins < 100) return setToast("Недостаточно Coins");
+
     setState((s) => {
       const board = [...s.board];
       board[emptyIndex] = 1;
       return { ...s, board, coins: s.coins - 100 };
     });
-    setToast("Динозавр Level 1 куплен");
+
+    setToast("Динозавр Level 1 куплен локально");
   };
 
   const chooseSlot = (index: number) => {
     const level = state.board[index];
+
     if (!level) {
       setSelected(null);
       return;
     }
+
     if (selected === null) {
       setSelected(index);
       return;
     }
+
     if (selected === index) {
       setSelected(null);
       return;
     }
+
     const firstLevel = state.board[selected];
+
     if (firstLevel === level && level < 16) {
       setState((s) => {
         const board = [...s.board];
@@ -124,8 +204,9 @@ export default function GameApp() {
         board[index] = level + 1;
         return { ...s, board };
       });
+
       setSelected(null);
-      setToast(`MERGE! Получен динозавр Level ${level + 1}`);
+      setToast(`MERGE локально! Получен динозавр Level ${level + 1}`);
     } else {
       setSelected(index);
       setToast("Для merge выберите двух динозавров одинакового уровня");
@@ -134,12 +215,19 @@ export default function GameApp() {
 
   const exchangeDna = () => {
     if (state.dna < 1) return setToast("Недостаточно DNA");
+
     const amount = Math.min(10, state.dna);
-    setState((s) => ({ ...s, dna: s.dna - amount, coins: s.coins + amount * gameConfig.dnaToCoins }));
-    setToast(`${formatNumber(amount)} DNA обменено на ${formatNumber(amount * gameConfig.dnaToCoins)} Coins`);
+
+    setState((s) => ({
+      ...s,
+      dna: s.dna - amount,
+      coins: s.coins + amount * gameConfig.dnaToCoins,
+    }));
+
+    setToast(`${formatNumber(amount)} DNA обменено локально на ${formatNumber(amount * gameConfig.dnaToCoins)} Coins`);
   };
 
-  const progress = Math.min(100, (state.eggs / gameConfig.initialNestCapacity) * 100);
+  const progress = Math.min(100, (state.eggs / Math.max(1, state.capacity)) * 100);
   const depositCoins = depositUsd * gameConfig.usdToCoins;
   const depositBonus = depositCoins * gameConfig.firstDepositBonus;
 
@@ -148,8 +236,8 @@ export default function GameApp() {
       <header className="hud glass">
         <div className="avatar">🦖</div>
         <div className="profile">
-          <strong>Dino Farmer</strong>
-          <span>Level 1 · Demo</span>
+          <strong>{playerName}</strong>
+          <span>{isLoading ? "Загрузка..." : loadError ? "Database error" : "Level 1 · Neon"}</span>
         </div>
         <div className="balances">
           <span>🪙 {formatNumber(state.coins, 0)}</span>
@@ -165,10 +253,10 @@ export default function GameApp() {
               <div className="jungle">🌿🌴🌿</div>
               <div className="nest-visual">🪺<span className="egg">🥚</span></div>
               <h1>Гнездо</h1>
-              <p>{formatNumber(state.eggs, 0)} / {formatNumber(gameConfig.initialNestCapacity, 0)} яиц</p>
+              <p>{formatNumber(state.eggs, 0)} / {formatNumber(state.capacity, 0)} яиц</p>
               <div className="progress"><div style={{ width: `${progress}%` }} /></div>
               <div className="rate">⚡ {formatNumber(eggsPerHour, 0)} яиц / час</div>
-              <button className="primary" onClick={collectEggs}>🥚 СОБРАТЬ ЯЙЦА</button>
+              <button className="primary" onClick={collectEggs} disabled={isLoading || Boolean(loadError)}>🥚 СОБРАТЬ ЯЙЦА</button>
             </div>
 
             <div className="stats-grid">
@@ -183,9 +271,9 @@ export default function GameApp() {
           <div className="screen">
             <div className="section-head">
               <div><span className="eyebrow">MERGE FARM</span><h2>Игровая доска</h2></div>
-              <button className="coin-button" onClick={buyDino}>+ 🦕 100</button>
+              <button className="coin-button" onClick={buyDino} disabled={isLoading || Boolean(loadError)}>+ 🦕 100</button>
             </div>
-            <p className="hint">Нажмите на двух одинаковых динозавров, чтобы объединить их.</p>
+            <p className="hint">Данные загружены из Neon. Изменения действий пока сохраняются только до обновления страницы.</p>
             <div className="board">
               {state.board.map((level, index) => (
                 <button
@@ -193,6 +281,7 @@ export default function GameApp() {
                   className={`slot ${selected === index ? "selected" : ""}`}
                   onClick={() => chooseSlot(index)}
                   aria-label={level ? `Динозавр уровня ${level}` : "Пустая клетка"}
+                  disabled={isLoading || Boolean(loadError)}
                 >
                   {level ? <><span className="dino">🦖</span><b>Lv.{level}</b></> : <span className="plus">+</span>}
                 </button>
@@ -211,7 +300,7 @@ export default function GameApp() {
               <div className="quote"><span>Coins</span><strong>{formatNumber(depositCoins, 0)}</strong></div>
               <div className="quote bonus"><span>Первый бонус +20%</span><strong>+{formatNumber(depositBonus, 0)}</strong></div>
               <div className="quote total"><span>Итого</span><strong>{formatNumber(depositCoins + depositBonus, 0)}</strong></div>
-              <button className="primary" onClick={() => setToast("Платежи будут подключены после стабильного demo-deploy")}>ПРОДОЛЖИТЬ</button>
+              <button className="primary" onClick={() => setToast("Платежи будут подключены после server-side игровых операций")}>ПРОДОЛЖИТЬ</button>
               <small>Demo: реальные платежи отключены.</small>
             </div>
           </div>
@@ -240,9 +329,9 @@ export default function GameApp() {
             <div className="menu-list">
               <button onClick={exchangeDna}><span>🧬 DNA → Coins</span><b>1 : 1.1</b></button>
               <button onClick={() => setToast("Profit Plan будет вынесен в отдельный калькулятор")}><span>📊 Profit Plan</span><b>›</b></button>
-              <button onClick={() => setToast("Задания появятся на этапе backend")}><span>✅ Задания</span><b>›</b></button>
+              <button onClick={() => setToast("Задания появятся после server-side игровых операций")}><span>✅ Задания</span><b>›</b></button>
               <button onClick={() => setToast("Рулетка отключена до server-side реализации")}><span>🎰 Рулетка</span><b>OFF</b></button>
-              <button onClick={() => { localStorage.removeItem(STORAGE_KEY); window.location.reload(); }}><span>♻️ Сбросить demo</span><b>›</b></button>
+              <button onClick={() => window.location.reload()}><span>🔄 Перезагрузить из Neon</span><b>›</b></button>
             </div>
           </div>
         )}
