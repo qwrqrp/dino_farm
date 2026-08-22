@@ -59,6 +59,7 @@ export default function GameApp() {
   const [playerName, setPlayerName] = useState("Dino Farmer");
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isCollecting, setIsCollecting] = useState(false);
 
   const eggsPerHour = useMemo(() => {
     return state.board.reduce((sum: number, level) => {
@@ -144,23 +145,50 @@ export default function GameApp() {
     return () => window.clearInterval(timer);
   }, [eggsPerHour, isLoading, loadError]);
 
-  const collectEggs = () => {
-    if (state.eggs < 1) {
-      setToast("В гнезде пока нет яиц");
-      return;
+  const collectEggs = async () => {
+    if (isCollecting) return;
+
+    setIsCollecting(true);
+    setToast("Собираем яйца на сервере...");
+
+    try {
+      const response = await fetch("/api/collect-eggs", {
+        method: "POST",
+        cache: "no-store",
+      });
+
+      const data = (await response.json()) as {
+        ok?: boolean;
+        message?: string;
+        collectedEggs?: number;
+        coinsReward?: number;
+        dnaReward?: number;
+        coins?: number;
+        dna?: number;
+        currentEggs?: number;
+      };
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || "Не удалось собрать яйца");
+      }
+
+      setState((previous) => ({
+        ...previous,
+        coins: data.coins ?? previous.coins,
+        dna: data.dna ?? previous.dna,
+        eggs: data.currentEggs ?? 0,
+        lastTick: Date.now(),
+      }));
+
+      setToast(
+        `Собрано ${formatNumber(data.collectedEggs ?? 0, 0)} яиц: +${formatNumber(data.coinsReward ?? 0)} Coins и +${formatNumber(data.dnaReward ?? 0)} DNA ✓`,
+      );
+    } catch (error) {
+      console.error("Failed to collect eggs", error);
+      setToast(error instanceof Error ? error.message : "Ошибка сбора яиц");
+    } finally {
+      setIsCollecting(false);
     }
-
-    const coins = state.eggs * gameConfig.eggToCoin;
-    const dna = state.eggs * gameConfig.eggToDna;
-
-    setState((s) => ({
-      ...s,
-      eggs: 0,
-      coins: s.coins + coins,
-      dna: s.dna + dna,
-    }));
-
-    setToast(`Собрано локально: +${formatNumber(coins)} Coins и +${formatNumber(dna)} DNA`);
   };
 
   const buyDino = () => {
@@ -256,7 +284,7 @@ export default function GameApp() {
               <p>{formatNumber(state.eggs, 0)} / {formatNumber(state.capacity, 0)} яиц</p>
               <div className="progress"><div style={{ width: `${progress}%` }} /></div>
               <div className="rate">⚡ {formatNumber(eggsPerHour, 0)} яиц / час</div>
-              <button className="primary" onClick={collectEggs} disabled={isLoading || Boolean(loadError)}>🥚 СОБРАТЬ ЯЙЦА</button>
+              <button className="primary" onClick={collectEggs} disabled={isLoading || isCollecting || Boolean(loadError)}>{isCollecting ? "⏳ СОБИРАЕМ..." : "🥚 СОБРАТЬ ЯЙЦА"}</button>
             </div>
 
             <div className="stats-grid">
@@ -273,7 +301,7 @@ export default function GameApp() {
               <div><span className="eyebrow">MERGE FARM</span><h2>Игровая доска</h2></div>
               <button className="coin-button" onClick={buyDino} disabled={isLoading || Boolean(loadError)}>+ 🦕 100</button>
             </div>
-            <p className="hint">Данные загружены из Neon. Изменения действий пока сохраняются только до обновления страницы.</p>
+            <p className="hint">Данные загружены из Neon. Сбор яиц уже сохраняется на сервере; покупка и merge пока локальные.</p>
             <div className="board">
               {state.board.map((level, index) => (
                 <button
