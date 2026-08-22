@@ -7,7 +7,10 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const items = await prisma.shopItem.findMany({
-      where: { active: true },
+      where: {
+        active: true,
+        kind: { in: ["DINO", "NEST_CAPACITY"] },
+      },
       orderBy: [{ sortOrder: "asc" }, { priceCoins: "asc" }],
       select: {
         id: true,
