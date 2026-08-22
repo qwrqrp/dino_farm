@@ -1541,12 +1541,15 @@ export default function GameApp() {
 
   const checkDeposit = async (
     deposit: DepositItem,
+    silent = false,
   ) => {
     if (isCheckingDeposit) {
       return;
     }
 
-    setIsCheckingDeposit(true);
+    if (!silent) {
+      setIsCheckingDeposit(true);
+    }
 
     try {
       const response = await fetch(
@@ -1583,6 +1586,9 @@ export default function GameApp() {
         );
       }
 
+      const previousStatus =
+        deposit.status;
+
       setActiveDeposit(
         data.deposit,
       );
@@ -1605,16 +1611,20 @@ export default function GameApp() {
         data.deposit.status ===
         "FINISHED"
       ) {
-        setToast(
+        if (
+          previousStatus !==
+            "FINISHED" ||
           data.credited
-            ? `Пополнение зачислено: +${formatNumber(
-                data.deposit
-                  .creditedCoins,
-                0,
-              )} Coins ✓`
-            : "Платёж уже зачислен ✓",
-        );
-      } else {
+        ) {
+          setToast(
+            `✅ Пополнение зачислено: +${formatNumber(
+              data.deposit
+                .creditedCoins,
+              0,
+            )} Coins`,
+          );
+        }
+      } else if (!silent) {
         const status =
           depositStatusMeta(
             data.deposit.status,
@@ -1632,15 +1642,105 @@ export default function GameApp() {
         error,
       );
 
-      setToast(
-        error instanceof Error
-          ? error.message
-          : "Ошибка проверки платежа",
-      );
+      if (!silent) {
+        setToast(
+          error instanceof Error
+            ? error.message
+            : "Ошибка проверки платежа",
+        );
+      }
     } finally {
-      setIsCheckingDeposit(false);
+      if (!silent) {
+        setIsCheckingDeposit(false);
+      }
     }
   };
+
+
+  const isDepositFinalStatus = (
+    status: string,
+  ) => {
+    const normalized =
+      status.toUpperCase();
+
+    return [
+      "FINISHED",
+      "FAILED",
+      "EXPIRED",
+      "REFUNDED",
+      "CREATE_FAILED",
+    ].includes(normalized);
+  };
+
+  useEffect(() => {
+    if (
+      tab !== "shop" ||
+      shopSection !== "deposit" ||
+      !activeDeposit ||
+      isDepositFinalStatus(
+        activeDeposit.status,
+      )
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+    let running = false;
+
+    const poll = async () => {
+      if (
+        cancelled ||
+        running
+      ) {
+        return;
+      }
+
+      running = true;
+
+      try {
+        await checkDeposit(
+          activeDeposit,
+          true,
+        );
+      } finally {
+        running = false;
+      }
+    };
+
+    const firstTimer =
+      window.setTimeout(
+        () => {
+          void poll();
+        },
+        5000,
+      );
+
+    const interval =
+      window.setInterval(
+        () => {
+          void poll();
+        },
+        15000,
+      );
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(
+        firstTimer,
+      );
+      window.clearInterval(
+        interval,
+      );
+    };
+    // activeDeposit.status intentionally restarts polling
+    // when the provider advances to the next status.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    tab,
+    shopSection,
+    activeDeposit?.id,
+    activeDeposit?.status,
+  ]);
 
   const copyDepositValue = async (
     value: string,
@@ -3853,6 +3953,24 @@ export default function GameApp() {
                       привести к потере средств.
                     </div>
 
+                    {!isDepositFinalStatus(
+                      activeDeposit.status,
+                    ) ? (
+                      <p
+                        style={{
+                          margin:
+                            "10px 0 0",
+                          fontSize: 12,
+                          lineHeight: 1.45,
+                          opacity: .72,
+                        }}
+                      >
+                        🔄 Статус проверяется
+                        автоматически примерно
+                        каждые 15 секунд.
+                      </p>
+                    ) : null}
+
                     <button
                       className="primary"
                       onClick={() =>
@@ -3875,7 +3993,7 @@ export default function GameApp() {
                         ? "✅ ЗАЧИСЛЕНО"
                         : isCheckingDeposit
                           ? "⏳ ПРОВЕРЯЕМ..."
-                          : "ПРОВЕРИТЬ ОПЛАТУ"}
+                          : "ПРОВЕРИТЬ СЕЙЧАС"}
                     </button>
                   </div>
                 ) : null}
