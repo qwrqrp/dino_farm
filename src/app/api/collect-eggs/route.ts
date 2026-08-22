@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPlayerContext } from "@/lib/player";
-import { dinosaurs, gameConfig } from "@/lib/game-config";
+import { gameConfig, getDinosaurConfig } from "@/lib/game-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,7 +40,7 @@ export async function POST() {
       );
 
       const eggsPerHour = user.dinosaurs.reduce((sum, dinosaur) => {
-        const config = dinosaurs[dinosaur.level - 1];
+        const config = getDinosaurConfig(dinosaur.level);
         return sum + (config?.eggsPerHour ?? 0);
       }, 0);
 
