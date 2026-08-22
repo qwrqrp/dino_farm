@@ -1719,7 +1719,7 @@ export default function GameApp() {
         </div>
         <div className="balances">
           <span>🪙 {formatNumber(state.coins, 2)}</span>
-          <span>🧬 {formatNumber(state.dna, 1)}</span>
+          <span>🧬 {formatNumber(state.dna, 2)}</span>
         </div>
       </header>
 
@@ -2126,7 +2126,7 @@ export default function GameApp() {
 
             <div className="card">
               <strong>Ваш баланс</strong>
-              <p>🪙 {formatNumber(state.coins, 2)} Coins · 🧬 {formatNumber(state.dna, 0)} DNA</p>
+              <p>🪙 {formatNumber(state.coins, 2)} Coins · 🧬 {formatNumber(state.dna, 2)} DNA</p>
               <p>🪺 Вместимость: {formatNumber(state.capacity, 0)} яиц</p>
             </div>
           </div>
