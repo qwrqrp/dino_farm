@@ -1168,7 +1168,7 @@ export default function GameApp() {
                         <button
                           className="coin-button"
                           onClick={() => void loadWithdrawals()}
-                          disabled={withdrawalStatus === "loading"}
+                          disabled={false}
                           style={{ flex: "0 0 auto" }}
                         >
                           ↻
