@@ -29,6 +29,7 @@ model User {
   gameStats       GameStats?
   taskClaims      TaskClaim[]
   achievementClaims AchievementClaim[]
+  gameActionLogs GameActionLog[]
 }
 
 model Balance {
@@ -179,4 +180,20 @@ model AchievementClaim {
 
   @@unique([userId, achievementCode])
   @@index([userId])
+}
+
+
+model GameActionLog {
+  id          String   @id
+  userId      String
+  actionType  String
+  sourceLevel Int?
+  resultLevel Int
+  coinsSpent  Float    @default(0)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([actionType, createdAt])
 }
