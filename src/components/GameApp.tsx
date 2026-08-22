@@ -629,6 +629,7 @@ export default function GameApp() {
   const [selectedMethodMinimumUsd, setSelectedMethodMinimumUsd] = useState<number | null>(null);
   const [minimumLoading, setMinimumLoading] = useState(false);
   const [activeDeposit, setActiveDeposit] = useState<DepositItem | null>(null);
+  const [depositConfirmationOpen, setDepositConfirmationOpen] = useState(false);
   const [isCreatingDeposit, setIsCreatingDeposit] = useState(false);
   const [isCheckingDeposit, setIsCheckingDeposit] = useState(false);
   const [dinoCatalog, setDinoCatalog] = useState<DinoCatalogItem[]>([]);
@@ -1569,7 +1570,23 @@ export default function GameApp() {
     depositMethodCode,
   ]);
 
-  const createDeposit = async () => {
+  const openDepositConfirmation = () => {
+    if (
+      isCreatingDeposit ||
+      !depositPreview.valid ||
+      !depositMethodCode ||
+      depositTelegramRequired ||
+      !depositProviderConfigured
+    ) {
+      return;
+    }
+
+    setDepositConfirmationOpen(
+      true,
+    );
+  };
+
+  const confirmCreateDeposit = async () => {
     if (
       isCreatingDeposit ||
       !depositPreview.valid ||
@@ -1645,6 +1662,9 @@ export default function GameApp() {
 
       setActiveDeposit(
         data.deposit,
+      );
+      setDepositConfirmationOpen(
+        false,
       );
       setToast(
         "Платёж создан. Отправьте точную сумму на указанный адрес.",
@@ -3989,8 +4009,8 @@ export default function GameApp() {
                         depositTelegramRequired ||
                         !depositProviderConfigured
                       }
-                      onClick={() =>
-                        void createDeposit()
+                      onClick={
+                        openDepositConfirmation
                       }
                       style={{
                         width: "100%",
@@ -4002,8 +4022,323 @@ export default function GameApp() {
                     >
                       {isCreatingDeposit
                         ? "⏳ СОЗДАЁМ ПЛАТЁЖ..."
-                        : "ОПЛАТИТЬ"}
+                        : "ПРОДОЛЖИТЬ К ОПЛАТЕ"}
                     </button>
+                  </div>
+                ) : null}
+
+                {depositConfirmationOpen ? (
+                  <div
+                    role="dialog"
+                    aria-modal="true"
+                    style={{
+                      position: "fixed",
+                      inset: 0,
+                      zIndex: 1000,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: 16,
+                      background:
+                        "rgba(0,0,0,.72)",
+                      backdropFilter:
+                        "blur(6px)",
+                    }}
+                    onClick={() => {
+                      if (
+                        !isCreatingDeposit
+                      ) {
+                        setDepositConfirmationOpen(
+                          false,
+                        );
+                      }
+                    }}
+                  >
+                    <div
+                      onClick={(event) =>
+                        event.stopPropagation()
+                      }
+                      style={{
+                        width: "100%",
+                        maxWidth: 420,
+                        maxHeight:
+                          "calc(100vh - 32px)",
+                        overflowY: "auto",
+                        padding: 18,
+                        borderRadius: 22,
+                        background:
+                          "#10281e",
+                        border:
+                          "1px solid rgba(167,243,72,.28)",
+                        boxShadow:
+                          "0 20px 60px rgba(0,0,0,.45)",
+                        boxSizing:
+                          "border-box",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent:
+                            "space-between",
+                          alignItems:
+                            "flex-start",
+                          gap: 12,
+                        }}
+                      >
+                        <div>
+                          <small
+                            style={{
+                              display:
+                                "block",
+                              opacity: .62,
+                              marginBottom:
+                                4,
+                            }}
+                          >
+                            ПОДТВЕРЖДЕНИЕ
+                            ОПЛАТЫ
+                          </small>
+
+                          <h2
+                            style={{
+                              margin:
+                                "0 0 4px",
+                              fontSize: 22,
+                            }}
+                          >
+                            💳 Создать платёж?
+                          </h2>
+                        </div>
+
+                        <button
+                          className="coin-button"
+                          disabled={
+                            isCreatingDeposit
+                          }
+                          onClick={() =>
+                            setDepositConfirmationOpen(
+                              false,
+                            )
+                          }
+                          style={{
+                            minWidth: 42,
+                            width: 42,
+                            padding: 8,
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: 14,
+                          padding: 14,
+                          borderRadius: 16,
+                          background:
+                            "rgba(255,255,255,.04)",
+                        }}
+                      >
+                        <small
+                          style={{
+                            opacity: .62,
+                          }}
+                        >
+                          Выбранный способ
+                        </small>
+
+                        <strong
+                          style={{
+                            display: "block",
+                            marginTop: 4,
+                            fontSize: 20,
+                          }}
+                        >
+                          {
+                            depositMethods.find(
+                              (method) =>
+                                method.code ===
+                                depositMethodCode,
+                            )?.label
+                          }
+                        </strong>
+                      </div>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(2, minmax(0, 1fr))",
+                          gap: 8,
+                          marginTop: 8,
+                        }}
+                      >
+                        <div
+                          style={{
+                            minWidth: 0,
+                            padding: 12,
+                            borderRadius:
+                              14,
+                            background:
+                              "rgba(255,255,255,.04)",
+                          }}
+                        >
+                          <small
+                            style={{
+                              opacity:
+                                .62,
+                            }}
+                          >
+                            Сумма
+                          </small>
+                          <strong
+                            style={{
+                              display:
+                                "block",
+                              marginTop:
+                                4,
+                            }}
+                          >
+                            $
+                            {depositPreview.amountUsd.toFixed(
+                              2,
+                            )}
+                          </strong>
+                        </div>
+
+                        <div
+                          style={{
+                            minWidth: 0,
+                            padding: 12,
+                            borderRadius:
+                              14,
+                            background:
+                              "rgba(167,243,72,.08)",
+                          }}
+                        >
+                          <small
+                            style={{
+                              opacity:
+                                .62,
+                            }}
+                          >
+                            Получите
+                          </small>
+                          <strong
+                            style={{
+                              display:
+                                "block",
+                              marginTop:
+                                4,
+                            }}
+                          >
+                            {formatNumber(
+                              depositPreview.totalCoins,
+                              0,
+                            )}{" "}
+                            Coins
+                          </strong>
+                        </div>
+                      </div>
+
+                      {depositPreview.bonusCoins >
+                      0 ? (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            padding: 10,
+                            borderRadius:
+                              12,
+                            background:
+                              "rgba(255,215,106,.08)",
+                            fontSize: 13,
+                          }}
+                        >
+                          🎁 Включён бонус
+                          первого пополнения:
+                          +
+                          {formatNumber(
+                            depositPreview.bonusCoins,
+                            0,
+                          )}{" "}
+                          Coins
+                        </div>
+                      ) : null}
+
+                      <div
+                        style={{
+                          marginTop: 12,
+                          padding: 13,
+                          borderRadius: 14,
+                          background:
+                            "rgba(255,193,7,.09)",
+                          border:
+                            "1px solid rgba(255,193,7,.18)",
+                          fontSize: 13,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        ⚠️ После создания
+                        платежа отправляйте{" "}
+                        <b>
+                          {depositMethods.find(
+                            (method) =>
+                              method.code ===
+                              depositMethodCode,
+                          )?.coin ??
+                            "только выбранную монету"}
+                        </b>{" "}
+                        только по сети{" "}
+                        <b>
+                          {depositMethods.find(
+                            (method) =>
+                              method.code ===
+                              depositMethodCode,
+                          )?.network}
+                        </b>
+                        . Не отправляйте другую
+                        монету на выданный адрес.
+                      </div>
+
+                      <button
+                        className="primary"
+                        disabled={
+                          isCreatingDeposit
+                        }
+                        onClick={() =>
+                          void confirmCreateDeposit()
+                        }
+                        style={{
+                          width: "100%",
+                          maxWidth: "none",
+                          marginTop: 14,
+                        }}
+                      >
+                        {isCreatingDeposit
+                          ? "⏳ СОЗДАЁМ..."
+                          : "ПОДТВЕРДИТЬ И СОЗДАТЬ ПЛАТЁЖ"}
+                      </button>
+
+                      <button
+                        className="coin-button"
+                        disabled={
+                          isCreatingDeposit
+                        }
+                        onClick={() =>
+                          setDepositConfirmationOpen(
+                            false,
+                          )
+                        }
+                        style={{
+                          width: "100%",
+                          maxWidth: "none",
+                          marginTop: 8,
+                        }}
+                      >
+                        НАЗАД
+                      </button>
+                    </div>
                   </div>
                 ) : null}
 
