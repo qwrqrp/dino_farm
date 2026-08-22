@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 const INITIAL_NEST_CAPACITY = 250_000;
 const STARTER_DINO_LEVEL = 1;
+const STARTER_DINO_COUNT = 10;
 const REFERRER_BONUS_COINS = 500;
 const INVITEE_BONUS_COINS = 250;
 
@@ -125,12 +126,15 @@ export async function POST(request: Request) {
               },
             },
             dinosaurs: {
-              create: {
-                id: randomUUID(),
-                level: STARTER_DINO_LEVEL,
-                boardSlot: 0,
-                createdAt: now,
-              },
+              create: Array.from(
+                { length: STARTER_DINO_COUNT },
+                (_, index) => ({
+                  id: randomUUID(),
+                  level: STARTER_DINO_LEVEL,
+                  boardSlot: index,
+                  createdAt: now,
+                }),
+              ),
             },
           },
         });
@@ -202,14 +206,17 @@ export async function POST(request: Request) {
         });
 
         if (dinoCount === 0) {
-          await tx.dinosaur.create({
-            data: {
-              id: randomUUID(),
-              userId: dbUser.id,
-              level: STARTER_DINO_LEVEL,
-              boardSlot: 0,
-              createdAt: now,
-            },
+          await tx.dinosaur.createMany({
+            data: Array.from(
+              { length: STARTER_DINO_COUNT },
+              (_, index) => ({
+                id: randomUUID(),
+                userId: dbUser.id,
+                level: STARTER_DINO_LEVEL,
+                boardSlot: index,
+                createdAt: now,
+              }),
+            ),
           });
         }
       }
