@@ -35,6 +35,7 @@ function serializeWithdrawal(withdrawal: {
   status: string;
   createdAt: Date;
   updatedAt: Date;
+  note: string | null;
 }) {
   return {
     id: withdrawal.id,
@@ -47,6 +48,7 @@ function serializeWithdrawal(withdrawal: {
     status: withdrawal.status,
     createdAt: withdrawal.createdAt.toISOString(),
     updatedAt: withdrawal.updatedAt.toISOString(),
+    note: withdrawal.note,
   };
 }
 
