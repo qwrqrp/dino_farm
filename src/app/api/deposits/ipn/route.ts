@@ -80,11 +80,24 @@ export async function POST(
       error,
     );
 
+    const code =
+      error instanceof Error
+        ? error.message
+        : "UNKNOWN";
+
     return NextResponse.json(
       {
         ok: false,
         error:
           "FAILED_TO_PROCESS_IPN",
+        reason: [
+          "DEPOSIT_PAYMENT_ID_MISMATCH",
+          "DEPOSIT_PRICE_MISMATCH",
+          "DEPOSIT_PRICE_CURRENCY_MISMATCH",
+          "DEPOSIT_NOT_FOUND",
+        ].includes(code)
+          ? code
+          : "INTERNAL_ERROR",
       },
       { status: 500 },
     );
