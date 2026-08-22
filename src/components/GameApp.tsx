@@ -101,6 +101,18 @@ type TaskItem = {
   claimable: boolean;
 };
 
+type AchievementItem = {
+  code: string;
+  icon: string;
+  title: string;
+  description: string;
+  progress: number;
+  target: number;
+  rewardCoins: number;
+  claimed: boolean;
+  claimable: boolean;
+};
+
 type PlayerProfile = {
   player: {
     username: string | null;
@@ -308,6 +320,10 @@ export default function GameApp() {
   const [tasksStatus, setTasksStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [claimingTaskCode, setClaimingTaskCode] = useState<string | null>(null);
+  const [achievementsOpen, setAchievementsOpen] = useState(false);
+  const [achievementsStatus, setAchievementsStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [achievements, setAchievements] = useState<AchievementItem[]>([]);
+  const [claimingAchievementCode, setClaimingAchievementCode] = useState<string | null>(null);
   const [levelsOpen, setLevelsOpen] = useState(false);
   const [profitPlanOpen, setProfitPlanOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -953,6 +969,155 @@ export default function GameApp() {
     void loadProfile();
   };
 
+  const loadAchievements = async () => {
+    if (authMode !== "telegram") {
+      setToast(
+        "Достижения доступны только через Telegram.",
+      );
+      return;
+    }
+
+    setAchievementsStatus("loading");
+
+    try {
+      const response = await fetch("/api/achievements", {
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      const data = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+        achievements?: AchievementItem[];
+        balance?: {
+          coins: number;
+        };
+      };
+
+      if (!response.ok || !data.ok) {
+        throw new Error(
+          data.message ||
+            data.error ||
+            "Не удалось загрузить достижения",
+        );
+      }
+
+      setAchievements(
+        Array.isArray(data.achievements)
+          ? data.achievements
+          : [],
+      );
+
+      setState((previous) => ({
+        ...previous,
+        coins:
+          data.balance?.coins ?? previous.coins,
+      }));
+
+      setAchievementsStatus("ready");
+    } catch (error) {
+      console.error(
+        "Failed to load achievements",
+        error,
+      );
+      setAchievementsStatus("error");
+      setToast(
+        error instanceof Error
+          ? error.message
+          : "Ошибка загрузки достижений",
+      );
+    }
+  };
+
+  const openAchievements = () => {
+    if (authMode !== "telegram") {
+      setToast(
+        "Достижения доступны только через Telegram.",
+      );
+      return;
+    }
+
+    setAchievementsOpen(true);
+    void loadAchievements();
+  };
+
+  const claimAchievement = async (
+    achievement: AchievementItem,
+  ) => {
+    if (
+      claimingAchievementCode ||
+      !achievement.claimable
+    ) {
+      return;
+    }
+
+    setClaimingAchievementCode(achievement.code);
+    setToast("Получаем награду за достижение...");
+
+    try {
+      const response = await fetch(
+        "/api/achievements",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            achievementCode: achievement.code,
+          }),
+          cache: "no-store",
+          credentials: "include",
+        },
+      );
+
+      const data = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+        rewardCoins?: number;
+        balance?: {
+          coins: number;
+        };
+      };
+
+      if (!response.ok || !data.ok) {
+        throw new Error(
+          data.message ||
+            data.error ||
+            "Не удалось получить награду",
+        );
+      }
+
+      setState((previous) => ({
+        ...previous,
+        coins:
+          data.balance?.coins ?? previous.coins,
+      }));
+
+      setToast(
+        `🏅 Достижение получено: +${formatNumber(
+          data.rewardCoins ?? achievement.rewardCoins,
+          0,
+        )} Coins`,
+      );
+
+      await loadAchievements();
+    } catch (error) {
+      console.error(
+        "Failed to claim achievement",
+        error,
+      );
+      setToast(
+        error instanceof Error
+          ? error.message
+          : "Ошибка получения достижения",
+      );
+    } finally {
+      setClaimingAchievementCode(null);
+    }
+  };
+
   const loadTasks = async () => {
     if (authMode !== "telegram") {
       setToast("Задания доступны только через Telegram.");
@@ -1473,6 +1638,7 @@ export default function GameApp() {
               <button onClick={() => setProfitPlanOpen((value) => !value)}><span>📊 Profit Plan</span><b>МОЯ ФЕРМА</b></button>
               <button onClick={openDailyReward}><span>🎁 Ежедневный бонус</span><b>{dailyInfo?.canClaim ? "ЗАБРАТЬ" : "›"}</b></button>
               <button onClick={openTasks}><span>✅ Задания</span><b>{tasks.some((task) => task.claimable) ? "ЗАБРАТЬ" : "›"}</b></button>
+              <button onClick={openAchievements}><span>🏅 Достижения</span><b>{achievements.some((achievement) => achievement.claimable) ? "ЗАБРАТЬ" : "›"}</b></button>
               <button onClick={() => setToast("Рулетка отключена до server-side реализации")}><span>🎰 Рулетка</span><b>OFF</b></button>
               <button onClick={() => window.location.reload()}><span>🔄 Перезагрузить из Neon</span><b>›</b></button>
             </div>
@@ -2630,6 +2796,362 @@ export default function GameApp() {
                     гнезде новые яйца не накапливаются до следующего сбора.
                   </small>
                 </div>
+              </div>
+            ) : null}
+
+            {achievementsOpen ? (
+              <div
+                className="form-card"
+                style={{
+                  marginTop: 16,
+                  borderRadius: 20,
+                  background: "#10281e",
+                  border: "1px solid rgba(255,255,255,.08)",
+                  padding: 14,
+                  width: "100%",
+                  minWidth: 0,
+                }}
+              >
+                <div
+                  className="section-head"
+                  style={{
+                    width: "100%",
+                    minWidth: 0,
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <span className="eyebrow">
+                      ACHIEVEMENTS
+                    </span>
+                    <h2>🏅 Достижения</h2>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 6,
+                      flex: "0 0 auto",
+                    }}
+                  >
+                    <button
+                      className="coin-button"
+                      onClick={() =>
+                        void loadAchievements()
+                      }
+                    >
+                      ↻
+                    </button>
+
+                    <button
+                      className="coin-button"
+                      onClick={() =>
+                        setAchievementsOpen(false)
+                      }
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+
+                {achievementsStatus === "loading" ||
+                achievementsStatus === "idle" ? (
+                  <p>Загружаем достижения...</p>
+                ) : achievementsStatus === "error" ? (
+                  <>
+                    <p>
+                      Не удалось загрузить достижения.
+                    </p>
+                    <button
+                      className="primary"
+                      onClick={() =>
+                        void loadAchievements()
+                      }
+                    >
+                      ПОВТОРИТЬ
+                    </button>
+                  </>
+                ) : achievements.length === 0 ? (
+                  <p>Достижений пока нет.</p>
+                ) : (
+                  <>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(2, minmax(0, 1fr))",
+                        gap: 8,
+                        width: "100%",
+                        marginTop: 8,
+                      }}
+                    >
+                      <div
+                        style={{
+                          padding: 10,
+                          borderRadius: 12,
+                          background:
+                            "rgba(255,255,255,.04)",
+                        }}
+                      >
+                        <small style={{ opacity: .62 }}>
+                          Получено
+                        </small>
+                        <strong
+                          style={{
+                            display: "block",
+                            marginTop: 3,
+                            fontSize: 19,
+                          }}
+                        >
+                          {
+                            achievements.filter(
+                              (achievement) =>
+                                achievement.claimed,
+                            ).length
+                          }{" "}
+                          / {achievements.length}
+                        </strong>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: 10,
+                          borderRadius: 12,
+                          background:
+                            "rgba(255,255,255,.04)",
+                        }}
+                      >
+                        <small style={{ opacity: .62 }}>
+                          Можно забрать
+                        </small>
+                        <strong
+                          style={{
+                            display: "block",
+                            marginTop: 3,
+                            fontSize: 19,
+                          }}
+                        >
+                          {
+                            achievements.filter(
+                              (achievement) =>
+                                achievement.claimable,
+                            ).length
+                          }
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gap: 10,
+                        width: "100%",
+                        marginTop: 10,
+                      }}
+                    >
+                      {achievements.map(
+                        (achievement) => {
+                          const percent = Math.max(
+                            0,
+                            Math.min(
+                              100,
+                              (achievement.progress /
+                                Math.max(
+                                  1,
+                                  achievement.target,
+                                )) *
+                                100,
+                            ),
+                          );
+
+                          return (
+                            <article
+                              key={achievement.code}
+                              style={{
+                                width: "100%",
+                                minWidth: 0,
+                                padding: 12,
+                                borderRadius: 16,
+                                border:
+                                  achievement.claimable
+                                    ? "1px solid rgba(244,211,94,.50)"
+                                    : "1px solid rgba(255,255,255,.08)",
+                                background:
+                                  achievement.claimed
+                                    ? "rgba(70,150,85,.10)"
+                                    : achievement.claimable
+                                      ? "rgba(244,211,94,.08)"
+                                      : "rgba(255,255,255,.035)",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent:
+                                    "space-between",
+                                  gap: 10,
+                                  alignItems:
+                                    "flex-start",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    minWidth: 0,
+                                  }}
+                                >
+                                  <strong
+                                    style={{
+                                      display: "block",
+                                      fontSize: 15,
+                                      lineHeight: 1.3,
+                                    }}
+                                  >
+                                    {achievement.icon}{" "}
+                                    {achievement.title}
+                                  </strong>
+
+                                  <small
+                                    style={{
+                                      display: "block",
+                                      marginTop: 4,
+                                      opacity: .68,
+                                      lineHeight: 1.4,
+                                    }}
+                                  >
+                                    {
+                                      achievement.description
+                                    }
+                                  </small>
+                                </div>
+
+                                <div
+                                  style={{
+                                    flex: "0 0 auto",
+                                    textAlign: "right",
+                                  }}
+                                >
+                                  <strong
+                                    style={{
+                                      display: "block",
+                                      color: "#f4d35e",
+                                    }}
+                                  >
+                                    +
+                                    {formatNumber(
+                                      achievement.rewardCoins,
+                                      0,
+                                    )}
+                                  </strong>
+                                  <small>Coins</small>
+                                </div>
+                              </div>
+
+                              <div
+                                style={{
+                                  marginTop: 10,
+                                  height: 8,
+                                  borderRadius: 999,
+                                  overflow: "hidden",
+                                  background:
+                                    "rgba(255,255,255,.08)",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    height: "100%",
+                                    width: `${percent}%`,
+                                    borderRadius: 999,
+                                    background:
+                                      achievement.claimed
+                                        ? "#70d68a"
+                                        : achievement.claimable
+                                          ? "#f4d35e"
+                                          : "#a7f348",
+                                  }}
+                                />
+                              </div>
+
+                              <div
+                                style={{
+                                  marginTop: 7,
+                                  display: "flex",
+                                  justifyContent:
+                                    "space-between",
+                                  gap: 8,
+                                  alignItems: "center",
+                                }}
+                              >
+                                <small
+                                  style={{ opacity: .72 }}
+                                >
+                                  {formatNumber(
+                                    achievement.progress,
+                                    0,
+                                  )}{" "}
+                                  /{" "}
+                                  {formatNumber(
+                                    achievement.target,
+                                    0,
+                                  )}
+                                </small>
+
+                                {achievement.claimed ? (
+                                  <strong
+                                    style={{
+                                      color: "#92e6a5",
+                                      fontSize: 12,
+                                    }}
+                                  >
+                                    ✓ ПОЛУЧЕНО
+                                  </strong>
+                                ) : achievement.claimable ? (
+                                  <button
+                                    className="coin-button"
+                                    onClick={() =>
+                                      void claimAchievement(
+                                        achievement,
+                                      )
+                                    }
+                                    disabled={Boolean(
+                                      claimingAchievementCode,
+                                    )}
+                                  >
+                                    {claimingAchievementCode ===
+                                    achievement.code
+                                      ? "⏳"
+                                      : "ЗАБРАТЬ"}
+                                  </button>
+                                ) : (
+                                  <small
+                                    style={{
+                                      opacity: .55,
+                                    }}
+                                  >
+                                    В процессе
+                                  </small>
+                                )}
+                              </div>
+                            </article>
+                          );
+                        },
+                      )}
+                    </div>
+
+                    <small
+                      style={{
+                        display: "block",
+                        opacity: .60,
+                        lineHeight: 1.45,
+                        marginTop: 10,
+                      }}
+                    >
+                      Каждая награда выдаётся только
+                      один раз. Условия проверяются на
+                      сервере. Достижения начисляют только
+                      Coins — DNA здесь не выдаётся.
+                    </small>
+                  </>
+                )}
               </div>
             ) : null}
 
