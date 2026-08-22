@@ -622,19 +622,10 @@ export default function GameApp() {
     }
   };
 
-  const exchangeDna = () => {
-    if (state.dna < 1) return setToast("Недостаточно DNA");
-
-    const amount = Math.min(10, state.dna);
-
-    setState((s) => ({
-      ...s,
-      dna: s.dna - amount,
-      coins: s.coins + amount * gameConfig.dnaToCoins,
-    }));
-
-    setToast(`${formatNumber(amount)} DNA обменено локально на ${formatNumber(amount * gameConfig.dnaToCoins)} Coins`);
+  const openDnaWithdrawal = () => {
+    setToast("DNA нельзя купить или обменять на Coins. Вывод DNA в деньги будет подключён отдельным защищённым серверным модулем.");
   };
+
 
   const progress = Math.min(100, (state.eggs / Math.max(1, state.capacity)) * 100);
 
@@ -710,6 +701,10 @@ export default function GameApp() {
           <div className="screen">
             <span className="eyebrow">SHOP</span><h2>Магазин</h2>
             <p className="hint">Цены загружаются из Neon. Клиент отправляет только код товара — стоимость и эффект проверяются на сервере.</p>
+            <div className="card">
+              <strong>🧬 DNA не продаётся</strong>
+              <p>DNA — ценная игровая валюта, которая зарабатывается в игре и предназначена для последующего вывода/конвертации в деньги. Купить DNA за Coins нельзя.</p>
+            </div>
 
             {shopStatus === "loading" || shopStatus === "idle" ? (
               <div className="card"><strong>Загружаем товары...</strong></div>
@@ -728,7 +723,7 @@ export default function GameApp() {
                     disabled={Boolean(buyingItemCode) || isLoading || Boolean(loadError)}
                   >
                     <span>
-                      <strong>{item.kind === "DINO" ? "🦕 " : item.kind === "DNA" ? "🧬 " : "🪺 "}{item.title}</strong>
+                      <strong>{item.kind === "DINO" ? "🦕 " : "🪺 "}{item.title}</strong>
                       <small>{item.description || "Игровой товар"}</small>
                     </span>
                     <b>
@@ -797,7 +792,7 @@ export default function GameApp() {
           <div className="screen">
             <span className="eyebrow">TOOLS</span><h2>Меню</h2>
             <div className="menu-list">
-              <button onClick={exchangeDna}><span>🧬 DNA → Coins</span><b>1 : 1.1</b></button>
+              <button onClick={openDnaWithdrawal}><span>🧬 Вывод DNA</span><b>→ деньги</b></button>
               <button onClick={() => setToast("Profit Plan будет вынесен в отдельный калькулятор")}><span>📊 Profit Plan</span><b>›</b></button>
               <button onClick={() => setToast("Задания появятся после server-side игровых операций")}><span>✅ Задания</span><b>›</b></button>
               <button onClick={() => setToast("Рулетка отключена до server-side реализации")}><span>🎰 Рулетка</span><b>OFF</b></button>
