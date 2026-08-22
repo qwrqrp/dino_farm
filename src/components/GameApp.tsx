@@ -18,9 +18,13 @@ type SaveState = {
 type GameStateResponse = {
   user: {
     id: string;
+    telegramId?: string | null;
     username: string | null;
     firstName: string | null;
     lastName: string | null;
+  };
+  session?: {
+    authenticated: boolean;
   };
   balance: {
     coins: number;
@@ -50,6 +54,20 @@ const INITIAL_STATE: SaveState = {
   lastTick: Date.now(),
 };
 
+type TelegramWebApp = {
+  initData?: string;
+  ready?: () => void;
+  expand?: () => void;
+};
+
+function getTelegramWebApp(): TelegramWebApp | undefined {
+  if (typeof window === "undefined") return undefined;
+
+  return (window as unknown as {
+    Telegram?: { WebApp?: TelegramWebApp };
+  }).Telegram?.WebApp;
+}
+
 export default function GameApp() {
   const [tab, setTab] = useState<Tab>("nest");
   const [state, setState] = useState<SaveState>(INITIAL_STATE);
@@ -62,6 +80,7 @@ export default function GameApp() {
   const [isCollecting, setIsCollecting] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
   const [isMerging, setIsMerging] = useState(false);
+  const [authMode, setAuthMode] = useState<"telegram" | "demo" | "unknown">("unknown");
 
   const eggsPerHour = useMemo(() => {
     return state.board.reduce((sum: number, level) => {
@@ -73,10 +92,44 @@ export default function GameApp() {
   useEffect(() => {
     let cancelled = false;
 
+    async function authenticateTelegramIfAvailable() {
+      const webApp = getTelegramWebApp();
+      const initData = webApp?.initData?.trim() ?? "";
+
+      if (!initData) {
+        return false;
+      }
+
+      webApp?.ready?.();
+      webApp?.expand?.();
+
+      const response = await fetch("/api/auth/telegram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ initData }),
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      const data = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+      };
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || "Telegram auth failed");
+      }
+
+      return true;
+    }
+
     async function loadGameState() {
       try {
+        const telegramAuthenticated = await authenticateTelegramIfAvailable();
+
         const response = await fetch("/api/game-state", {
           cache: "no-store",
+          credentials: "include",
         });
 
         if (!response.ok) {
@@ -106,15 +159,28 @@ export default function GameApp() {
           "Dino Farmer";
 
         setPlayerName(name);
+        setAuthMode(
+          telegramAuthenticated || data.session?.authenticated
+            ? "telegram"
+            : "demo",
+        );
         setLoadError(null);
-        setToast("Данные загружены из Neon ✓");
+        setToast(
+          telegramAuthenticated || data.session?.authenticated
+            ? "Telegram подтверждён · данные загружены из Neon ✓"
+            : "Demo-режим · данные загружены из Neon ✓",
+        );
       } catch (error) {
-        console.error("Failed to load /api/game-state", error);
+        console.error("Failed to initialize player", error);
 
         if (cancelled) return;
 
-        setLoadError("Не удалось загрузить данные из базы");
-        setToast("Ошибка загрузки Neon");
+        setLoadError("Не удалось авторизовать или загрузить игрока");
+        setToast(
+          error instanceof Error
+            ? `Ошибка: ${error.message}`
+            : "Ошибка Telegram / Neon",
+        );
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -157,6 +223,7 @@ export default function GameApp() {
       const response = await fetch("/api/collect-eggs", {
         method: "POST",
         cache: "no-store",
+        credentials: "include",
       });
 
       const raw = await response.text();
@@ -211,6 +278,7 @@ export default function GameApp() {
       const response = await fetch("/api/buy-dino", {
         method: "POST",
         cache: "no-store",
+        credentials: "include",
       });
 
       const raw = await response.text();
@@ -306,6 +374,7 @@ export default function GameApp() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fromSlot, toSlot }),
         cache: "no-store",
+        credentials: "include",
       });
 
       const raw = await response.text();
@@ -370,7 +439,15 @@ export default function GameApp() {
         <div className="avatar">🦖</div>
         <div className="profile">
           <strong>{playerName}</strong>
-          <span>{isLoading ? "Загрузка..." : loadError ? "Database error" : "Level 1 · Neon"}</span>
+          <span>{
+            isLoading
+              ? "Загрузка..."
+              : loadError
+                ? "Auth / Database error"
+                : authMode === "telegram"
+                  ? "Level 1 · Telegram"
+                  : "Level 1 · Demo"
+          }</span>
         </div>
         <div className="balances">
           <span>🪙 {formatNumber(state.coins, 0)}</span>
