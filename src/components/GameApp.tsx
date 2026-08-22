@@ -328,6 +328,12 @@ export default function GameApp() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isCollecting, setIsCollecting] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
+  const [pendingPurchase, setPendingPurchase] = useState<{
+    source: "quick" | "shop";
+    title: string;
+    priceCoins: number;
+    item?: ShopItem;
+  } | null>(null);
   const [isMerging, setIsMerging] = useState(false);
   const [pendingMerge, setPendingMerge] = useState<{
     fromSlot: number;
@@ -647,7 +653,7 @@ export default function GameApp() {
     }
   };
 
-  const buyDino = async () => {
+  const executeBuyDino = async () => {
     if (isBuying) return;
 
     setIsBuying(true);
@@ -704,6 +710,30 @@ export default function GameApp() {
     } finally {
       setIsBuying(false);
     }
+  };
+
+  const buyDino = () => {
+    if (isBuying || buyingItemCode) return;
+
+    const priceCoins = gameConfig.levelOnePriceCoins;
+
+    if (!state.board.some((slot) => slot === null)) {
+      setToast("На игровой доске нет свободной клетки.");
+      return;
+    }
+
+    if (state.coins < priceCoins) {
+      setToast(
+        `Для покупки Lv.1 нужно ${formatNumber(priceCoins, 0)} Coins`,
+      );
+      return;
+    }
+
+    setPendingPurchase({
+      source: "quick",
+      title: "Динозавр Lv.1",
+      priceCoins,
+    });
   };
 
   const chooseSlot = async (index: number) => {
@@ -1121,7 +1151,7 @@ export default function GameApp() {
     }
   };
 
-  const buyShopItem = async (item: ShopItem) => {
+  const executeBuyShopItem = async (item: ShopItem) => {
     if (buyingItemCode) return;
 
     setBuyingItemCode(item.code);
@@ -1176,6 +1206,63 @@ export default function GameApp() {
       setBuyingItemCode(null);
     }
   };
+
+  const buyShopItem = (item: ShopItem) => {
+    if (buyingItemCode || isBuying) return;
+
+    if (item.kind === "DINO" && !state.board.some((slot) => slot === null)) {
+      setToast("На игровой доске нет свободной клетки.");
+      return;
+    }
+
+    if (state.coins < item.priceCoins) {
+      setToast(
+        `Для покупки нужно ${formatNumber(item.priceCoins, 0)} Coins`,
+      );
+      return;
+    }
+
+    setPendingPurchase({
+      source: "shop",
+      title: item.title,
+      priceCoins: item.priceCoins,
+      item,
+    });
+  };
+
+  const cancelPurchase = () => {
+    if (isBuying || buyingItemCode) return;
+    setPendingPurchase(null);
+  };
+
+  const confirmPurchase = async () => {
+    if (!pendingPurchase || isBuying || buyingItemCode) return;
+
+    if (state.coins < pendingPurchase.priceCoins) {
+      setPendingPurchase(null);
+      setToast(
+        `Недостаточно Coins. Нужно ${formatNumber(
+          pendingPurchase.priceCoins,
+          0,
+        )} Coins`,
+      );
+      return;
+    }
+
+    try {
+      if (
+        pendingPurchase.source === "shop" &&
+        pendingPurchase.item
+      ) {
+        await executeBuyShopItem(pendingPurchase.item);
+      } else {
+        await executeBuyDino();
+      }
+    } finally {
+      setPendingPurchase(null);
+    }
+  };
+
 
   const loadProfile = async () => {
     if (authMode !== "telegram") {
@@ -4541,6 +4628,149 @@ export default function GameApp() {
           </div>
         )}
       </section>
+
+      {pendingPurchase ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Подтверждение покупки"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1001,
+            display: "grid",
+            placeItems: "center",
+            padding: 18,
+            background: "rgba(3,12,8,.76)",
+            backdropFilter: "blur(5px)",
+          }}
+          onClick={cancelPurchase}
+        >
+          <div
+            style={{
+              width: "min(100%, 380px)",
+              borderRadius: 22,
+              padding: 18,
+              background: "#10281e",
+              border: "1px solid rgba(255,255,255,.12)",
+              boxShadow: "0 18px 60px rgba(0,0,0,.45)",
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <span className="eyebrow">CONFIRM PURCHASE</span>
+            <h2 style={{ marginBottom: 8 }}>🛒 Подтвердить покупку?</h2>
+
+            <div
+              style={{
+                marginTop: 12,
+                padding: 16,
+                borderRadius: 16,
+                background: "rgba(167,243,72,.08)",
+                border: "1px solid rgba(167,243,72,.22)",
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: 34 }}>🦖</div>
+              <strong
+                style={{
+                  display: "block",
+                  marginTop: 5,
+                  fontSize: 18,
+                }}
+              >
+                {pendingPurchase.title}
+              </strong>
+              <small
+                style={{
+                  display: "block",
+                  marginTop: 4,
+                  opacity: .65,
+                }}
+              >
+                Динозавр будет добавлен на свободную клетку.
+              </small>
+            </div>
+
+            <div
+              style={{
+                marginTop: 10,
+                padding: 12,
+                borderRadius: 14,
+                background: "rgba(255,255,255,.04)",
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+            >
+              <span style={{ opacity: .68 }}>Стоимость</span>
+              <strong>
+                {formatNumber(pendingPurchase.priceCoins, 0)} Coins
+              </strong>
+            </div>
+
+            <div
+              style={{
+                marginTop: 8,
+                padding: 12,
+                borderRadius: 14,
+                background: "rgba(255,255,255,.04)",
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+            >
+              <span style={{ opacity: .68 }}>Баланс после покупки</span>
+              <strong>
+                {formatNumber(
+                  Math.max(0, state.coins - pendingPurchase.priceCoins),
+                  2,
+                )}{" "}
+                Coins
+              </strong>
+            </div>
+
+            <p
+              style={{
+                margin: "10px 0 0",
+                opacity: .60,
+                fontSize: 12,
+                lineHeight: 1.4,
+              }}
+            >
+              Coins будут списаны только после подтверждения.
+            </p>
+
+            <div
+              style={{
+                marginTop: 14,
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gap: 8,
+              }}
+            >
+              <button
+                className="coin-button"
+                onClick={cancelPurchase}
+                disabled={isBuying || Boolean(buyingItemCode)}
+                style={{ width: "100%" }}
+              >
+                ОТМЕНА
+              </button>
+
+              <button
+                className="primary"
+                onClick={() => void confirmPurchase()}
+                disabled={isBuying || Boolean(buyingItemCode)}
+                style={{ width: "100%" }}
+              >
+                {isBuying || buyingItemCode
+                  ? "⏳ ПОКУПКА..."
+                  : "ПОДТВЕРДИТЬ"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {pendingMerge ? (
         <div
