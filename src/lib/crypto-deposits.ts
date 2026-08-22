@@ -596,10 +596,34 @@ function assertProviderMatchesDeposit(
   deposit: Deposit,
   payload: NowPaymentPayload,
 ) {
+  const payloadPaymentId =
+    payload.payment_id === undefined
+      ? ""
+      : String(
+          payload.payment_id,
+        ).trim();
+
+  // If both sides have a provider payment id, it MUST match.
+  // This is a stronger identity check than comparing currency labels,
+  // because NOWPayments may return different aliases for the same
+  // coin/network between create-payment, status and IPN responses.
+  if (
+    deposit.providerPaymentId &&
+    payloadPaymentId &&
+    deposit.providerPaymentId !==
+      payloadPaymentId
+  ) {
+    throw new Error(
+      "DEPOSIT_PAYMENT_ID_MISMATCH",
+    );
+  }
+
   const providerPrice =
     payload.price_amount === undefined
       ? null
-      : Number(payload.price_amount);
+      : Number(
+          payload.price_amount,
+        );
 
   if (
     providerPrice !== null &&
@@ -607,7 +631,7 @@ function assertProviderMatchesDeposit(
     Math.abs(
       providerPrice -
         Number(deposit.usdAmount),
-    ) > 0.011
+    ) > 0.05
   ) {
     throw new Error(
       "DEPOSIT_PRICE_MISMATCH",
@@ -615,18 +639,20 @@ function assertProviderMatchesDeposit(
   }
 
   if (
-    payload.pay_currency &&
-    payload.pay_currency
+    payload.price_currency &&
+    payload.price_currency
       .trim()
-      .toLowerCase() !==
-      deposit.payCurrency
-        .trim()
-        .toLowerCase()
+      .toLowerCase() !== "usd"
   ) {
     throw new Error(
-      "DEPOSIT_CURRENCY_MISMATCH",
+      "DEPOSIT_PRICE_CURRENCY_MISMATCH",
     );
   }
+
+  // Do NOT reject by payload.pay_currency string.
+  // NOWPayments can use different aliases for the same asset/network.
+  // The signed IPN + stored Payment ID + USD order amount are used
+  // as the authoritative checks.
 }
 
 async function findDepositForProviderPayload(
