@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getPlayerContext } from "@/lib/player";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const DEMO_USER_ID = "demo-user-1";
 const BOARD_SIZE = 16;
 const MAX_DINO_LEVEL = 16;
 
@@ -44,11 +44,11 @@ export async function GET() {
   });
 }
 
-async function mergeDino(fromSlot: number, toSlot: number) {
+async function mergeDino(userId: string, fromSlot: number, toSlot: number) {
   return prisma.$transaction(
     async (tx) => {
       const user = await tx.user.findUnique({
-        where: { id: DEMO_USER_ID },
+        where: { id: userId },
         include: {
           dinosaurs: {
             orderBy: [{ boardSlot: "asc" }, { createdAt: "asc" }],
@@ -57,7 +57,7 @@ async function mergeDino(fromSlot: number, toSlot: number) {
       });
 
       if (!user) {
-        throw new Error("DEMO_STATE_NOT_FOUND");
+        throw new Error("PLAYER_STATE_NOT_FOUND");
       }
 
       const source = user.dinosaurs.find((dino) => dino.boardSlot === fromSlot);
@@ -116,6 +116,7 @@ async function mergeDino(fromSlot: number, toSlot: number) {
 
 export async function POST(request: Request) {
   try {
+    const player = await getPlayerContext();
     const body = (await request.json()) as {
       fromSlot?: unknown;
       toSlot?: unknown;
@@ -145,7 +146,7 @@ export async function POST(request: Request) {
 
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       try {
-        const result = await mergeDino(fromSlot, toSlot);
+        const result = await mergeDino(player.userId, fromSlot, toSlot);
         return NextResponse.json(
           { ok: true, ...result },
           { headers: { "Cache-Control": "no-store" } },
@@ -174,7 +175,7 @@ export async function POST(request: Request) {
 
     if (error instanceof Error) {
       const messages: Record<string, { status: number; message: string }> = {
-        DEMO_STATE_NOT_FOUND: { status: 404, message: "Состояние игрока не найдено" },
+        PLAYER_STATE_NOT_FOUND: { status: 404, message: "Состояние игрока не найдено" },
         DINO_NOT_FOUND: { status: 404, message: "Динозавр в выбранной клетке не найден" },
         SAME_DINO: { status: 400, message: "Нужно выбрать двух разных динозавров" },
         LEVEL_MISMATCH: { status: 400, message: "Для merge нужны два одинаковых уровня" },
