@@ -2675,8 +2675,12 @@ export default function GameApp() {
                     <div
                       style={{
                         display: "grid",
-                        gap: 7,
-                        marginTop: 10,
+                        gridTemplateColumns: "1fr",
+                        gap: 8,
+                        width: "100%",
+                        maxWidth: "100%",
+                        marginTop: 0,
+                        boxSizing: "border-box",
                       }}
                     >
                       {NEST_UPGRADE_TIERS.map((tier, index) => {
@@ -3053,7 +3057,7 @@ export default function GameApp() {
                   </div>
                 )}
 
-                <div className="card">
+                <div className="card" style={{ display: "block", width: "100%", maxWidth: "100%", boxSizing: "border-box" }}>
                   <strong>
                     Ваш баланс
                   </strong>
@@ -3144,17 +3148,37 @@ export default function GameApp() {
                 ) : null}
 
                 {depositConfig ? (
-                  <div className="card">
-                    <strong>
+                  <div
+                    className="card"
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      maxWidth: "100%",
+                      boxSizing: "border-box",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <strong
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        marginBottom: 10,
+                      }}
+                    >
                       Сумма пополнения
                     </strong>
 
                     <div
                       style={{
-                        display: "flex",
+                        display: "grid",
+                        gridTemplateColumns:
+                          "28px minmax(0, 1fr)",
                         alignItems: "center",
                         gap: 8,
-                        marginTop: 10,
+                        width: "100%",
+                        maxWidth: "100%",
+                        marginTop: 0,
+                        boxSizing: "border-box",
                       }}
                     >
                       <span
@@ -3182,7 +3206,11 @@ export default function GameApp() {
                           )
                         }
                         style={{
+                          display: "block",
                           width: "100%",
+                          minWidth: 0,
+                          maxWidth: "100%",
+                          boxSizing: "border-box",
                           padding:
                             "12px 14px",
                           borderRadius: 12,
@@ -3193,6 +3221,7 @@ export default function GameApp() {
                           color: "inherit",
                           fontSize: 18,
                           fontWeight: 800,
+                          lineHeight: 1.2,
                           outline: "none",
                         }}
                       />
@@ -3216,17 +3245,23 @@ export default function GameApp() {
                       style={{
                         display: "grid",
                         gridTemplateColumns:
-                          "repeat(3, minmax(0, 1fr))",
-                        gap: 7,
+                          "repeat(2, minmax(0, 1fr))",
+                        gap: 8,
+                        width: "100%",
+                        maxWidth: "100%",
                         marginTop: 12,
+                        boxSizing: "border-box",
                       }}
                     >
                       <div
                         style={{
+                          minWidth: 0,
                           padding: 10,
                           borderRadius: 13,
                           background:
                             "rgba(255,255,255,.04)",
+                          boxSizing: "border-box",
+                          overflow: "hidden",
                         }}
                       >
                         <small
@@ -3239,7 +3274,12 @@ export default function GameApp() {
                         <strong
                           style={{
                             display: "block",
+                            minWidth: 0,
                             marginTop: 4,
+                            fontSize: 16,
+                            lineHeight: 1.2,
+                            overflowWrap: "anywhere",
+                            wordBreak: "break-word",
                           }}
                         >
                           {formatNumber(
@@ -3251,12 +3291,15 @@ export default function GameApp() {
 
                       <div
                         style={{
+                          minWidth: 0,
                           padding: 10,
                           borderRadius: 13,
                           background:
                             firstDepositEligible
                               ? "rgba(167,243,72,.08)"
                               : "rgba(255,255,255,.04)",
+                          boxSizing: "border-box",
+                          overflow: "hidden",
                         }}
                       >
                         <small
@@ -3269,7 +3312,12 @@ export default function GameApp() {
                         <strong
                           style={{
                             display: "block",
+                            minWidth: 0,
                             marginTop: 4,
+                            fontSize: 16,
+                            lineHeight: 1.2,
+                            overflowWrap: "anywhere",
+                            wordBreak: "break-word",
                           }}
                         >
                           +
@@ -3282,12 +3330,16 @@ export default function GameApp() {
 
                       <div
                         style={{
+                          gridColumn: "1 / -1",
+                          minWidth: 0,
                           padding: 10,
                           borderRadius: 13,
                           background:
                             "rgba(167,243,72,.10)",
                           border:
                             "1px solid rgba(167,243,72,.20)",
+                          boxSizing: "border-box",
+                          overflow: "hidden",
                         }}
                       >
                         <small
@@ -3300,7 +3352,12 @@ export default function GameApp() {
                         <strong
                           style={{
                             display: "block",
+                            minWidth: 0,
                             marginTop: 4,
+                            fontSize: 16,
+                            lineHeight: 1.2,
+                            overflowWrap: "anywhere",
+                            wordBreak: "break-word",
                           }}
                         >
                           {formatNumber(
@@ -3338,8 +3395,23 @@ export default function GameApp() {
 
                 {depositConfig &&
                 depositMethods.length > 0 ? (
-                  <div className="card">
-                    <strong>
+                  <div
+                    className="card"
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      maxWidth: "100%",
+                      boxSizing: "border-box",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <strong
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        marginBottom: 10,
+                      }}
+                    >
                       Выберите криптовалюту
                     </strong>
 
@@ -3377,12 +3449,21 @@ export default function GameApp() {
                               }
                               style={{
                                 width: "100%",
+                                minWidth: 0,
+                                maxWidth: "none",
+                                minHeight: 52,
+                                boxSizing: "border-box",
                                 display: "flex",
+                                flexDirection: "row",
                                 alignItems:
                                   "center",
                                 justifyContent:
                                   "space-between",
                                 gap: 10,
+                                padding: "12px 14px",
+                                margin: 0,
+                                textAlign: "left",
+                                whiteSpace: "normal",
                                 opacity:
                                   method.available
                                     ? 1
@@ -3420,6 +3501,9 @@ export default function GameApp() {
                       }
                       style={{
                         width: "100%",
+                        minWidth: 0,
+                        maxWidth: "none",
+                        boxSizing: "border-box",
                         marginTop: 12,
                       }}
                     >
@@ -3431,7 +3515,7 @@ export default function GameApp() {
                 ) : null}
 
                 {activeDeposit ? (
-                  <div className="card">
+                  <div className="card" style={{ display: "block", width: "100%", maxWidth: "100%", boxSizing: "border-box", overflow: "hidden" }}>
                     <strong>
                       🧾 Текущий платёж
                     </strong>
@@ -3630,7 +3714,7 @@ export default function GameApp() {
 
                 {depositHistory.length >
                 0 ? (
-                  <div className="card">
+                  <div className="card" style={{ display: "block", width: "100%", maxWidth: "100%", boxSizing: "border-box", overflow: "hidden" }}>
                     <strong>
                       История пополнений
                     </strong>
