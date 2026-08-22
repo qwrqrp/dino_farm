@@ -258,6 +258,40 @@ type WithdrawalItem = {
   updatedAt: string;
 };
 
+type WalletHistoryItem = {
+  id: string;
+  type: "DEPOSIT" | "WITHDRAWAL";
+  createdAt: string;
+  status: string;
+  deposit: {
+    usdAmount: number;
+    baseCoins: number;
+    bonusCoins: number;
+    creditedCoins: number;
+    bonusPercent: number;
+    network: string;
+    methodCode: string;
+    creditedAt: string | null;
+  } | null;
+  withdrawal: {
+    currency: string;
+    network: string;
+    dnaAmount: number;
+    usdtAmount: number;
+    processedAt: string | null;
+  } | null;
+};
+
+type WalletHistorySummary = {
+  successfulDeposits: number;
+  depositedUsd: number;
+  creditedCoins: number;
+  bonusCoins: number;
+  paidWithdrawals: number;
+  paidUsdt: number;
+  paidDna: number;
+};
+
 function withdrawalStatusMeta(status: string) {
   if (status === "PENDING") {
     return {
@@ -328,6 +362,96 @@ function shortWallet(value: string) {
   if (!value) return "—";
   if (value.length <= 18) return value;
   return `${value.slice(0, 8)}…${value.slice(-6)}`;
+}
+
+function walletOperationStatus(
+  type: "DEPOSIT" | "WITHDRAWAL",
+  status: string,
+) {
+  const normalized =
+    status.toUpperCase();
+
+  if (type === "DEPOSIT") {
+    if (normalized === "FINISHED") {
+      return {
+        icon: "✅",
+        label: "Зачислено",
+        color: "#a8f58e",
+      };
+    }
+
+    if (
+      normalized === "FAILED" ||
+      normalized === "CREATE_FAILED"
+    ) {
+      return {
+        icon: "❌",
+        label: "Ошибка",
+        color: "#ffabb4",
+      };
+    }
+
+    if (normalized === "EXPIRED") {
+      return {
+        icon: "⌛",
+        label: "Истёк",
+        color: "#ffcf8e",
+      };
+    }
+
+    if (normalized === "REFUNDED") {
+      return {
+        icon: "↩️",
+        label: "Возвращено",
+        color: "#ffcf8e",
+      };
+    }
+
+    return {
+      icon: "⏳",
+      label:
+        normalized ===
+        "PARTIALLY_PAID"
+          ? "Частично оплачено"
+          : normalized ===
+              "CONFIRMING" ||
+            normalized ===
+              "CONFIRMED"
+            ? "Подтверждается"
+            : "Ожидает оплату",
+      color: "#ffd76a",
+    };
+  }
+
+  if (normalized === "PAID") {
+    return {
+      icon: "✅",
+      label: "Выплачено",
+      color: "#a8f58e",
+    };
+  }
+
+  if (normalized === "APPROVED") {
+    return {
+      icon: "🔄",
+      label: "Одобрено",
+      color: "#9bd8ff",
+    };
+  }
+
+  if (normalized === "REJECTED") {
+    return {
+      icon: "❌",
+      label: "Отклонено",
+      color: "#ffabb4",
+    };
+  }
+
+  return {
+    icon: "⏳",
+    label: "На проверке",
+    color: "#ffd76a",
+  };
 }
 
 function depositStatusMeta(status: string) {
@@ -531,6 +655,10 @@ export default function GameApp() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileStatus, setProfileStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
+  const [walletHistoryOpen, setWalletHistoryOpen] = useState(false);
+  const [walletHistoryStatus, setWalletHistoryStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [walletHistory, setWalletHistory] = useState<WalletHistoryItem[]>([]);
+  const [walletHistorySummary, setWalletHistorySummary] = useState<WalletHistorySummary | null>(null);
   const [withdrawalOpen, setWithdrawalOpen] = useState(false);
   const [withdrawalStatus, setWithdrawalStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [withdrawalConfig, setWithdrawalConfig] = useState<WithdrawalConfigResponse | null>(null);
@@ -2158,6 +2286,89 @@ export default function GameApp() {
     }
   };
 
+
+  const loadWalletHistory = async () => {
+    if (authMode !== "telegram") {
+      setToast(
+        "История баланса доступна только через Telegram.",
+      );
+      return;
+    }
+
+    setWalletHistoryStatus(
+      "loading",
+    );
+
+    try {
+      const response = await fetch(
+        "/api/wallet-history",
+        {
+          cache: "no-store",
+          credentials: "include",
+        },
+      );
+
+      const data =
+        (await response.json()) as {
+          ok?: boolean;
+          summary?:
+            WalletHistorySummary;
+          items?:
+            WalletHistoryItem[];
+          error?: string;
+          message?: string;
+        };
+
+      if (!response.ok || !data.ok) {
+        throw new Error(
+          data.message ||
+            data.error ||
+            "Не удалось загрузить историю баланса",
+        );
+      }
+
+      setWalletHistory(
+        Array.isArray(data.items)
+          ? data.items
+          : [],
+      );
+
+      setWalletHistorySummary(
+        data.summary ?? null,
+      );
+
+      setWalletHistoryStatus(
+        "ready",
+      );
+    } catch (error) {
+      console.error(
+        "Failed to load wallet history",
+        error,
+      );
+
+      setWalletHistoryStatus(
+        "error",
+      );
+
+      setToast(
+        error instanceof Error
+          ? error.message
+          : "Ошибка загрузки истории баланса",
+      );
+    }
+  };
+
+  const openWalletHistory = () => {
+    if (authMode !== "telegram") {
+      setToast(
+        "История баланса доступна только через Telegram.",
+      );
+      return;
+    }
+
+    setWalletHistoryOpen(true);
+    void loadWalletHistory();
+  };
 
   const loadProfile = async () => {
     if (authMode !== "telegram") {
@@ -4172,6 +4383,7 @@ export default function GameApp() {
 
             <div className="menu-list">
               <button onClick={openProfile}><span>👤 Мой профиль</span><b>СТАТИСТИКА</b></button>
+              <button onClick={openWalletHistory}><span>💰 История баланса</span><b>ПОПОЛНЕНИЯ / ВЫВОДЫ</b></button>
               <button onClick={openDnaWithdrawal}><span>🧬 Вывод DNA</span><b>→ USDT</b></button>
               <button onClick={() => setLevelsOpen((value) => !value)}><span>📈 Уровни динозавров</span><b>Lv.1–16</b></button>
               <button onClick={() => setProfitPlanOpen((value) => !value)}><span>📊 Profit Plan</span><b>МОЯ ФЕРМА</b></button>
@@ -4181,6 +4393,504 @@ export default function GameApp() {
               <button onClick={() => setToast("Рулетка отключена до server-side реализации")}><span>🎰 Рулетка</span><b>OFF</b></button>
               <button onClick={() => window.location.reload()}><span>🔄 Перезагрузить из Neon</span><b>›</b></button>
             </div>
+
+            {walletHistoryOpen ? (
+              <div
+                className="form-card"
+                style={{
+                  marginTop: 16,
+                  borderRadius: 20,
+                  background: "#10281e",
+                  border:
+                    "1px solid rgba(255,255,255,.08)",
+                  padding: 14,
+                  width: "100%",
+                  minWidth: 0,
+                  boxSizing:
+                    "border-box",
+                }}
+              >
+                <div
+                  className="section-head"
+                  style={{
+                    width: "100%",
+                    minWidth: 0,
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <span className="eyebrow">
+                      WALLET HISTORY
+                    </span>
+                    <h2>
+                      💰 История баланса
+                    </h2>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 6,
+                      flex:
+                        "0 0 auto",
+                    }}
+                  >
+                    <button
+                      className="coin-button"
+                      onClick={() =>
+                        void loadWalletHistory()
+                      }
+                    >
+                      ↻
+                    </button>
+
+                    <button
+                      className="coin-button"
+                      onClick={() =>
+                        setWalletHistoryOpen(
+                          false,
+                        )
+                      }
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+
+                {walletHistoryStatus ===
+                  "loading" ||
+                walletHistoryStatus ===
+                  "idle" ? (
+                  <p>
+                    Загружаем операции...
+                  </p>
+                ) : walletHistoryStatus ===
+                  "error" ? (
+                  <>
+                    <p>
+                      Не удалось загрузить
+                      историю.
+                    </p>
+                    <button
+                      className="primary"
+                      onClick={() =>
+                        void loadWalletHistory()
+                      }
+                    >
+                      ПОВТОРИТЬ
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {walletHistorySummary ? (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(2, minmax(0, 1fr))",
+                          gap: 8,
+                          marginTop: 10,
+                        }}
+                      >
+                        <div
+                          style={{
+                            minWidth: 0,
+                            padding: 11,
+                            borderRadius: 14,
+                            background:
+                              "rgba(167,243,72,.08)",
+                          }}
+                        >
+                          <small
+                            style={{
+                              opacity: .65,
+                            }}
+                          >
+                            Пополнено
+                          </small>
+
+                          <strong
+                            style={{
+                              display:
+                                "block",
+                              marginTop: 4,
+                              fontSize: 16,
+                            }}
+                          >
+                            $
+                            {walletHistorySummary.depositedUsd.toFixed(
+                              2,
+                            )}
+                          </strong>
+
+                          <small>
+                            +
+                            {formatNumber(
+                              walletHistorySummary.creditedCoins,
+                              0,
+                            )}{" "}
+                            Coins
+                          </small>
+                        </div>
+
+                        <div
+                          style={{
+                            minWidth: 0,
+                            padding: 11,
+                            borderRadius: 14,
+                            background:
+                              "rgba(255,255,255,.04)",
+                          }}
+                        >
+                          <small
+                            style={{
+                              opacity: .65,
+                            }}
+                          >
+                            Выплачено
+                          </small>
+
+                          <strong
+                            style={{
+                              display:
+                                "block",
+                              marginTop: 4,
+                              fontSize: 16,
+                            }}
+                          >
+                            {walletHistorySummary.paidUsdt.toFixed(
+                              8,
+                            )}{" "}
+                            USDT
+                          </strong>
+
+                          <small>
+                            {formatNumber(
+                              walletHistorySummary.paidDna,
+                              2,
+                            )}{" "}
+                            DNA
+                          </small>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {walletHistorySummary &&
+                    walletHistorySummary.bonusCoins >
+                      0 ? (
+                      <div
+                        style={{
+                          marginTop: 8,
+                          padding: 10,
+                          borderRadius: 12,
+                          background:
+                            "rgba(255,215,106,.08)",
+                          fontSize: 13,
+                        }}
+                      >
+                        🎁 Получено бонусных
+                        Coins:{" "}
+                        <b>
+                          {formatNumber(
+                            walletHistorySummary.bonusCoins,
+                            0,
+                          )}
+                        </b>
+                      </div>
+                    ) : null}
+
+                    {walletHistory.length ===
+                    0 ? (
+                      <div
+                        className="card"
+                        style={{
+                          display:
+                            "block",
+                          marginTop: 12,
+                        }}
+                      >
+                        <strong>
+                          Операций пока нет
+                        </strong>
+                        <p>
+                          Здесь появятся
+                          пополнения Coins и
+                          заявки на вывод DNA.
+                        </p>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: "grid",
+                          gap: 8,
+                          marginTop: 12,
+                        }}
+                      >
+                        {walletHistory.map(
+                          (item) => {
+                            const meta =
+                              walletOperationStatus(
+                                item.type,
+                                item.status,
+                              );
+
+                            return (
+                              <div
+                                key={`${item.type}-${item.id}`}
+                                style={{
+                                  minWidth:
+                                    0,
+                                  padding:
+                                    12,
+                                  borderRadius:
+                                    14,
+                                  background:
+                                    "rgba(255,255,255,.04)",
+                                  border:
+                                    "1px solid rgba(255,255,255,.07)",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display:
+                                      "flex",
+                                    alignItems:
+                                      "flex-start",
+                                    justifyContent:
+                                      "space-between",
+                                    gap: 10,
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      minWidth:
+                                        0,
+                                    }}
+                                  >
+                                    <strong
+                                      style={{
+                                        display:
+                                          "block",
+                                      }}
+                                    >
+                                      {item.type ===
+                                      "DEPOSIT"
+                                        ? "💳 Пополнение Coins"
+                                        : "🧬 Вывод DNA"}
+                                    </strong>
+
+                                    <small
+                                      style={{
+                                        display:
+                                          "block",
+                                        marginTop:
+                                          3,
+                                        opacity:
+                                          .62,
+                                      }}
+                                    >
+                                      {formatDepositDate(
+                                        item.createdAt,
+                                      )}
+                                    </small>
+                                  </div>
+
+                                  <b
+                                    style={{
+                                      color:
+                                        meta.color,
+                                      fontSize:
+                                        12,
+                                      textAlign:
+                                        "right",
+                                      whiteSpace:
+                                        "nowrap",
+                                    }}
+                                  >
+                                    {meta.icon}{" "}
+                                    {meta.label}
+                                  </b>
+                                </div>
+
+                                {item.type ===
+                                  "DEPOSIT" &&
+                                item.deposit ? (
+                                  <div
+                                    style={{
+                                      marginTop:
+                                        10,
+                                      display:
+                                        "grid",
+                                      gridTemplateColumns:
+                                        "repeat(2, minmax(0, 1fr))",
+                                      gap: 7,
+                                    }}
+                                  >
+                                    <div>
+                                      <small
+                                        style={{
+                                          opacity:
+                                            .6,
+                                        }}
+                                      >
+                                        Сумма
+                                      </small>
+                                      <div>
+                                        <b>
+                                          $
+                                          {item.deposit.usdAmount.toFixed(
+                                            2,
+                                          )}
+                                        </b>
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <small
+                                        style={{
+                                          opacity:
+                                            .6,
+                                        }}
+                                      >
+                                        Coins
+                                      </small>
+                                      <div>
+                                        <b>
+                                          {item.deposit.creditedCoins >
+                                          0
+                                            ? `+${formatNumber(
+                                                item.deposit.creditedCoins,
+                                                0,
+                                              )}`
+                                            : formatNumber(
+                                                item.deposit.baseCoins,
+                                                0,
+                                              )}
+                                        </b>
+                                      </div>
+                                    </div>
+
+                                    {item.deposit.bonusCoins >
+                                    0 ? (
+                                      <div
+                                        style={{
+                                          gridColumn:
+                                            "1 / -1",
+                                        }}
+                                      >
+                                        <small
+                                          style={{
+                                            opacity:
+                                              .6,
+                                          }}
+                                        >
+                                          Бонус
+                                        </small>
+                                        <div>
+                                          🎁 +
+                                          {formatNumber(
+                                            item.deposit.bonusCoins,
+                                            0,
+                                          )}{" "}
+                                          Coins (
+                                          {
+                                            item
+                                              .deposit
+                                              .bonusPercent
+                                          }
+                                          %)
+                                        </div>
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                ) : null}
+
+                                {item.type ===
+                                  "WITHDRAWAL" &&
+                                item.withdrawal ? (
+                                  <div
+                                    style={{
+                                      marginTop:
+                                        10,
+                                      display:
+                                        "grid",
+                                      gridTemplateColumns:
+                                        "repeat(2, minmax(0, 1fr))",
+                                      gap: 7,
+                                    }}
+                                  >
+                                    <div>
+                                      <small
+                                        style={{
+                                          opacity:
+                                            .6,
+                                        }}
+                                      >
+                                        DNA
+                                      </small>
+                                      <div>
+                                        <b>
+                                          {formatNumber(
+                                            item.withdrawal.dnaAmount,
+                                            2,
+                                          )}
+                                        </b>
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <small
+                                        style={{
+                                          opacity:
+                                            .6,
+                                        }}
+                                      >
+                                        К выплате
+                                      </small>
+                                      <div>
+                                        <b>
+                                          {item.withdrawal.usdtAmount.toFixed(
+                                            8,
+                                          )}{" "}
+                                          USDT
+                                        </b>
+                                      </div>
+                                    </div>
+
+                                    <div
+                                      style={{
+                                        gridColumn:
+                                          "1 / -1",
+                                      }}
+                                    >
+                                      <small
+                                        style={{
+                                          opacity:
+                                            .6,
+                                        }}
+                                      >
+                                        Сеть
+                                      </small>
+                                      <div>
+                                        {
+                                          item
+                                            .withdrawal
+                                            .network
+                                        }
+                                      </div>
+                                    </div>
+                                  </div>
+                                ) : null}
+                              </div>
+                            );
+                          },
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            ) : null}
 
             {profileOpen ? (
               <div
