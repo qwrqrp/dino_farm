@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPlayerContext } from "@/lib/player";
+import { MAX_DINOSAUR_LEVEL } from "@/lib/game-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const BOARD_SIZE = 16;
-const MAX_DINO_LEVEL = 16;
 
 function getErrorCode(error: unknown) {
   if (typeof error !== "object" || error === null || !("code" in error)) {
@@ -75,7 +75,7 @@ async function mergeDino(userId: string, fromSlot: number, toSlot: number) {
         throw new Error("LEVEL_MISMATCH");
       }
 
-      if (source.level >= MAX_DINO_LEVEL) {
+      if (source.level >= MAX_DINOSAUR_LEVEL) {
         throw new Error("MAX_LEVEL");
       }
 
@@ -179,7 +179,7 @@ export async function POST(request: Request) {
         DINO_NOT_FOUND: { status: 404, message: "Динозавр в выбранной клетке не найден" },
         SAME_DINO: { status: 400, message: "Нужно выбрать двух разных динозавров" },
         LEVEL_MISMATCH: { status: 400, message: "Для merge нужны два одинаковых уровня" },
-        MAX_LEVEL: { status: 400, message: "Достигнут максимальный уровень 16" },
+        MAX_LEVEL: { status: 400, message: `Достигнут максимальный уровень ${MAX_DINOSAUR_LEVEL}` },
       };
 
       const mapped = messages[error.message];
