@@ -265,6 +265,7 @@ export default function GameApp() {
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [claimingTaskCode, setClaimingTaskCode] = useState<string | null>(null);
   const [levelsOpen, setLevelsOpen] = useState(false);
+  const [profitPlanOpen, setProfitPlanOpen] = useState(false);
   const [withdrawalOpen, setWithdrawalOpen] = useState(false);
   const [withdrawalStatus, setWithdrawalStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [withdrawalConfig, setWithdrawalConfig] = useState<WithdrawalConfigResponse | null>(null);
@@ -279,6 +280,51 @@ export default function GameApp() {
       if (!level) return sum;
       return sum + dinosaurs[level - 1].eggsPerHour;
     }, 0);
+  }, [state.board]);
+
+  const profitPlan = useMemo(() => {
+    const levelCounts = Array.from(
+      { length: MAX_DINOSAUR_LEVEL },
+      () => 0,
+    );
+
+    let totalDinosaurs = 0;
+    let dailyCoins = 0;
+    let dailyDna = 0;
+    let equivalentCostCoins = 0;
+
+    for (const level of state.board) {
+      if (
+        !level ||
+        level < 1 ||
+        level > MAX_DINOSAUR_LEVEL
+      ) {
+        continue;
+      }
+
+      const config = getDinosaurConfig(level);
+      if (!config) continue;
+
+      levelCounts[level - 1] += 1;
+      totalDinosaurs += 1;
+      dailyCoins += config.dailyCoins;
+      dailyDna += config.dailyDna;
+      equivalentCostCoins += config.equivalentCostCoins;
+    }
+
+    const paybackDays =
+      dailyCoins > 0
+        ? equivalentCostCoins / dailyCoins
+        : 0;
+
+    return {
+      levelCounts,
+      totalDinosaurs,
+      dailyCoins,
+      dailyDna,
+      equivalentCostCoins,
+      paybackDays,
+    };
   }, [state.board]);
 
   useEffect(() => {
@@ -1313,11 +1359,404 @@ export default function GameApp() {
             <div className="menu-list">
               <button onClick={openDnaWithdrawal}><span>🧬 Вывод DNA</span><b>→ USDT</b></button>
               <button onClick={() => setLevelsOpen((value) => !value)}><span>📈 Уровни динозавров</span><b>Lv.1–16</b></button>
+              <button onClick={() => setProfitPlanOpen((value) => !value)}><span>📊 Profit Plan</span><b>МОЯ ФЕРМА</b></button>
               <button onClick={openDailyReward}><span>🎁 Ежедневный бонус</span><b>{dailyInfo?.canClaim ? "ЗАБРАТЬ" : "›"}</b></button>
               <button onClick={openTasks}><span>✅ Задания</span><b>{tasks.some((task) => task.claimable) ? "ЗАБРАТЬ" : "›"}</b></button>
               <button onClick={() => setToast("Рулетка отключена до server-side реализации")}><span>🎰 Рулетка</span><b>OFF</b></button>
               <button onClick={() => window.location.reload()}><span>🔄 Перезагрузить из Neon</span><b>›</b></button>
             </div>
+
+            {profitPlanOpen ? (
+              <div
+                className="form-card"
+                style={{
+                  marginTop: 16,
+                  borderRadius: 20,
+                  background: "#10281e",
+                  border: "1px solid rgba(255,255,255,.08)",
+                  padding: 14,
+                  width: "100%",
+                  minWidth: 0,
+                }}
+              >
+                <div
+                  className="section-head"
+                  style={{
+                    width: "100%",
+                    minWidth: 0,
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <span className="eyebrow">PROFIT PLAN</span>
+                    <h2>📊 Моя ферма</h2>
+                  </div>
+
+                  <button
+                    className="coin-button"
+                    onClick={() => setProfitPlanOpen(false)}
+                    style={{ flex: "0 0 auto" }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {profitPlan.totalDinosaurs === 0 ? (
+                  <div
+                    style={{
+                      padding: 14,
+                      marginTop: 8,
+                      borderRadius: 14,
+                      background: "rgba(255,255,255,.04)",
+                    }}
+                  >
+                    <strong>На доске пока нет динозавров</strong>
+                    <p
+                      style={{
+                        margin: "6px 0 0",
+                        opacity: .68,
+                        fontSize: 12,
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      Добавьте динозавров на ферму, и здесь появится
+                      персональный расчёт доходности.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                        gap: 8,
+                        width: "100%",
+                        marginTop: 8,
+                      }}
+                    >
+                      <div
+                        style={{
+                          padding: 12,
+                          borderRadius: 14,
+                          background: "rgba(255,255,255,.05)",
+                          minWidth: 0,
+                        }}
+                      >
+                        <small style={{ opacity: .64 }}>
+                          Динозавров
+                        </small>
+                        <strong
+                          style={{
+                            display: "block",
+                            marginTop: 3,
+                            fontSize: 22,
+                          }}
+                        >
+                          {profitPlan.totalDinosaurs}
+                        </strong>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: 12,
+                          borderRadius: 14,
+                          background: "rgba(255,255,255,.05)",
+                          minWidth: 0,
+                        }}
+                      >
+                        <small style={{ opacity: .64 }}>
+                          Производство
+                        </small>
+                        <strong
+                          style={{
+                            display: "block",
+                            marginTop: 3,
+                            fontSize: 17,
+                            overflowWrap: "anywhere",
+                          }}
+                        >
+                          {formatNumber(eggsPerHour, 2)} яиц/ч
+                        </strong>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: 12,
+                          borderRadius: 14,
+                          background: "rgba(255,255,255,.05)",
+                          minWidth: 0,
+                        }}
+                      >
+                        <small style={{ opacity: .64 }}>
+                          Coins / день
+                        </small>
+                        <strong
+                          style={{
+                            display: "block",
+                            marginTop: 3,
+                            fontSize: 19,
+                          }}
+                        >
+                          {formatNumber(profitPlan.dailyCoins, 2)}
+                        </strong>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: 12,
+                          borderRadius: 14,
+                          background: "rgba(255,255,255,.05)",
+                          minWidth: 0,
+                        }}
+                      >
+                        <small style={{ opacity: .64 }}>
+                          DNA / день
+                        </small>
+                        <strong
+                          style={{
+                            display: "block",
+                            marginTop: 3,
+                            fontSize: 19,
+                          }}
+                        >
+                          {formatNumber(profitPlan.dailyDna, 2)}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 12,
+                        display: "grid",
+                        gap: 8,
+                        width: "100%",
+                      }}
+                    >
+                      {[
+                        { label: "1 день", days: 1 },
+                        { label: "30 дней", days: 30 },
+                        { label: "180 дней", days: 180 },
+                        { label: "1 год", days: 365 },
+                      ].map((period) => {
+                        const coins =
+                          profitPlan.dailyCoins * period.days;
+                        const dna =
+                          profitPlan.dailyDna * period.days;
+
+                        return (
+                          <article
+                            key={period.days}
+                            style={{
+                              width: "100%",
+                              minWidth: 0,
+                              padding: 11,
+                              borderRadius: 14,
+                              border:
+                                "1px solid rgba(255,255,255,.07)",
+                              background:
+                                "rgba(255,255,255,.035)",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                gap: 10,
+                              }}
+                            >
+                              <strong>{period.label}</strong>
+                              <small style={{ opacity: .55 }}>
+                                без реинвестирования
+                              </small>
+                            </div>
+
+                            <div
+                              style={{
+                                marginTop: 8,
+                                display: "grid",
+                                gridTemplateColumns:
+                                  "repeat(2, minmax(0, 1fr))",
+                                gap: 7,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  padding: "8px 9px",
+                                  borderRadius: 10,
+                                  background:
+                                    "rgba(255,255,255,.04)",
+                                  minWidth: 0,
+                                }}
+                              >
+                                <small style={{ opacity: .62 }}>
+                                  Coins
+                                </small>
+                                <strong
+                                  style={{
+                                    display: "block",
+                                    marginTop: 2,
+                                    overflowWrap: "anywhere",
+                                  }}
+                                >
+                                  {formatNumber(coins, 2)}
+                                </strong>
+                              </div>
+
+                              <div
+                                style={{
+                                  padding: "8px 9px",
+                                  borderRadius: 10,
+                                  background:
+                                    "rgba(255,255,255,.04)",
+                                  minWidth: 0,
+                                }}
+                              >
+                                <small style={{ opacity: .62 }}>
+                                  DNA
+                                </small>
+                                <strong
+                                  style={{
+                                    display: "block",
+                                    marginTop: 2,
+                                    overflowWrap: "anywhere",
+                                  }}
+                                >
+                                  {formatNumber(dna, 2)}
+                                </strong>
+                              </div>
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 12,
+                        padding: 12,
+                        borderRadius: 14,
+                        background: "rgba(255,255,255,.04)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 10,
+                          alignItems: "baseline",
+                        }}
+                      >
+                        <span
+                          style={{
+                            opacity: .68,
+                            fontSize: 12,
+                          }}
+                        >
+                          Теоретическая стоимость фермы
+                        </span>
+                        <strong>
+                          {formatNumber(
+                            profitPlan.equivalentCostCoins,
+                            0,
+                          )}{" "}
+                          Coins
+                        </strong>
+                      </div>
+
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 10,
+                          alignItems: "baseline",
+                          marginTop: 7,
+                        }}
+                      >
+                        <span
+                          style={{
+                            opacity: .68,
+                            fontSize: 12,
+                          }}
+                        >
+                          Coins-окупаемость
+                        </span>
+                        <strong>
+                          ≈{" "}
+                          {formatNumber(
+                            profitPlan.paybackDays,
+                            0,
+                          )}{" "}
+                          дней
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 12,
+                        padding: 12,
+                        borderRadius: 14,
+                        background: "rgba(255,255,255,.04)",
+                      }}
+                    >
+                      <strong
+                        style={{
+                          display: "block",
+                          marginBottom: 8,
+                        }}
+                      >
+                        Состав фермы
+                      </strong>
+
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 6,
+                        }}
+                      >
+                        {profitPlan.levelCounts.map(
+                          (count, index) =>
+                            count > 0 ? (
+                              <span
+                                key={index}
+                                style={{
+                                  padding: "7px 9px",
+                                  borderRadius: 999,
+                                  background:
+                                    "rgba(167,243,72,.10)",
+                                  border:
+                                    "1px solid rgba(167,243,72,.20)",
+                                  fontSize: 12,
+                                  fontWeight: 800,
+                                }}
+                              >
+                                🦖 Lv.{index + 1} × {count}
+                              </span>
+                            ) : null,
+                        )}
+                      </div>
+                    </div>
+
+                    <small
+                      style={{
+                        display: "block",
+                        marginTop: 10,
+                        opacity: .58,
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      Это расчёт по текущему составу вашей фермы и
+                      установленной игровой экономике. Он не учитывает
+                      будущие покупки, merge, задания, ежедневные бонусы
+                      и реферальные награды. При заполненном гнезде
+                      производство перестаёт накапливаться до сбора.
+                    </small>
+                  </>
+                )}
+              </div>
+            ) : null}
 
             {levelsOpen ? (
               <div
