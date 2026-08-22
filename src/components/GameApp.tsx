@@ -89,6 +89,18 @@ type DailyRewardInfo = {
   };
 };
 
+type TaskItem = {
+  code: string;
+  icon: string;
+  title: string;
+  description: string;
+  progress: number;
+  target: number;
+  rewardCoins: number;
+  claimed: boolean;
+  claimable: boolean;
+};
+
 type WithdrawalConfigResponse = {
   currency: string;
   usdtPerDna: number;
@@ -248,6 +260,10 @@ export default function GameApp() {
   const [dailyStatus, setDailyStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [dailyInfo, setDailyInfo] = useState<DailyRewardInfo | null>(null);
   const [isClaimingDaily, setIsClaimingDaily] = useState(false);
+  const [tasksOpen, setTasksOpen] = useState(false);
+  const [tasksStatus, setTasksStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [claimingTaskCode, setClaimingTaskCode] = useState<string | null>(null);
   const [withdrawalOpen, setWithdrawalOpen] = useState(false);
   const [withdrawalStatus, setWithdrawalStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [withdrawalConfig, setWithdrawalConfig] = useState<WithdrawalConfigResponse | null>(null);
@@ -761,6 +777,115 @@ export default function GameApp() {
     }
   };
 
+  const loadTasks = async () => {
+    if (authMode !== "telegram") {
+      setToast("Задания доступны только через Telegram.");
+      return;
+    }
+
+    setTasksStatus("loading");
+
+    try {
+      const response = await fetch("/api/tasks", {
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      const data = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+        tasks?: TaskItem[];
+        balance?: { coins: number };
+      };
+
+      if (!response.ok || !data.ok) {
+        throw new Error(
+          data.message || data.error || "Не удалось загрузить задания",
+        );
+      }
+
+      setTasks(Array.isArray(data.tasks) ? data.tasks : []);
+      setState((previous) => ({
+        ...previous,
+        coins: data.balance?.coins ?? previous.coins,
+      }));
+      setTasksStatus("ready");
+    } catch (error) {
+      console.error("Failed to load tasks", error);
+      setTasksStatus("error");
+      setToast(
+        error instanceof Error
+          ? error.message
+          : "Ошибка загрузки заданий",
+      );
+    }
+  };
+
+  const openTasks = () => {
+    if (authMode !== "telegram") {
+      setToast("Задания доступны только через Telegram.");
+      return;
+    }
+
+    setTasksOpen(true);
+    void loadTasks();
+  };
+
+  const claimTask = async (task: TaskItem) => {
+    if (claimingTaskCode || !task.claimable) return;
+
+    setClaimingTaskCode(task.code);
+    setToast("Получаем награду за задание...");
+
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskCode: task.code }),
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      const data = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+        rewardCoins?: number;
+        balance?: { coins: number };
+      };
+
+      if (!response.ok || !data.ok) {
+        throw new Error(
+          data.message || data.error || "Не удалось получить награду",
+        );
+      }
+
+      setState((previous) => ({
+        ...previous,
+        coins: data.balance?.coins ?? previous.coins,
+      }));
+
+      setToast(
+        `✅ Задание выполнено: +${formatNumber(
+          data.rewardCoins ?? task.rewardCoins,
+          0,
+        )} Coins`,
+      );
+
+      await loadTasks();
+    } catch (error) {
+      console.error("Failed to claim task", error);
+      setToast(
+        error instanceof Error
+          ? error.message
+          : "Ошибка получения награды",
+      );
+    } finally {
+      setClaimingTaskCode(null);
+    }
+  };
+
   const loadDailyReward = async () => {
     if (authMode !== "telegram") {
       setToast("Ежедневный бонус доступен только через Telegram.");
@@ -1169,10 +1294,236 @@ export default function GameApp() {
               <button onClick={openDnaWithdrawal}><span>🧬 Вывод DNA</span><b>→ USDT</b></button>
               <button onClick={() => setToast("Profit Plan будет вынесен в отдельный калькулятор")}><span>📊 Profit Plan</span><b>›</b></button>
               <button onClick={openDailyReward}><span>🎁 Ежедневный бонус</span><b>{dailyInfo?.canClaim ? "ЗАБРАТЬ" : "›"}</b></button>
-              <button onClick={() => setToast("Задания сделаем следующим игровым этапом")}><span>✅ Задания</span><b>›</b></button>
+              <button onClick={openTasks}><span>✅ Задания</span><b>{tasks.some((task) => task.claimable) ? "ЗАБРАТЬ" : "›"}</b></button>
               <button onClick={() => setToast("Рулетка отключена до server-side реализации")}><span>🎰 Рулетка</span><b>OFF</b></button>
               <button onClick={() => window.location.reload()}><span>🔄 Перезагрузить из Neon</span><b>›</b></button>
             </div>
+
+            {tasksOpen ? (
+              <div
+                className="form-card"
+                style={{
+                  marginTop: 16,
+                  borderRadius: 20,
+                  background: "#10281e",
+                  border: "1px solid rgba(255,255,255,.08)",
+                  padding: 14,
+                  width: "100%",
+                  minWidth: 0,
+                }}
+              >
+                <div
+                  className="section-head"
+                  style={{
+                    width: "100%",
+                    minWidth: 0,
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <span className="eyebrow">MISSIONS</span>
+                    <h2>✅ Задания</h2>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 6,
+                      flex: "0 0 auto",
+                    }}
+                  >
+                    <button
+                      className="coin-button"
+                      onClick={() => void loadTasks()}
+                    >
+                      ↻
+                    </button>
+                    <button
+                      className="coin-button"
+                      onClick={() => setTasksOpen(false)}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+
+                {tasksStatus === "loading" || tasksStatus === "idle" ? (
+                  <p>Загружаем задания...</p>
+                ) : tasksStatus === "error" ? (
+                  <>
+                    <p>Не удалось загрузить задания.</p>
+                    <button
+                      className="primary"
+                      onClick={() => void loadTasks()}
+                    >
+                      ПОВТОРИТЬ
+                    </button>
+                  </>
+                ) : tasks.length === 0 ? (
+                  <p>Заданий пока нет.</p>
+                ) : (
+                  <div
+                    style={{
+                      display: "grid",
+                      gap: 10,
+                      width: "100%",
+                      marginTop: 8,
+                    }}
+                  >
+                    {tasks.map((task) => {
+                      const percent = Math.max(
+                        0,
+                        Math.min(
+                          100,
+                          (task.progress / Math.max(1, task.target)) * 100,
+                        ),
+                      );
+
+                      return (
+                        <article
+                          key={task.code}
+                          style={{
+                            width: "100%",
+                            minWidth: 0,
+                            padding: 12,
+                            borderRadius: 16,
+                            border: task.claimable
+                              ? "1px solid rgba(167,243,72,.45)"
+                              : "1px solid rgba(255,255,255,.08)",
+                            background: task.claimed
+                              ? "rgba(70,150,85,.10)"
+                              : task.claimable
+                                ? "rgba(167,243,72,.08)"
+                                : "rgba(255,255,255,.035)",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              gap: 10,
+                              alignItems: "flex-start",
+                            }}
+                          >
+                            <div style={{ minWidth: 0 }}>
+                              <strong
+                                style={{
+                                  display: "block",
+                                  fontSize: 15,
+                                  lineHeight: 1.3,
+                                }}
+                              >
+                                {task.icon} {task.title}
+                              </strong>
+                              <small
+                                style={{
+                                  display: "block",
+                                  marginTop: 4,
+                                  opacity: .68,
+                                  lineHeight: 1.4,
+                                }}
+                              >
+                                {task.description}
+                              </small>
+                            </div>
+
+                            <div
+                              style={{
+                                flex: "0 0 auto",
+                                textAlign: "right",
+                              }}
+                            >
+                              <strong
+                                style={{
+                                  display: "block",
+                                  color: "#f4d35e",
+                                }}
+                              >
+                                +{formatNumber(task.rewardCoins, 0)}
+                              </strong>
+                              <small>Coins</small>
+                            </div>
+                          </div>
+
+                          <div
+                            style={{
+                              marginTop: 10,
+                              height: 8,
+                              borderRadius: 999,
+                              overflow: "hidden",
+                              background: "rgba(255,255,255,.08)",
+                            }}
+                          >
+                            <div
+                              style={{
+                                height: "100%",
+                                width: `${percent}%`,
+                                borderRadius: 999,
+                                background: task.claimed
+                                  ? "#70d68a"
+                                  : "#a7f348",
+                              }}
+                            />
+                          </div>
+
+                          <div
+                            style={{
+                              marginTop: 7,
+                              display: "flex",
+                              justifyContent: "space-between",
+                              gap: 8,
+                              alignItems: "center",
+                            }}
+                          >
+                            <small style={{ opacity: .72 }}>
+                              {formatNumber(task.progress, 0)} /{" "}
+                              {formatNumber(task.target, 0)}
+                            </small>
+
+                            {task.claimed ? (
+                              <strong
+                                style={{
+                                  color: "#92e6a5",
+                                  fontSize: 12,
+                                }}
+                              >
+                                ✓ ПОЛУЧЕНО
+                              </strong>
+                            ) : task.claimable ? (
+                              <button
+                                className="coin-button"
+                                onClick={() => void claimTask(task)}
+                                disabled={Boolean(claimingTaskCode)}
+                              >
+                                {claimingTaskCode === task.code
+                                  ? "⏳"
+                                  : "ЗАБРАТЬ"}
+                              </button>
+                            ) : (
+                              <small style={{ opacity: .55 }}>
+                                В процессе
+                              </small>
+                            )}
+                          </div>
+                        </article>
+                      );
+                    })}
+
+                    <small
+                      style={{
+                        display: "block",
+                        opacity: .62,
+                        lineHeight: 1.45,
+                        marginTop: 2,
+                      }}
+                    >
+                      Награды за задания выдаются только в Coins. DNA за
+                      задания не начисляется.
+                    </small>
+                  </div>
+                )}
+              </div>
+            ) : null}
 
             {dailyOpen ? (
               <div
