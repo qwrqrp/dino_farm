@@ -681,6 +681,7 @@ export default function GameApp() {
   const [withdrawWallet, setWithdrawWallet] = useState("");
   const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
   const [cancelingWithdrawalId, setCancelingWithdrawalId] = useState<string | null>(null);
+  const [withdrawalStatusSnapshot, setWithdrawalStatusSnapshot] = useState<Record<string, string>>({});
 
   const depositPreview = useMemo(() => {
     const normalized = Number(
@@ -2826,44 +2827,154 @@ export default function GameApp() {
     }
   };
 
-  const loadWithdrawals = async () => {
-    if (authMode !== "telegram") {
-      setToast("Вывод доступен только при входе через Telegram.");
+  const loadWithdrawals = async (
+    silent = false,
+  ) => {
+    if (
+      !silent &&
+      authMode !== "telegram"
+    ) {
+      setToast(
+        "Вывод DNA доступен только через Telegram.",
+      );
       return;
     }
 
-    setWithdrawalStatus("loading");
-
     try {
-      const response = await fetch("/api/withdrawals", {
-        cache: "no-store",
-        credentials: "include",
-      });
+      const response = await fetch(
+        "/api/withdrawals",
+        {
+          cache: "no-store",
+          credentials: "include",
+        },
+      );
 
-      const data = (await response.json()) as {
-        ok?: boolean;
-        error?: string;
-        message?: string;
-        config?: WithdrawalConfigResponse;
-        balance?: { dna: number };
-        withdrawals?: WithdrawalItem[];
-      };
+      const data =
+        (await response.json()) as {
+          ok?: boolean;
+          withdrawals?:
+            WithdrawalItem[];
+          config?: {
+            dnaToUsdt: number;
+            minDna: number;
+          };
+          error?: string;
+          message?: string;
+        };
 
-      if (!response.ok || !data.ok || !data.config) {
-        throw new Error(data.message || data.error || "Не удалось загрузить вывод");
+      if (!response.ok || !data.ok) {
+        throw new Error(
+          data.message ||
+            data.error ||
+            "Не удалось загрузить заявки",
+        );
       }
 
-      setWithdrawalConfig(data.config);
-      setWithdrawals(Array.isArray(data.withdrawals) ? data.withdrawals : []);
-      setState((previous) => ({
-        ...previous,
-        dna: data.balance?.dna ?? previous.dna,
-      }));
-      setWithdrawalStatus("ready");
+      const nextWithdrawals =
+        Array.isArray(
+          data.withdrawals,
+        )
+          ? data.withdrawals
+          : [];
+
+      if (
+        data.config &&
+        Number.isFinite(
+          data.config.dnaToUsdt,
+        ) &&
+        Number.isFinite(
+          data.config.minDna,
+        )
+      ) {
+        setWithdrawalConfig(
+          data.config,
+        );
+      }
+
+      setWithdrawals(
+        nextWithdrawals,
+      );
+
+      if (silent) {
+        for (const item of nextWithdrawals) {
+          const previousStatus =
+            withdrawalStatusSnapshot[
+              item.id
+            ];
+
+          if (
+            previousStatus &&
+            previousStatus !==
+              item.status
+          ) {
+            const meta =
+              withdrawalStatusMeta(
+                item.status,
+                item.note,
+              );
+
+            if (
+              item.status ===
+              "APPROVED"
+            ) {
+              setToast(
+                "🔄 Ваша заявка на вывод DNA одобрена.",
+              );
+            } else if (
+              item.status === "PAID"
+            ) {
+              setToast(
+                `✅ Выплата отправлена: ${item.usdtAmount.toFixed(
+                  8,
+                )} USDT`,
+              );
+            } else if (
+              item.status ===
+              "REJECTED"
+            ) {
+              setToast(
+                item.note ===
+                "CANCELED_BY_PLAYER"
+                  ? "↩️ Заявка отменена."
+                  : "↩️ Заявка отклонена. DNA возвращена на баланс.",
+              );
+            } else {
+              setToast(
+                `${meta.icon} Статус вывода: ${meta.label}`,
+              );
+            }
+          }
+        }
+      }
+
+      const snapshot =
+        nextWithdrawals.reduce<
+          Record<string, string>
+        >(
+          (result, item) => {
+            result[item.id] =
+              item.status;
+            return result;
+          },
+          {},
+        );
+
+      setWithdrawalStatusSnapshot(
+        snapshot,
+      );
     } catch (error) {
-      console.error("Failed to load withdrawals", error);
-      setWithdrawalStatus("error");
-      setToast(error instanceof Error ? error.message : "Ошибка загрузки вывода");
+      console.error(
+        "Failed to load withdrawals",
+        error,
+      );
+
+      if (!silent) {
+        setToast(
+          error instanceof Error
+            ? error.message
+            : "Ошибка загрузки заявок",
+        );
+      }
     }
   };
 
@@ -3040,6 +3151,14 @@ export default function GameApp() {
           ),
       );
 
+      setWithdrawalStatusSnapshot(
+        (previous) => ({
+          ...previous,
+          [data.withdrawal!.id]:
+            data.withdrawal!.status,
+        }),
+      );
+
       setState((previous) => ({
         ...previous,
         dna:
@@ -3072,6 +3191,85 @@ export default function GameApp() {
       );
     }
   };
+
+  useEffect(() => {
+    if (
+      !withdrawalOpen ||
+      authMode !== "telegram"
+    ) {
+      return;
+    }
+
+    const hasActiveWithdrawal =
+      withdrawals.some(
+        (item) =>
+          item.status === "PENDING" ||
+          item.status === "APPROVED",
+      );
+
+    if (!hasActiveWithdrawal) {
+      return;
+    }
+
+    let cancelled = false;
+    let running = false;
+
+    const poll = async () => {
+      if (
+        cancelled ||
+        running
+      ) {
+        return;
+      }
+
+      running = true;
+
+      try {
+        await loadWithdrawals(
+          true,
+        );
+      } finally {
+        running = false;
+      }
+    };
+
+    const firstTimer =
+      window.setTimeout(
+        () => {
+          void poll();
+        },
+        5000,
+      );
+
+    const interval =
+      window.setInterval(
+        () => {
+          void poll();
+        },
+        15000,
+      );
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(
+        firstTimer,
+      );
+      window.clearInterval(
+        interval,
+      );
+    };
+    // Polling restarts when the active set changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    withdrawalOpen,
+    authMode,
+    withdrawals
+      .map(
+        (item) =>
+          `${item.id}:${item.status}`,
+      )
+      .join("|"),
+  ]);
 
   const withdrawalPreview = withdrawalConfig
     ? Math.max(0, Number(withdrawDna) || 0) * withdrawalConfig.usdtPerDna
@@ -4927,6 +5125,26 @@ export default function GameApp() {
                   <p>
                     Загружаем операции...
                   </p>
+
+                  {withdrawals.some(
+                    (item) =>
+                      item.status ===
+                        "PENDING" ||
+                      item.status ===
+                        "APPROVED",
+                  ) ? (
+                    <p
+                      className="hint"
+                      style={{
+                        marginTop: 6,
+                      }}
+                    >
+                      🔄 Статус активной заявки
+                      обновляется автоматически
+                      примерно каждые 15 секунд.
+                    </p>
+                  ) : null}
+
                 ) : walletHistoryStatus ===
                   "error" ? (
                   <>
