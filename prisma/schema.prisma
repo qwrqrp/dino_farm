@@ -28,6 +28,7 @@ model User {
   dailyReward     DailyReward?
   gameStats       GameStats?
   taskClaims      TaskClaim[]
+  achievementClaims AchievementClaim[]
 }
 
 model Balance {
@@ -163,5 +164,19 @@ model TaskClaim {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, taskCode])
+  @@index([userId])
+}
+
+
+model AchievementClaim {
+  id              String   @id
+  userId          String
+  achievementCode String
+  rewardCoins     Float
+  claimedAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementCode])
   @@index([userId])
 }
