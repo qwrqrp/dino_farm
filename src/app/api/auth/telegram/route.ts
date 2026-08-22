@@ -201,8 +201,10 @@ export async function POST(request: Request) {
           },
         });
 
+        const existingUserId = dbUser.id;
+
         const dinoCount = await tx.dinosaur.count({
-          where: { userId: dbUser.id },
+          where: { userId: existingUserId },
         });
 
         if (dinoCount === 0) {
@@ -211,7 +213,7 @@ export async function POST(request: Request) {
               { length: STARTER_DINO_COUNT },
               (_, index) => ({
                 id: randomUUID(),
-                userId: dbUser.id,
+                userId: existingUserId,
                 level: STARTER_DINO_LEVEL,
                 boardSlot: index,
                 createdAt: now,
