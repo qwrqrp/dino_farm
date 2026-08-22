@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPlayerContext } from "@/lib/player";
@@ -106,6 +107,17 @@ async function mergeDino(userId: string, fromSlot: number, toSlot: number) {
       const upgraded = await tx.dinosaur.update({
         where: { id: target.id },
         data: { level: newLevel },
+      });
+
+      await tx.gameActionLog.create({
+        data: {
+          id: randomUUID(),
+          userId,
+          actionType: "MERGE_DINO",
+          sourceLevel: target.level,
+          resultLevel: newLevel,
+          coinsSpent: mergeFee,
+        },
       });
 
       const dinosaursAfterMerge = user.dinosaurs
