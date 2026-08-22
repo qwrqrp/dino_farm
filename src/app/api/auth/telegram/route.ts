@@ -13,6 +13,22 @@ export const dynamic = "force-dynamic";
 
 const INITIAL_NEST_CAPACITY = 250_000;
 const STARTER_DINO_LEVEL = 1;
+const REFERRER_BONUS_COINS = 500;
+const INVITEE_BONUS_COINS = 250;
+
+function parseReferralTelegramId(
+  startParam: string | undefined,
+  currentTelegramId: string,
+) {
+  if (!startParam?.startsWith("ref_")) return null;
+
+  const telegramId = startParam.slice(4);
+
+  if (!/^\d{1,20}$/.test(telegramId)) return null;
+  if (telegramId === currentTelegramId) return null;
+
+  return telegramId;
+}
 
 export async function GET() {
   return NextResponse.json({
@@ -59,14 +75,30 @@ export async function POST(request: Request) {
 
     const tg = validated.user;
     const telegramId = String(tg.id);
+    const referralTelegramId = parseReferralTelegramId(
+      validated.startParam,
+      telegramId,
+    );
     const now = new Date();
 
-    const user = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       let dbUser = await tx.user.findUnique({
         where: { telegramId },
       });
 
+      let referralApplied = false;
+      let referrerRewardCoins = 0;
+      let inviteeRewardCoins = 0;
+
       if (!dbUser) {
+        const referrer = referralTelegramId
+          ? await tx.user.findUnique({
+              where: { telegramId: referralTelegramId },
+            })
+          : null;
+
+        inviteeRewardCoins = referrer ? INVITEE_BONUS_COINS : 0;
+
         dbUser = await tx.user.create({
           data: {
             id: `tg_${telegramId}`,
@@ -79,8 +111,8 @@ export async function POST(request: Request) {
             balance: {
               create: {
                 id: `bal_${telegramId}`,
-                // Never copy demo balances to real users.
-                coins: 0,
+                // Real players start from zero unless they joined by referral.
+                coins: inviteeRewardCoins,
                 dna: 0,
               },
             },
@@ -102,6 +134,35 @@ export async function POST(request: Request) {
             },
           },
         });
+
+        if (referrer) {
+          await tx.balance.upsert({
+            where: { userId: referrer.id },
+            update: {
+              coins: { increment: REFERRER_BONUS_COINS },
+            },
+            create: {
+              id: `bal_${referralTelegramId}`,
+              userId: referrer.id,
+              coins: REFERRER_BONUS_COINS,
+              dna: 0,
+            },
+          });
+
+          await tx.referral.create({
+            data: {
+              id: randomUUID(),
+              inviterId: referrer.id,
+              invitedId: dbUser.id,
+              inviterRewardCoins: REFERRER_BONUS_COINS,
+              inviteeRewardCoins: INVITEE_BONUS_COINS,
+              createdAt: now,
+            },
+          });
+
+          referralApplied = true;
+          referrerRewardCoins = REFERRER_BONUS_COINS;
+        }
       } else {
         dbUser = await tx.user.update({
           where: { id: dbUser.id },
@@ -153,11 +214,16 @@ export async function POST(request: Request) {
         }
       }
 
-      return dbUser;
+      return {
+        user: dbUser,
+        referralApplied,
+        referrerRewardCoins,
+        inviteeRewardCoins,
+      };
     });
 
     const sessionToken = createSessionToken(
-      user.id,
+      result.user.id,
       telegramId,
       sessionSecret,
     );
@@ -165,13 +231,18 @@ export async function POST(request: Request) {
     const response = NextResponse.json({
       ok: true,
       user: {
-        id: user.id,
+        id: result.user.id,
         telegramId,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        username: result.user.username,
+        firstName: result.user.firstName,
+        lastName: result.user.lastName,
       },
       startParam: validated.startParam ?? null,
+      referral: {
+        applied: result.referralApplied,
+        referrerRewardCoins: result.referrerRewardCoins,
+        inviteeRewardCoins: result.inviteeRewardCoins,
+      },
     });
 
     response.cookies.set({
