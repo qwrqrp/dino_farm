@@ -246,6 +246,17 @@ async function purchaseDino(
           },
         });
 
+      await tx.gameActionLog.create({
+        data: {
+          id: randomUUID(),
+          userId,
+          actionType: "PURCHASE_DINO",
+          sourceLevel: null,
+          resultLevel: requestedLevel,
+          coinsSpent: price,
+        },
+      });
+
       const dinosaursAfterPurchase = [
         ...user.dinosaurs,
         {
