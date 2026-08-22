@@ -1166,8 +1166,8 @@ export default function GameApp() {
 
             <div className="stats-grid">
               <article className="stat-card"><span>За день</span><strong>{formatNumber(eggsPerHour * 24, 0)}</strong><small>яиц</small></article>
-              <article className="stat-card"><span>Coins / день</span><strong>{formatNumber(eggsPerHour * 24 * gameConfig.eggToCoin)}</strong><small>расчётно</small></article>
-              <article className="stat-card"><span>DNA / день</span><strong>{formatNumber(eggsPerHour * 24 * gameConfig.eggToDna)}</strong><small>расчётно</small></article>
+              <article className="stat-card"><span>Coins / день</span><strong>{formatNumber(eggsPerHour * 24 * gameConfig.eggToCoin, 2)}</strong><small>расчётно</small></article>
+              <article className="stat-card"><span>DNA / день</span><strong>{formatNumber(eggsPerHour * 24 * gameConfig.eggToDna, 2)}</strong><small>расчётно</small></article>
             </div>
           </div>
         )}
@@ -1357,23 +1357,20 @@ export default function GameApp() {
                   }}
                 >
                   {dinosaurs.map((dino) => {
-                    const eggsPerDay = dino.eggsPerHour * 24;
-                    const coinsPerDay =
-                      eggsPerDay * gameConfig.eggToCoin;
-                    const dnaPerDay =
-                      eggsPerDay * gameConfig.eggToDna;
+                    const periods = [
+                      { label: "1 день", days: 1 },
+                      { label: "30 дней", days: 30 },
+                      { label: "180 дней", days: 180 },
+                      { label: "1 год", days: 365 },
+                    ] as const;
 
                     return (
                       <article
                         key={dino.level}
                         style={{
-                          display: "grid",
-                          gridTemplateColumns: "54px minmax(0, 1fr)",
-                          gap: 10,
-                          alignItems: "center",
                           width: "100%",
                           minWidth: 0,
-                          padding: 10,
+                          padding: 11,
                           borderRadius: 14,
                           border:
                             dino.level === MAX_DINOSAUR_LEVEL
@@ -1387,106 +1384,117 @@ export default function GameApp() {
                       >
                         <div
                           style={{
-                            width: 54,
-                            height: 54,
-                            borderRadius: 14,
-                            display: "grid",
-                            placeItems: "center",
-                            background: "rgba(255,255,255,.05)",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: 10,
                           }}
                         >
-                          <div style={{ textAlign: "center" }}>
-                            <div style={{ fontSize: 19 }}>🦖</div>
-                            <strong style={{ fontSize: 11 }}>
-                              Lv.{dino.level}
-                            </strong>
-                          </div>
-                        </div>
-
-                        <div style={{ minWidth: 0 }}>
                           <div
                             style={{
                               display: "flex",
-                              justifyContent: "space-between",
-                              gap: 8,
-                              alignItems: "baseline",
-                            }}
-                          >
-                            <strong>
-                              {formatNumber(dino.eggsPerHour, 0)} яиц/ч
-                            </strong>
-                            <small style={{ opacity: .62 }}>
-                              {formatNumber(eggsPerDay, 0)}/день
-                            </small>
-                          </div>
-
-                          <div
-                            style={{
-                              marginTop: 7,
-                              display: "grid",
-                              gridTemplateColumns:
-                                "repeat(2, minmax(0, 1fr))",
-                              gap: 6,
+                              alignItems: "center",
+                              gap: 9,
+                              minWidth: 0,
                             }}
                           >
                             <div
                               style={{
-                                padding: "7px 8px",
-                                borderRadius: 10,
-                                background: "rgba(255,255,255,.04)",
-                                minWidth: 0,
+                                width: 46,
+                                height: 46,
+                                flex: "0 0 auto",
+                                borderRadius: 13,
+                                display: "grid",
+                                placeItems: "center",
+                                background: "rgba(255,255,255,.05)",
                               }}
                             >
-                              <small style={{ opacity: .62 }}>
-                                Coins / день
-                              </small>
-                              <div
-                                style={{
-                                  marginTop: 2,
-                                  fontWeight: 800,
-                                  overflowWrap: "anywhere",
-                                }}
-                              >
-                                {formatNumber(coinsPerDay, 2)}
+                              <div style={{ textAlign: "center" }}>
+                                <div style={{ fontSize: 17 }}>🦖</div>
+                                <strong style={{ fontSize: 10 }}>
+                                  Lv.{dino.level}
+                                </strong>
                               </div>
                             </div>
 
-                            <div
-                              style={{
-                                padding: "7px 8px",
-                                borderRadius: 10,
-                                background: "rgba(255,255,255,.04)",
-                                minWidth: 0,
-                              }}
-                            >
-                              <small style={{ opacity: .62 }}>
-                                DNA / день
-                              </small>
-                              <div
+                            <div style={{ minWidth: 0 }}>
+                              <strong
                                 style={{
-                                  marginTop: 2,
-                                  fontWeight: 800,
-                                  overflowWrap: "anywhere",
+                                  display: "block",
+                                  fontSize: 15,
                                 }}
                               >
-                                {formatNumber(dnaPerDay, 2)}
-                              </div>
+                                {formatNumber(dino.dailyCoins, 2)} Coins +{" "}
+                                {formatNumber(dino.dailyDna, 2)} DNA
+                              </strong>
+                              <small style={{ opacity: .62 }}>
+                                в сутки · {formatNumber(dino.eggsPerHour, 2)} яиц/ч
+                              </small>
                             </div>
                           </div>
-
-                          <small
-                            style={{
-                              display: "block",
-                              marginTop: 6,
-                              opacity: .52,
-                            }}
-                          >
-                            Эквивалент: {formatNumber(
-                              dino.levelOneCopies,
-                              0,
-                            )} × Lv.1
-                          </small>
                         </div>
+
+                        <div
+                          style={{
+                            marginTop: 9,
+                            display: "grid",
+                            gridTemplateColumns:
+                              "repeat(2, minmax(0, 1fr))",
+                            gap: 6,
+                          }}
+                        >
+                          {periods.map((period) => {
+                            const amount =
+                              dino.dailyCoins * period.days;
+
+                            return (
+                              <div
+                                key={period.days}
+                                style={{
+                                  padding: "8px 9px",
+                                  borderRadius: 10,
+                                  background: "rgba(255,255,255,.04)",
+                                  minWidth: 0,
+                                }}
+                              >
+                                <small
+                                  style={{
+                                    display: "block",
+                                    opacity: .60,
+                                  }}
+                                >
+                                  {period.label}
+                                </small>
+                                <strong
+                                  style={{
+                                    display: "block",
+                                    marginTop: 2,
+                                    fontSize: 13,
+                                    overflowWrap: "anywhere",
+                                  }}
+                                >
+                                  {formatNumber(amount, 2)}
+                                </strong>
+                                <small style={{ opacity: .72 }}>
+                                  Coins + столько же DNA
+                                </small>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <small
+                          style={{
+                            display: "block",
+                            marginTop: 7,
+                            opacity: .50,
+                          }}
+                        >
+                          Для merge: {formatNumber(
+                            dino.levelOneCopies,
+                            0,
+                          )} × Lv.1
+                        </small>
                       </article>
                     );
                   })}
@@ -1501,10 +1509,11 @@ export default function GameApp() {
                   }}
                 >
                   <small style={{ lineHeight: 1.45, opacity: .68 }}>
-                    Значения «за день» показывают теоретические 24 часа
-                    непрерывного производства. Фактический сбор ограничен
-                    вместимостью гнезда: когда оно заполнено, новые яйца
-                    больше не накапливаются до следующего сбора.
+                    Расчёты за 30, 180 и 365 дней сделаны без реинвестирования:
+                    дневной доход × количество дней. Coins и DNA начисляются
+                    в одинаковом количестве. Это потенциальный доход при
+                    непрерывном производстве; если гнездо переполнено, новые
+                    яйца не накапливаются до следующего сбора.
                   </small>
                 </div>
               </div>
