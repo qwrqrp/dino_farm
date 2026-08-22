@@ -23,6 +23,7 @@ model User {
 
   referralsSent   Referral[] @relation("ReferralInviter")
   referralSource  Referral?  @relation("ReferralInvited")
+  shopPurchases   ShopPurchase[]
 }
 
 model Balance {
@@ -68,4 +69,34 @@ model Referral {
   invited User @relation("ReferralInvited", fields: [invitedId], references: [id], onDelete: Cascade)
 
   @@index([inviterId])
+}
+
+model ShopItem {
+  id          String   @id
+  code        String   @unique
+  title       String
+  description String?
+  priceCoins  Float
+  kind        String
+  amount      Float
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  purchases ShopPurchase[]
+}
+
+model ShopPurchase {
+  id         String   @id
+  userId     String
+  shopItemId String
+  priceCoins Float
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shopItem ShopItem @relation(fields: [shopItemId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([shopItemId])
 }
