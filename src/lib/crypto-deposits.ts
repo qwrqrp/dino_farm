@@ -391,6 +391,57 @@ export async function getProviderPayment(
   )) as NowPaymentPayload;
 }
 
+export async function getMinimumUsdForMethod(
+  method: DepositMethod,
+) {
+  try {
+    const params = new URLSearchParams({
+      currency_from: "usd",
+      currency_to:
+        method.providerCurrency,
+      fiat_equivalent: "usd",
+      is_fixed_rate: "False",
+      is_fee_paid_by_user: "False",
+    });
+
+    const data = (await nowPaymentsFetch(
+      `/min-amount?${params.toString()}`,
+    )) as {
+      min_amount?: unknown;
+      fiat_equivalent?: unknown;
+    };
+
+    const minAmount =
+      Number(data.min_amount);
+
+    if (
+      !Number.isFinite(minAmount) ||
+      minAmount <= 0
+    ) {
+      return null;
+    }
+
+    // currency_from=usd means min_amount is already USD.
+    // Round UP to cents, then add a small safety buffer because
+    // NOWPayments minimums can change with rates/network fees.
+    const roundedUp =
+      Math.ceil(minAmount * 100) / 100;
+
+    return Math.ceil(
+      roundedUp * 1.02 * 100,
+    ) / 100;
+  } catch (error) {
+    console.error(
+      `Failed to load minimum amount for ${method.code}:`,
+      error,
+    );
+
+    // Do not block all payments if the preflight endpoint
+    // is temporarily unavailable. Provider POST remains final.
+    return null;
+  }
+}
+
 function normalizeProviderStatus(
   value: unknown,
 ) {
