@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPlayerContext } from "@/lib/player";
@@ -77,6 +78,20 @@ export async function POST() {
         data: {
           currentEggs: 0,
           lastProductionAt: now,
+        },
+      });
+
+      await tx.gameStats.upsert({
+        where: { userId: player.userId },
+        update: {
+          totalEggsCollected: {
+            increment: collectibleEggs,
+          },
+        },
+        create: {
+          id: randomUUID(),
+          userId: player.userId,
+          totalEggsCollected: collectibleEggs,
         },
       });
 
