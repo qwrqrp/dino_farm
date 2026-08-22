@@ -49,6 +49,17 @@ async function buyItem(userId: string, itemCode: string) {
         throw new Error("ITEM_NOT_FOUND");
       }
 
+      // DNA is a value-bearing currency. It is earned in-game and may be
+      // withdrawn/converted to money through a separate server-side flow,
+      // so it must never be purchasable in the shop.
+      if (item.kind === "DNA") {
+        throw new Error("DNA_NOT_FOR_SALE");
+      }
+
+      if (!(["DINO", "NEST_CAPACITY"] as const).includes(item.kind as "DINO" | "NEST_CAPACITY")) {
+        throw new Error("UNSUPPORTED_ITEM_KIND");
+      }
+
       const user = await tx.user.findUnique({
         where: { id: userId },
         include: {
@@ -117,13 +128,6 @@ async function buyItem(userId: string, itemCode: string) {
           where: { userId },
           data: {
             capacity: { increment: item.amount },
-          },
-        });
-      } else if (item.kind === "DNA") {
-        await tx.balance.update({
-          where: { userId },
-          data: {
-            dna: { increment: item.amount },
           },
         });
       } else {
@@ -226,6 +230,7 @@ export async function POST(request: Request) {
         PLAYER_STATE_NOT_FOUND: 404,
         INSUFFICIENT_COINS: 400,
         BOARD_FULL: 409,
+        DNA_NOT_FOR_SALE: 400,
         UNSUPPORTED_ITEM_KIND: 400,
       };
 
@@ -234,6 +239,7 @@ export async function POST(request: Request) {
         PLAYER_STATE_NOT_FOUND: "Данные игрока не найдены",
         INSUFFICIENT_COINS: "Недостаточно Coins",
         BOARD_FULL: "Игровая доска заполнена",
+        DNA_NOT_FOR_SALE: "DNA нельзя покупать. Эта валюта зарабатывается в игре и предназначена для вывода в деньги.",
         UNSUPPORTED_ITEM_KIND: "Этот товар пока не поддерживается",
       };
 
