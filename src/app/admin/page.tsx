@@ -349,6 +349,13 @@ export default function AdminPage() {
   const [depositSearch, setDepositSearch] = useState("");
   const [depositSyncingId, setDepositSyncingId] = useState<string | null>(null);
   const [depositProviderInfo, setDepositProviderInfo] = useState<Record<string, string>>({});
+  const [depositSyncResult, setDepositSyncResult] = useState<Record<string, {
+    status: string;
+    credited: boolean;
+    creditedCoins: number;
+    actuallyPaid: string;
+    payCurrency: string;
+  }>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -704,6 +711,17 @@ export default function AdminPage() {
       const actuallyPaid =
         data.provider?.actuallyPaid;
 
+      const payCurrency =
+        String(
+          data.provider?.payCurrency ??
+            item.payCurrency,
+        ).toUpperCase();
+
+      await loadAdminDeposits(
+        depositFilter,
+        depositSearch,
+      );
+
       setDepositProviderInfo(
         (previous) => ({
           ...previous,
@@ -711,12 +729,33 @@ export default function AdminPage() {
             `NOWPayments: ${providerStatus}${
               actuallyPaid !== null &&
               actuallyPaid !== undefined
-                ? ` · получено ${actuallyPaid} ${String(
-                    data.provider?.payCurrency ??
-                      item.payCurrency,
-                  ).toUpperCase()}`
+                ? ` · получено ${actuallyPaid} ${payCurrency}`
                 : ""
             }`,
+        }),
+      );
+
+      setDepositSyncResult(
+        (previous) => ({
+          ...previous,
+          [item.id]: {
+            status: providerStatus,
+            credited:
+              Boolean(data.credited),
+            creditedCoins:
+              Number(
+                data.deposit
+                  ?.creditedCoins ?? 0,
+              ),
+            actuallyPaid:
+              actuallyPaid === null ||
+              actuallyPaid === undefined
+                ? "—"
+                : String(
+                    actuallyPaid,
+                  ),
+            payCurrency,
+          },
         }),
       );
 
@@ -744,11 +783,6 @@ export default function AdminPage() {
           `NOWPayments сейчас возвращает статус: ${providerStatus}`,
         );
       }
-
-      await loadAdminDeposits(
-        depositFilter,
-        depositSearch,
-      );
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -1581,6 +1615,89 @@ export default function AdminPage() {
                                 item.id
                               ]
                             }
+                          </div>
+                        ) : null}
+
+                        {depositSyncResult[
+                          item.id
+                        ] ? (
+                          <div
+                            style={{
+                              marginTop: 10,
+                              padding: 12,
+                              borderRadius: 12,
+                              border:
+                                "1px solid rgba(255,255,255,.12)",
+                              background:
+                                "rgba(255,255,255,.04)",
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontWeight: 800,
+                                marginBottom: 8,
+                              }}
+                            >
+                              🔎 Результат синхронизации
+                            </div>
+
+                            <div
+                              style={{
+                                display: "grid",
+                                gap: 6,
+                                fontSize: 14,
+                              }}
+                            >
+                              <div>
+                                Статус NOWPayments:{" "}
+                                <b>
+                                  {
+                                    depositSyncResult[
+                                      item.id
+                                    ].status
+                                  }
+                                </b>
+                              </div>
+
+                              <div>
+                                Фактически получено:{" "}
+                                <b>
+                                  {
+                                    depositSyncResult[
+                                      item.id
+                                    ].actuallyPaid
+                                  }{" "}
+                                  {
+                                    depositSyncResult[
+                                      item.id
+                                    ].payCurrency
+                                  }
+                                </b>
+                              </div>
+
+                              <div>
+                                Coins:{" "}
+                                <b>
+                                  {depositSyncResult[
+                                    item.id
+                                  ].credited
+                                    ? `начислено +${depositSyncResult[
+                                        item.id
+                                      ].creditedCoins.toLocaleString(
+                                        "ru-RU",
+                                        {
+                                          maximumFractionDigits: 0,
+                                        },
+                                      )}`
+                                    : depositSyncResult[
+                                        item.id
+                                      ].status.toUpperCase() ===
+                                      "FINISHED"
+                                      ? `уже было зачислено ранее`
+                                      : "не начислено"}
+                                </b>
+                              </div>
+                            </div>
                           </div>
                         ) : null}
 
