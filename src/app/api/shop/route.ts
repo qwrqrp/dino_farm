@@ -9,7 +9,7 @@ export async function GET() {
     const items = await prisma.shopItem.findMany({
       where: {
         active: true,
-        kind: { in: ["DINO", "NEST_CAPACITY"] },
+        kind: "DINO",
       },
       orderBy: [{ sortOrder: "asc" }, { priceCoins: "asc" }],
       select: {
