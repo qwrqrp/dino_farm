@@ -94,6 +94,78 @@ type WithdrawalItem = {
   updatedAt: string;
 };
 
+function withdrawalStatusMeta(status: string) {
+  if (status === "PENDING") {
+    return {
+      label: "Ожидает проверки",
+      icon: "⏳",
+      background: "rgba(255, 193, 7, .14)",
+      border: "rgba(255, 193, 7, .30)",
+      color: "#ffd76a",
+    };
+  }
+
+  if (status === "APPROVED") {
+    return {
+      label: "Одобрено",
+      icon: "✅",
+      background: "rgba(84, 180, 255, .14)",
+      border: "rgba(84, 180, 255, .30)",
+      color: "#9bd8ff",
+    };
+  }
+
+  if (status === "PAID") {
+    return {
+      label: "Оплачено",
+      icon: "💸",
+      background: "rgba(129, 230, 96, .14)",
+      border: "rgba(129, 230, 96, .30)",
+      color: "#a8f58e",
+    };
+  }
+
+  if (status === "REJECTED") {
+    return {
+      label: "Отклонено · DNA возвращена",
+      icon: "↩️",
+      background: "rgba(255, 92, 108, .14)",
+      border: "rgba(255, 92, 108, .30)",
+      color: "#ffabb4",
+    };
+  }
+
+  return {
+    label: status,
+    icon: "•",
+    background: "rgba(255,255,255,.08)",
+    border: "rgba(255,255,255,.14)",
+    color: "#dce7df",
+  };
+}
+
+function formatWithdrawalDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Дата неизвестна";
+  }
+
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function shortWallet(value: string) {
+  if (!value) return "—";
+  if (value.length <= 18) return value;
+  return `${value.slice(0, 8)}…${value.slice(-6)}`;
+}
+
 const EMPTY_BOARD: Slot[] = Array(16).fill(null);
 
 const INITIAL_STATE: SaveState = {
@@ -1073,24 +1145,248 @@ export default function GameApp() {
                     </button>
 
                     <div
-                      className="card"
                       style={{
-                        marginTop: 16,
+                        marginTop: 18,
                         width: "100%",
                         minWidth: 0,
-                        flexDirection: "column",
-                        alignItems: "flex-start",
                       }}
                     >
-                      <strong>Последние заявки</strong>
+                      <div
+                        className="section-head"
+                        style={{
+                          width: "100%",
+                          minWidth: 0,
+                          alignItems: "center",
+                          marginBottom: 10,
+                        }}
+                      >
+                        <div>
+                          <span className="eyebrow">HISTORY</span>
+                          <h3 style={{ margin: "2px 0 0" }}>История выплат</h3>
+                        </div>
+
+                        <button
+                          className="coin-button"
+                          onClick={() => void loadWithdrawals()}
+                          disabled={withdrawalStatus === "loading"}
+                          style={{ flex: "0 0 auto" }}
+                        >
+                          ↻
+                        </button>
+                      </div>
+
                       {withdrawals.length === 0 ? (
-                        <p>Заявок пока нет.</p>
+                        <div
+                          className="card"
+                          style={{
+                            width: "100%",
+                            minWidth: 0,
+                            flexDirection: "column",
+                            alignItems: "flex-start",
+                          }}
+                        >
+                          <strong>Заявок пока нет</strong>
+                          <small style={{ lineHeight: 1.45 }}>
+                            После первого вывода заявка появится здесь вместе со статусом и суммой.
+                          </small>
+                        </div>
                       ) : (
-                        withdrawals.slice(0, 8).map((item) => (
-                          <p key={item.id}>
-                            {item.dnaAmount} DNA → {item.usdtAmount.toFixed(8)} USDT · {item.network} · <strong>{item.status}</strong>
-                          </p>
-                        ))
+                        <div
+                          style={{
+                            display: "grid",
+                            gap: 10,
+                            width: "100%",
+                            minWidth: 0,
+                          }}
+                        >
+                          {withdrawals.slice(0, 12).map((item) => {
+                            const status = withdrawalStatusMeta(item.status);
+
+                            return (
+                              <article
+                                key={item.id}
+                                style={{
+                                  width: "100%",
+                                  minWidth: 0,
+                                  borderRadius: 16,
+                                  border: "1px solid rgba(255,255,255,.08)",
+                                  background: "rgba(5, 22, 15, .55)",
+                                  padding: 12,
+                                  overflow: "hidden",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "flex-start",
+                                    gap: 10,
+                                    width: "100%",
+                                  }}
+                                >
+                                  <div style={{ minWidth: 0 }}>
+                                    <div
+                                      style={{
+                                        fontSize: 18,
+                                        fontWeight: 900,
+                                        lineHeight: 1.2,
+                                      }}
+                                    >
+                                      {item.usdtAmount.toFixed(8)} USDT
+                                    </div>
+                                    <small style={{ opacity: .72 }}>
+                                      {formatNumber(item.dnaAmount, 4)} DNA
+                                    </small>
+                                  </div>
+
+                                  <span
+                                    style={{
+                                      flex: "0 0 auto",
+                                      maxWidth: "58%",
+                                      padding: "6px 8px",
+                                      borderRadius: 999,
+                                      border: `1px solid ${status.border}`,
+                                      background: status.background,
+                                      color: status.color,
+                                      fontSize: 11,
+                                      fontWeight: 900,
+                                      lineHeight: 1.2,
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    {status.icon} {status.label}
+                                  </span>
+                                </div>
+
+                                <div
+                                  style={{
+                                    marginTop: 10,
+                                    display: "grid",
+                                    gridTemplateColumns: "1fr 1fr",
+                                    gap: 8,
+                                    width: "100%",
+                                    minWidth: 0,
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      padding: 9,
+                                      borderRadius: 12,
+                                      background: "rgba(255,255,255,.04)",
+                                      minWidth: 0,
+                                    }}
+                                  >
+                                    <small style={{ opacity: .65 }}>Сеть</small>
+                                    <div
+                                      style={{
+                                        marginTop: 3,
+                                        fontWeight: 800,
+                                        overflowWrap: "anywhere",
+                                      }}
+                                    >
+                                      {item.network}
+                                    </div>
+                                  </div>
+
+                                  <div
+                                    style={{
+                                      padding: 9,
+                                      borderRadius: 12,
+                                      background: "rgba(255,255,255,.04)",
+                                      minWidth: 0,
+                                    }}
+                                  >
+                                    <small style={{ opacity: .65 }}>Дата</small>
+                                    <div
+                                      style={{
+                                        marginTop: 3,
+                                        fontWeight: 700,
+                                        fontSize: 12,
+                                        lineHeight: 1.35,
+                                      }}
+                                    >
+                                      {formatWithdrawalDate(item.createdAt)}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div
+                                  style={{
+                                    marginTop: 8,
+                                    padding: 9,
+                                    borderRadius: 12,
+                                    background: "rgba(255,255,255,.04)",
+                                    minWidth: 0,
+                                  }}
+                                >
+                                  <small style={{ opacity: .65 }}>Кошелёк</small>
+                                  <div
+                                    style={{
+                                      marginTop: 3,
+                                      fontFamily: "monospace",
+                                      fontSize: 12,
+                                      overflowWrap: "anywhere",
+                                    }}
+                                  >
+                                    {shortWallet(item.walletAddress)}
+                                  </div>
+                                </div>
+
+                                {item.status === "PENDING" ? (
+                                  <small
+                                    style={{
+                                      display: "block",
+                                      marginTop: 9,
+                                      opacity: .72,
+                                      lineHeight: 1.4,
+                                    }}
+                                  >
+                                    Заявка ожидает проверки администратором. DNA уже зарезервирована.
+                                  </small>
+                                ) : null}
+
+                                {item.status === "APPROVED" ? (
+                                  <small
+                                    style={{
+                                      display: "block",
+                                      marginTop: 9,
+                                      color: status.color,
+                                      lineHeight: 1.4,
+                                    }}
+                                  >
+                                    Заявка одобрена и ожидает отправки USDT.
+                                  </small>
+                                ) : null}
+
+                                {item.status === "PAID" ? (
+                                  <small
+                                    style={{
+                                      display: "block",
+                                      marginTop: 9,
+                                      color: status.color,
+                                      lineHeight: 1.4,
+                                    }}
+                                  >
+                                    Выплата отмечена администратором как отправленная.
+                                  </small>
+                                ) : null}
+
+                                {item.status === "REJECTED" ? (
+                                  <small
+                                    style={{
+                                      display: "block",
+                                      marginTop: 9,
+                                      color: status.color,
+                                      lineHeight: 1.4,
+                                    }}
+                                  >
+                                    Заявка отклонена. Зарезервированная DNA возвращена на игровой баланс.
+                                  </small>
+                                ) : null}
+                              </article>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
                   </>
