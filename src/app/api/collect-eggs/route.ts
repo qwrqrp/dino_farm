@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getPlayerContext } from "@/lib/player";
 import { dinosaurs, gameConfig } from "@/lib/game-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const DEMO_USER_ID = "demo-user-1";
 
 export async function GET() {
   return NextResponse.json({
@@ -17,9 +16,11 @@ export async function GET() {
 
 export async function POST() {
   try {
+    const player = await getPlayerContext();
+
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({
-        where: { id: DEMO_USER_ID },
+        where: { id: player.userId },
         include: {
           balance: true,
           nest: true,
@@ -28,7 +29,7 @@ export async function POST() {
       });
 
       if (!user || !user.balance || !user.nest) {
-        throw new Error("DEMO_STATE_NOT_FOUND");
+        throw new Error("PLAYER_STATE_NOT_FOUND");
       }
 
       const now = new Date();
@@ -64,7 +65,7 @@ export async function POST() {
       const dnaReward = collectibleEggs * gameConfig.eggToDna;
 
       const balance = await tx.balance.update({
-        where: { userId: DEMO_USER_ID },
+        where: { userId: player.userId },
         data: {
           coins: { increment: coinsReward },
           dna: { increment: dnaReward },
@@ -72,7 +73,7 @@ export async function POST() {
       });
 
       const nest = await tx.nest.update({
-        where: { userId: DEMO_USER_ID },
+        where: { userId: player.userId },
         data: {
           currentEggs: 0,
           lastProductionAt: now,
@@ -109,9 +110,9 @@ export async function POST() {
   } catch (error) {
     console.error("POST /api/collect-eggs failed:", error);
 
-    if (error instanceof Error && error.message === "DEMO_STATE_NOT_FOUND") {
+    if (error instanceof Error && error.message === "PLAYER_STATE_NOT_FOUND") {
       return NextResponse.json(
-        { ok: false, error: "Demo user state not found" },
+        { ok: false, error: "Player state not found" },
         { status: 404 },
       );
     }
