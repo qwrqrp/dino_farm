@@ -101,6 +101,50 @@ type TaskItem = {
   claimable: boolean;
 };
 
+type PlayerProfile = {
+  player: {
+    username: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    createdAt: string;
+  };
+  balance: {
+    coins: number;
+    dna: number;
+  };
+  farm: {
+    dinosaurCount: number;
+    maxLevel: number;
+    levelCounts: number[];
+    eggsPerHour: number;
+    dailyCoins: number;
+    dailyDna: number;
+    equivalentFarmCostCoins: number;
+    nestCapacity: number;
+    currentEggs: number;
+    totalEggsCollected: number;
+  };
+  progress: {
+    tasksCompleted: number;
+    dailyStreak: number;
+    dailyClaims: number;
+    dailyCoinsEarned: number;
+  };
+  referrals: {
+    invited: number;
+    coinsEarned: number;
+  };
+  withdrawals: {
+    total: number;
+    pending: number;
+    approved: number;
+    paid: number;
+    rejected: number;
+    paidUsdt: number;
+    totalDnaRequested: number;
+  };
+};
+
 type WithdrawalConfigResponse = {
   currency: string;
   usdtPerDna: number;
@@ -266,6 +310,9 @@ export default function GameApp() {
   const [claimingTaskCode, setClaimingTaskCode] = useState<string | null>(null);
   const [levelsOpen, setLevelsOpen] = useState(false);
   const [profitPlanOpen, setProfitPlanOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileStatus, setProfileStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [withdrawalOpen, setWithdrawalOpen] = useState(false);
   const [withdrawalStatus, setWithdrawalStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [withdrawalConfig, setWithdrawalConfig] = useState<WithdrawalConfigResponse | null>(null);
@@ -843,6 +890,69 @@ export default function GameApp() {
     }
   };
 
+  const loadProfile = async () => {
+    if (authMode !== "telegram") {
+      setToast("Профиль доступен только через Telegram.");
+      return;
+    }
+
+    setProfileStatus("loading");
+
+    try {
+      const response = await fetch("/api/profile", {
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      const data = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+      } & Partial<PlayerProfile>;
+
+      if (
+        !response.ok ||
+        !data.ok ||
+        !data.player ||
+        !data.farm ||
+        !data.progress ||
+        !data.referrals ||
+        !data.withdrawals ||
+        !data.balance
+      ) {
+        throw new Error(
+          data.message || data.error || "Не удалось загрузить профиль",
+        );
+      }
+
+      setProfile(data as PlayerProfile);
+      setState((previous) => ({
+        ...previous,
+        coins: data.balance?.coins ?? previous.coins,
+        dna: data.balance?.dna ?? previous.dna,
+      }));
+      setProfileStatus("ready");
+    } catch (error) {
+      console.error("Failed to load profile", error);
+      setProfileStatus("error");
+      setToast(
+        error instanceof Error
+          ? error.message
+          : "Ошибка загрузки профиля",
+      );
+    }
+  };
+
+  const openProfile = () => {
+    if (authMode !== "telegram") {
+      setToast("Профиль доступен только через Telegram.");
+      return;
+    }
+
+    setProfileOpen(true);
+    void loadProfile();
+  };
+
   const loadTasks = async () => {
     if (authMode !== "telegram") {
       setToast("Задания доступны только через Telegram.");
@@ -1280,6 +1390,7 @@ export default function GameApp() {
               </div>
             ) : (
               <div className="menu-list">
+              <button onClick={openProfile}><span>👤 Мой профиль</span><b>СТАТИСТИКА</b></button>
                 {shopItems.map((item) => (
                   <button
                     key={item.id}
@@ -1365,6 +1476,473 @@ export default function GameApp() {
               <button onClick={() => setToast("Рулетка отключена до server-side реализации")}><span>🎰 Рулетка</span><b>OFF</b></button>
               <button onClick={() => window.location.reload()}><span>🔄 Перезагрузить из Neon</span><b>›</b></button>
             </div>
+
+            {profileOpen ? (
+              <div
+                className="form-card"
+                style={{
+                  marginTop: 16,
+                  borderRadius: 20,
+                  background: "#10281e",
+                  border: "1px solid rgba(255,255,255,.08)",
+                  padding: 14,
+                  width: "100%",
+                  minWidth: 0,
+                }}
+              >
+                <div
+                  className="section-head"
+                  style={{
+                    width: "100%",
+                    minWidth: 0,
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <span className="eyebrow">PLAYER PROFILE</span>
+                    <h2>👤 Мой профиль</h2>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 6,
+                      flex: "0 0 auto",
+                    }}
+                  >
+                    <button
+                      className="coin-button"
+                      onClick={() => void loadProfile()}
+                    >
+                      ↻
+                    </button>
+                    <button
+                      className="coin-button"
+                      onClick={() => setProfileOpen(false)}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+
+                {profileStatus === "loading" ||
+                profileStatus === "idle" ? (
+                  <p>Загружаем профиль...</p>
+                ) : profileStatus === "error" ? (
+                  <>
+                    <p>Не удалось загрузить профиль.</p>
+                    <button
+                      className="primary"
+                      onClick={() => void loadProfile()}
+                    >
+                      ПОВТОРИТЬ
+                    </button>
+                  </>
+                ) : profile ? (
+                  <>
+                    <div
+                      style={{
+                        padding: 12,
+                        marginTop: 8,
+                        borderRadius: 14,
+                        background: "rgba(167,243,72,.08)",
+                        border: "1px solid rgba(167,243,72,.18)",
+                      }}
+                    >
+                      <strong
+                        style={{
+                          display: "block",
+                          fontSize: 18,
+                          overflowWrap: "anywhere",
+                        }}
+                      >
+                        {[
+                          profile.player.firstName,
+                          profile.player.lastName,
+                        ]
+                          .filter(Boolean)
+                          .join(" ") ||
+                          (profile.player.username
+                            ? `@${profile.player.username}`
+                            : "Игрок")}
+                      </strong>
+
+                      {profile.player.username ? (
+                        <small
+                          style={{
+                            display: "block",
+                            marginTop: 3,
+                            opacity: .68,
+                          }}
+                        >
+                          @{profile.player.username}
+                        </small>
+                      ) : null}
+
+                      <small
+                        style={{
+                          display: "block",
+                          marginTop: 5,
+                          opacity: .62,
+                        }}
+                      >
+                        В игре с{" "}
+                        {new Date(
+                          profile.player.createdAt,
+                        ).toLocaleDateString("ru-RU")}
+                      </small>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                        gap: 8,
+                        marginTop: 10,
+                      }}
+                    >
+                      {[
+                        {
+                          label: "Coins",
+                          value: formatNumber(
+                            profile.balance.coins,
+                            2,
+                          ),
+                        },
+                        {
+                          label: "DNA",
+                          value: formatNumber(
+                            profile.balance.dna,
+                            4,
+                          ),
+                        },
+                        {
+                          label: "Динозавров",
+                          value: profile.farm.dinosaurCount,
+                        },
+                        {
+                          label: "Макс. уровень",
+                          value: `Lv.${profile.farm.maxLevel}`,
+                        },
+                        {
+                          label: "Coins / день",
+                          value: formatNumber(
+                            profile.farm.dailyCoins,
+                            2,
+                          ),
+                        },
+                        {
+                          label: "DNA / день",
+                          value: formatNumber(
+                            profile.farm.dailyDna,
+                            2,
+                          ),
+                        },
+                      ].map((item) => (
+                        <div
+                          key={item.label}
+                          style={{
+                            padding: 10,
+                            borderRadius: 12,
+                            background: "rgba(255,255,255,.04)",
+                            minWidth: 0,
+                          }}
+                        >
+                          <small style={{ opacity: .62 }}>
+                            {item.label}
+                          </small>
+                          <strong
+                            style={{
+                              display: "block",
+                              marginTop: 3,
+                              overflowWrap: "anywhere",
+                            }}
+                          >
+                            {item.value}
+                          </strong>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 10,
+                        padding: 12,
+                        borderRadius: 14,
+                        background: "rgba(255,255,255,.04)",
+                      }}
+                    >
+                      <strong>🌱 Ферма</strong>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gap: 7,
+                          marginTop: 9,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            gap: 10,
+                          }}
+                        >
+                          <small style={{ opacity: .66 }}>
+                            Производство
+                          </small>
+                          <strong>
+                            {formatNumber(
+                              profile.farm.eggsPerHour,
+                              2,
+                            )}{" "}
+                            яиц/ч
+                          </strong>
+                        </div>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            gap: 10,
+                          }}
+                        >
+                          <small style={{ opacity: .66 }}>
+                            Собрано яиц всего
+                          </small>
+                          <strong>
+                            {formatNumber(
+                              profile.farm.totalEggsCollected,
+                              0,
+                            )}
+                          </strong>
+                        </div>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            gap: 10,
+                          }}
+                        >
+                          <small style={{ opacity: .66 }}>
+                            Вместимость гнезда
+                          </small>
+                          <strong>
+                            {formatNumber(
+                              profile.farm.nestCapacity,
+                              0,
+                            )}
+                          </strong>
+                        </div>
+
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            gap: 10,
+                          }}
+                        >
+                          <small style={{ opacity: .66 }}>
+                            Экв. стоимость фермы
+                          </small>
+                          <strong>
+                            {formatNumber(
+                              profile.farm
+                                .equivalentFarmCostCoins,
+                              0,
+                            )}{" "}
+                            Coins
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 10,
+                        padding: 12,
+                        borderRadius: 14,
+                        background: "rgba(255,255,255,.04)",
+                      }}
+                    >
+                      <strong>🏅 Прогресс</strong>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(2, minmax(0, 1fr))",
+                          gap: 7,
+                          marginTop: 9,
+                        }}
+                      >
+                        <div>
+                          <small style={{ opacity: .62 }}>
+                            Заданий выполнено
+                          </small>
+                          <strong
+                            style={{
+                              display: "block",
+                              marginTop: 2,
+                            }}
+                          >
+                            {profile.progress.tasksCompleted}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <small style={{ opacity: .62 }}>
+                            Daily streak
+                          </small>
+                          <strong
+                            style={{
+                              display: "block",
+                              marginTop: 2,
+                            }}
+                          >
+                            {profile.progress.dailyStreak}/7
+                          </strong>
+                        </div>
+
+                        <div>
+                          <small style={{ opacity: .62 }}>
+                            Daily получено
+                          </small>
+                          <strong
+                            style={{
+                              display: "block",
+                              marginTop: 2,
+                            }}
+                          >
+                            {profile.progress.dailyClaims}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <small style={{ opacity: .62 }}>
+                            Coins из Daily
+                          </small>
+                          <strong
+                            style={{
+                              display: "block",
+                              marginTop: 2,
+                            }}
+                          >
+                            {formatNumber(
+                              profile.progress.dailyCoinsEarned,
+                              0,
+                            )}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 10,
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(2, minmax(0, 1fr))",
+                        gap: 8,
+                      }}
+                    >
+                      <div
+                        style={{
+                          padding: 12,
+                          borderRadius: 14,
+                          background: "rgba(255,255,255,.04)",
+                        }}
+                      >
+                        <strong>👥 Рефералы</strong>
+                        <div
+                          style={{
+                            marginTop: 8,
+                            fontSize: 20,
+                            fontWeight: 900,
+                          }}
+                        >
+                          {profile.referrals.invited}
+                        </div>
+                        <small style={{ opacity: .64 }}>
+                          приглашено ·{" "}
+                          {formatNumber(
+                            profile.referrals.coinsEarned,
+                            0,
+                          )}{" "}
+                          Coins
+                        </small>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: 12,
+                          borderRadius: 14,
+                          background: "rgba(255,255,255,.04)",
+                        }}
+                      >
+                        <strong>💸 Выплаты</strong>
+                        <div
+                          style={{
+                            marginTop: 8,
+                            fontSize: 20,
+                            fontWeight: 900,
+                          }}
+                        >
+                          {profile.withdrawals.paid}
+                        </div>
+                        <small style={{ opacity: .64 }}>
+                          оплачено ·{" "}
+                          {profile.withdrawals.paidUsdt.toFixed(8)}{" "}
+                          USDT
+                        </small>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 10,
+                        padding: 12,
+                        borderRadius: 14,
+                        background: "rgba(255,255,255,.04)",
+                      }}
+                    >
+                      <strong>🦖 Коллекция</strong>
+
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 6,
+                          marginTop: 9,
+                        }}
+                      >
+                        {profile.farm.levelCounts.map(
+                          (count, index) =>
+                            count > 0 ? (
+                              <span
+                                key={index}
+                                style={{
+                                  padding: "7px 9px",
+                                  borderRadius: 999,
+                                  border:
+                                    "1px solid rgba(167,243,72,.18)",
+                                  background:
+                                    "rgba(167,243,72,.08)",
+                                  fontSize: 12,
+                                  fontWeight: 800,
+                                }}
+                              >
+                                Lv.{index + 1} × {count}
+                              </span>
+                            ) : null,
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
 
             {profitPlanOpen ? (
               <div
