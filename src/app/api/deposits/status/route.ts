@@ -4,7 +4,7 @@ import { getPlayerContext } from "@/lib/player";
 import {
   getProviderPayment,
   serializeDeposit,
-  syncDepositFromProvider,
+  syncKnownDepositFromProvider,
 } from "@/lib/crypto-deposits";
 
 export const runtime = "nodejs";
@@ -90,7 +90,8 @@ export async function GET(
       );
 
     const result =
-      await syncDepositFromProvider(
+      await syncKnownDepositFromProvider(
+        deposit.id,
         providerPayment,
       );
 
@@ -137,13 +138,23 @@ export async function GET(
       error,
     );
 
+    const code =
+      error instanceof Error
+        ? error.message
+        : "";
+
     return NextResponse.json(
       {
         ok: false,
         error:
           "FAILED_TO_CHECK_DEPOSIT",
         message:
-          "Не удалось проверить платёж. Попробуйте ещё раз через несколько секунд.",
+          code === "DEPOSIT_PRICE_MISMATCH"
+            ? "NOWPayments вернул Finished, но сумма платежа не совпала с созданным заказом."
+            : code ===
+                "DEPOSIT_PAYMENT_ID_MISMATCH"
+              ? "Payment ID от NOWPayments не совпал с сохранённым платежом."
+              : "Не удалось синхронизировать статус платежа. Нажмите «Проверить сейчас» ещё раз.",
       },
       { status: 500 },
     );
