@@ -64,6 +64,16 @@ type ReferralResponse = {
   }>;
 };
 
+type ShopItem = {
+  id: string;
+  code: string;
+  title: string;
+  description: string | null;
+  priceCoins: number;
+  kind: string;
+  amount: number;
+};
+
 const EMPTY_BOARD: Slot[] = Array(16).fill(null);
 
 const INITIAL_STATE: SaveState = {
@@ -94,7 +104,6 @@ export default function GameApp() {
   const [tab, setTab] = useState<Tab>("nest");
   const [state, setState] = useState<SaveState>(INITIAL_STATE);
   const [selected, setSelected] = useState<number | null>(null);
-  const [depositUsd, setDepositUsd] = useState(10);
   const [toast, setToast] = useState("Загрузка данных фермы...");
   const [playerName, setPlayerName] = useState("Dino Farmer");
   const [isLoading, setIsLoading] = useState(true);
@@ -105,6 +114,9 @@ export default function GameApp() {
   const [authMode, setAuthMode] = useState<"telegram" | "demo" | "unknown">("unknown");
   const [referralInfo, setReferralInfo] = useState<ReferralResponse | null>(null);
   const [referralStatus, setReferralStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [shopItems, setShopItems] = useState<ShopItem[]>([]);
+  const [shopStatus, setShopStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [buyingItemCode, setBuyingItemCode] = useState<string | null>(null);
 
   const eggsPerHour = useMemo(() => {
     return state.board.reduce((sum: number, level) => {
@@ -486,8 +498,6 @@ export default function GameApp() {
     if (!inviteLink) {
       if (authMode !== "telegram") {
         setToast("Откройте игру через Telegram, чтобы получить реферальную ссылку");
-      } else if (referralInfo?.reason === "BOT_USERNAME_NOT_CONFIGURED") {
-        setToast("Нужно добавить TELEGRAM_BOT_USERNAME в Vercel");
       } else {
         setToast("Реферальная ссылка пока недоступна");
       }
@@ -514,6 +524,104 @@ export default function GameApp() {
     }
   };
 
+  useEffect(() => {
+    if (tab !== "shop") return;
+
+    let cancelled = false;
+
+    async function loadShop() {
+      setShopStatus("loading");
+
+      try {
+        const response = await fetch("/api/shop", {
+          cache: "no-store",
+          credentials: "include",
+        });
+
+        const data = (await response.json()) as {
+          ok?: boolean;
+          items?: ShopItem[];
+          error?: string;
+        };
+
+        if (!response.ok || !data.ok || !Array.isArray(data.items)) {
+          throw new Error(data.error || "Не удалось загрузить магазин");
+        }
+
+        if (cancelled) return;
+        setShopItems(data.items);
+        setShopStatus("ready");
+      } catch (error) {
+        console.error("Failed to load shop", error);
+        if (cancelled) return;
+        setShopStatus("error");
+        setToast(error instanceof Error ? error.message : "Ошибка магазина");
+      }
+    }
+
+    void loadShop();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tab]);
+
+  const buyShopItem = async (item: ShopItem) => {
+    if (buyingItemCode) return;
+
+    setBuyingItemCode(item.code);
+    setToast(`Покупаем «${item.title}» на сервере...`);
+
+    try {
+      const response = await fetch("/api/shop/buy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemCode: item.code }),
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      const data = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+        item?: {
+          code: string;
+          title: string;
+          kind: string;
+          amount: number;
+          priceCoins: number;
+        };
+        balance?: { coins: number; dna: number };
+        nest?: { capacity: number };
+        board?: Slot[];
+      };
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || data.error || "Не удалось совершить покупку");
+      }
+
+      setState((previous) => ({
+        ...previous,
+        coins: data.balance?.coins ?? previous.coins,
+        dna: data.balance?.dna ?? previous.dna,
+        capacity: data.nest?.capacity ?? previous.capacity,
+        board:
+          Array.isArray(data.board) && data.board.length === 16
+            ? data.board
+            : previous.board,
+      }));
+
+      setSelected(null);
+      setToast(`«${data.item?.title ?? item.title}» куплено за ${formatNumber(data.item?.priceCoins ?? item.priceCoins, 0)} Coins ✓`);
+    } catch (error) {
+      console.error("Failed to buy shop item", error);
+      setToast(error instanceof Error ? error.message : "Ошибка покупки");
+    } finally {
+      setBuyingItemCode(null);
+    }
+  };
+
   const exchangeDna = () => {
     if (state.dna < 1) return setToast("Недостаточно DNA");
 
@@ -529,8 +637,6 @@ export default function GameApp() {
   };
 
   const progress = Math.min(100, (state.eggs / Math.max(1, state.capacity)) * 100);
-  const depositCoins = depositUsd * gameConfig.usdToCoins;
-  const depositBonus = depositCoins * gameConfig.firstDepositBonus;
 
   return (
     <main className="app-shell">
@@ -602,15 +708,43 @@ export default function GameApp() {
 
         {tab === "shop" && (
           <div className="screen">
-            <span className="eyebrow">SHOP</span><h2>Пополнение</h2>
-            <div className="card form-card">
-              <label htmlFor="deposit">Сумма USD</label>
-              <input id="deposit" type="number" min={3} max={20000} value={depositUsd} onChange={(e) => setDepositUsd(Math.max(3, Math.min(20000, Number(e.target.value) || 3)))} />
-              <div className="quote"><span>Coins</span><strong>{formatNumber(depositCoins, 0)}</strong></div>
-              <div className="quote bonus"><span>Первый бонус +20%</span><strong>+{formatNumber(depositBonus, 0)}</strong></div>
-              <div className="quote total"><span>Итого</span><strong>{formatNumber(depositCoins + depositBonus, 0)}</strong></div>
-              <button className="primary" onClick={() => setToast("Платежи будут подключены после server-side игровых операций")}>ПРОДОЛЖИТЬ</button>
-              <small>Demo: реальные платежи отключены.</small>
+            <span className="eyebrow">SHOP</span><h2>Магазин</h2>
+            <p className="hint">Цены загружаются из Neon. Клиент отправляет только код товара — стоимость и эффект проверяются на сервере.</p>
+
+            {shopStatus === "loading" || shopStatus === "idle" ? (
+              <div className="card"><strong>Загружаем товары...</strong></div>
+            ) : shopStatus === "error" ? (
+              <div className="card">
+                <strong>Не удалось загрузить магазин</strong>
+                <p>Обновите страницу и попробуйте ещё раз.</p>
+                <button className="primary" onClick={() => window.location.reload()}>ПОВТОРИТЬ</button>
+              </div>
+            ) : (
+              <div className="menu-list">
+                {shopItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => buyShopItem(item)}
+                    disabled={Boolean(buyingItemCode) || isLoading || Boolean(loadError)}
+                  >
+                    <span>
+                      <strong>{item.kind === "DINO" ? "🦕 " : item.kind === "DNA" ? "🧬 " : "🪺 "}{item.title}</strong>
+                      <small>{item.description || "Игровой товар"}</small>
+                    </span>
+                    <b>
+                      {buyingItemCode === item.code
+                        ? "⏳"
+                        : `🪙 ${formatNumber(item.priceCoins, 0)}`}
+                    </b>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="card">
+              <strong>Ваш баланс</strong>
+              <p>🪙 {formatNumber(state.coins, 0)} Coins · 🧬 {formatNumber(state.dna, 0)} DNA</p>
+              <p>🪺 Вместимость: {formatNumber(state.capacity, 0)} яиц</p>
             </div>
           </div>
         )}
@@ -631,7 +765,7 @@ export default function GameApp() {
                   <p><code>{referralInfo.inviteLink}</code></p>
                 </>
               ) : (
-                <p>Реферальная ссылка ещё не настроена. Проверьте TELEGRAM_BOT_USERNAME в Vercel.</p>
+                <p>Реферальная ссылка пока недоступна. Попробуйте открыть игру через Telegram ещё раз.</p>
               )}
               <button
                 className="primary"
