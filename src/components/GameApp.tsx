@@ -961,8 +961,19 @@ export default function GameApp() {
             </div>
 
             {withdrawalOpen ? (
-              <div className="card" style={{ marginTop: 16 }}>
-                <div className="section-head">
+              <div
+                className="form-card"
+                style={{
+                  marginTop: 16,
+                  borderRadius: 20,
+                  background: "#10281e",
+                  border: "1px solid rgba(255,255,255,.08)",
+                  padding: 14,
+                  width: "100%",
+                  minWidth: 0,
+                }}
+              >
+                <div className="section-head" style={{ width: "100%", minWidth: 0 }}>
                   <div>
                     <span className="eyebrow">WITHDRAWAL</span>
                     <h2>DNA → USDT</h2>
@@ -970,6 +981,7 @@ export default function GameApp() {
                   <button
                     className="coin-button"
                     onClick={() => setWithdrawalOpen(false)}
+                    style={{ flex: "0 0 auto" }}
                   >
                     ✕
                   </button>
@@ -996,7 +1008,7 @@ export default function GameApp() {
                       Доступно: <strong>{formatNumber(state.dna, 4)} DNA</strong>
                     </p>
 
-                    <label style={{ display: "grid", gap: 6, marginTop: 12 }}>
+                    <label style={{ display: "grid", gap: 6, marginTop: 12, width: "100%", minWidth: 0 }}>
                       <span>Количество DNA</span>
                       <input
                         type="number"
@@ -1004,11 +1016,11 @@ export default function GameApp() {
                         step="0.0001"
                         value={withdrawDna}
                         onChange={(event) => setWithdrawDna(event.target.value)}
-                        style={{ width: "100%", padding: 12, borderRadius: 12 }}
+                        style={{ width: "100%", minWidth: 0, padding: 12, borderRadius: 12 }}
                       />
                     </label>
 
-                    <label style={{ display: "grid", gap: 6, marginTop: 12 }}>
+                    <label style={{ display: "grid", gap: 6, marginTop: 12, width: "100%", minWidth: 0 }}>
                       <span>Сеть USDT</span>
                       <input
                         type="text"
@@ -1016,11 +1028,11 @@ export default function GameApp() {
                         onChange={(event) => setWithdrawNetwork(event.target.value)}
                         placeholder="Например: TON / TRC20 / BEP20"
                         maxLength={32}
-                        style={{ width: "100%", padding: 12, borderRadius: 12 }}
+                        style={{ width: "100%", minWidth: 0, padding: 12, borderRadius: 12 }}
                       />
                     </label>
 
-                    <label style={{ display: "grid", gap: 6, marginTop: 12 }}>
+                    <label style={{ display: "grid", gap: 6, marginTop: 12, width: "100%", minWidth: 0 }}>
                       <span>Адрес USDT-кошелька</span>
                       <input
                         type="text"
@@ -1029,14 +1041,25 @@ export default function GameApp() {
                         placeholder="Введите адрес кошелька"
                         maxLength={180}
                         autoComplete="off"
-                        style={{ width: "100%", padding: 12, borderRadius: 12 }}
+                        style={{ width: "100%", minWidth: 0, padding: 12, borderRadius: 12 }}
                       />
                     </label>
 
-                    <div className="card" style={{ marginTop: 12 }}>
+                    <div
+                      className="card"
+                      style={{
+                        marginTop: 12,
+                        width: "100%",
+                        minWidth: 0,
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                      }}
+                    >
                       <strong>К получению</strong>
-                      <p>{withdrawalPreview.toFixed(8)} USDT</p>
-                      <small>
+                      <p style={{ margin: "4px 0", fontSize: 22, fontWeight: 900 }}>
+                        {withdrawalPreview.toFixed(8)} USDT
+                      </p>
+                      <small style={{ lineHeight: 1.4 }}>
                         Заявка проходит ручную проверку. DNA резервируется сразу после создания заявки.
                       </small>
                     </div>
@@ -1049,7 +1072,16 @@ export default function GameApp() {
                       {isSubmittingWithdrawal ? "⏳ СОЗДАЁМ..." : "💸 СОЗДАТЬ ЗАЯВКУ"}
                     </button>
 
-                    <div className="card" style={{ marginTop: 16 }}>
+                    <div
+                      className="card"
+                      style={{
+                        marginTop: 16,
+                        width: "100%",
+                        minWidth: 0,
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                      }}
+                    >
                       <strong>Последние заявки</strong>
                       {withdrawals.length === 0 ? (
                         <p>Заявок пока нет.</p>
