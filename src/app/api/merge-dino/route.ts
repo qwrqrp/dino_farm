@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPlayerContext } from "@/lib/player";
-import { MAX_DINOSAUR_LEVEL } from "@/lib/game-config";
+import { MAX_DINOSAUR_LEVEL, getMergeFeeCoins } from "@/lib/game-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,13 +50,14 @@ async function mergeDino(userId: string, fromSlot: number, toSlot: number) {
       const user = await tx.user.findUnique({
         where: { id: userId },
         include: {
+          balance: true,
           dinosaurs: {
             orderBy: [{ boardSlot: "asc" }, { createdAt: "asc" }],
           },
         },
       });
 
-      if (!user) {
+      if (!user || !user.balance) {
         throw new Error("PLAYER_STATE_NOT_FOUND");
       }
 
@@ -80,6 +81,23 @@ async function mergeDino(userId: string, fromSlot: number, toSlot: number) {
       }
 
       const newLevel = target.level + 1;
+      const mergeFee = getMergeFeeCoins(newLevel);
+
+      if (user.balance.coins < mergeFee) {
+        throw new Error(`INSUFFICIENT_COINS:${mergeFee}`);
+      }
+
+      const balance = await tx.balance.update({
+        where: { userId },
+        data: {
+          coins: {
+            decrement: mergeFee,
+          },
+        },
+        select: {
+          coins: true,
+        },
+      });
 
       await tx.dinosaur.delete({
         where: { id: source.id },
@@ -107,6 +125,8 @@ async function mergeDino(userId: string, fromSlot: number, toSlot: number) {
           boardSlot: upgraded.boardSlot,
         },
         removedDinosaurId: source.id,
+        mergeFee,
+        coins: balance.coins,
         board: buildBoard(dinosaursAfterMerge),
       };
     },
@@ -174,6 +194,21 @@ export async function POST(request: Request) {
     }
 
     if (error instanceof Error) {
+      if (error.message.startsWith("INSUFFICIENT_COINS:")) {
+        const fee = Number(
+          error.message.slice("INSUFFICIENT_COINS:".length),
+        );
+
+        return NextResponse.json(
+          {
+            ok: false,
+            error: "INSUFFICIENT_COINS",
+            message: `Недостаточно Coins для merge. Нужно ${Number.isFinite(fee) ? fee : 0} Coins.`,
+          },
+          { status: 400 },
+        );
+      }
+
       const messages: Record<string, { status: number; message: string }> = {
         PLAYER_STATE_NOT_FOUND: { status: 404, message: "Состояние игрока не найдено" },
         DINO_NOT_FOUND: { status: 404, message: "Динозавр в выбранной клетке не найден" },
