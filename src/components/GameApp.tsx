@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { dinosaurs, formatNumber, gameConfig } from "@/lib/game-config";
+import { dinosaurs, formatNumber, gameConfig, MAX_DINOSAUR_LEVEL } from "@/lib/game-config";
 
 type Tab = "nest" | "game" | "shop" | "friends" | "menu";
 type Slot = number | null;
@@ -264,6 +264,7 @@ export default function GameApp() {
   const [tasksStatus, setTasksStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [claimingTaskCode, setClaimingTaskCode] = useState<string | null>(null);
+  const [levelsOpen, setLevelsOpen] = useState(false);
   const [withdrawalOpen, setWithdrawalOpen] = useState(false);
   const [withdrawalStatus, setWithdrawalStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [withdrawalConfig, setWithdrawalConfig] = useState<WithdrawalConfigResponse | null>(null);
@@ -547,7 +548,7 @@ export default function GameApp() {
       return;
     }
 
-    if (level >= 16) {
+    if (level >= MAX_DINOSAUR_LEVEL) {
       setSelected(null);
       setToast("Level 16 — максимальный уровень");
       return;
@@ -1292,12 +1293,222 @@ export default function GameApp() {
 
             <div className="menu-list">
               <button onClick={openDnaWithdrawal}><span>🧬 Вывод DNA</span><b>→ USDT</b></button>
-              <button onClick={() => setToast("Profit Plan будет вынесен в отдельный калькулятор")}><span>📊 Profit Plan</span><b>›</b></button>
+              <button onClick={() => setLevelsOpen((value) => !value)}><span>📈 Уровни динозавров</span><b>Lv.1–16</b></button>
               <button onClick={openDailyReward}><span>🎁 Ежедневный бонус</span><b>{dailyInfo?.canClaim ? "ЗАБРАТЬ" : "›"}</b></button>
               <button onClick={openTasks}><span>✅ Задания</span><b>{tasks.some((task) => task.claimable) ? "ЗАБРАТЬ" : "›"}</b></button>
               <button onClick={() => setToast("Рулетка отключена до server-side реализации")}><span>🎰 Рулетка</span><b>OFF</b></button>
               <button onClick={() => window.location.reload()}><span>🔄 Перезагрузить из Neon</span><b>›</b></button>
             </div>
+
+            {levelsOpen ? (
+              <div
+                className="form-card"
+                style={{
+                  marginTop: 16,
+                  borderRadius: 20,
+                  background: "#10281e",
+                  border: "1px solid rgba(255,255,255,.08)",
+                  padding: 14,
+                  width: "100%",
+                  minWidth: 0,
+                }}
+              >
+                <div
+                  className="section-head"
+                  style={{
+                    width: "100%",
+                    minWidth: 0,
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <span className="eyebrow">DINO ECONOMY</span>
+                    <h2>📈 Lv.1–Lv.{MAX_DINOSAUR_LEVEL}</h2>
+                  </div>
+
+                  <button
+                    className="coin-button"
+                    onClick={() => setLevelsOpen(false)}
+                    style={{ flex: "0 0 auto" }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <p
+                  style={{
+                    margin: "4px 0 12px",
+                    opacity: .72,
+                    fontSize: 12,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  Два одинаковых динозавра объединяются в один следующего
+                  уровня. Производство рассчитывается на сервере по этой же
+                  таблице.
+                </p>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gap: 7,
+                    width: "100%",
+                    minWidth: 0,
+                  }}
+                >
+                  {dinosaurs.map((dino) => {
+                    const eggsPerDay = dino.eggsPerHour * 24;
+                    const coinsPerDay =
+                      eggsPerDay * gameConfig.eggToCoin;
+                    const dnaPerDay =
+                      eggsPerDay * gameConfig.eggToDna;
+
+                    return (
+                      <article
+                        key={dino.level}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "54px minmax(0, 1fr)",
+                          gap: 10,
+                          alignItems: "center",
+                          width: "100%",
+                          minWidth: 0,
+                          padding: 10,
+                          borderRadius: 14,
+                          border:
+                            dino.level === MAX_DINOSAUR_LEVEL
+                              ? "1px solid rgba(167,243,72,.45)"
+                              : "1px solid rgba(255,255,255,.07)",
+                          background:
+                            dino.level === MAX_DINOSAUR_LEVEL
+                              ? "rgba(167,243,72,.08)"
+                              : "rgba(255,255,255,.035)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 54,
+                            height: 54,
+                            borderRadius: 14,
+                            display: "grid",
+                            placeItems: "center",
+                            background: "rgba(255,255,255,.05)",
+                          }}
+                        >
+                          <div style={{ textAlign: "center" }}>
+                            <div style={{ fontSize: 19 }}>🦖</div>
+                            <strong style={{ fontSize: 11 }}>
+                              Lv.{dino.level}
+                            </strong>
+                          </div>
+                        </div>
+
+                        <div style={{ minWidth: 0 }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              gap: 8,
+                              alignItems: "baseline",
+                            }}
+                          >
+                            <strong>
+                              {formatNumber(dino.eggsPerHour, 0)} яиц/ч
+                            </strong>
+                            <small style={{ opacity: .62 }}>
+                              {formatNumber(eggsPerDay, 0)}/день
+                            </small>
+                          </div>
+
+                          <div
+                            style={{
+                              marginTop: 7,
+                              display: "grid",
+                              gridTemplateColumns:
+                                "repeat(2, minmax(0, 1fr))",
+                              gap: 6,
+                            }}
+                          >
+                            <div
+                              style={{
+                                padding: "7px 8px",
+                                borderRadius: 10,
+                                background: "rgba(255,255,255,.04)",
+                                minWidth: 0,
+                              }}
+                            >
+                              <small style={{ opacity: .62 }}>
+                                Coins / день
+                              </small>
+                              <div
+                                style={{
+                                  marginTop: 2,
+                                  fontWeight: 800,
+                                  overflowWrap: "anywhere",
+                                }}
+                              >
+                                {formatNumber(coinsPerDay, 2)}
+                              </div>
+                            </div>
+
+                            <div
+                              style={{
+                                padding: "7px 8px",
+                                borderRadius: 10,
+                                background: "rgba(255,255,255,.04)",
+                                minWidth: 0,
+                              }}
+                            >
+                              <small style={{ opacity: .62 }}>
+                                DNA / день
+                              </small>
+                              <div
+                                style={{
+                                  marginTop: 2,
+                                  fontWeight: 800,
+                                  overflowWrap: "anywhere",
+                                }}
+                              >
+                                {formatNumber(dnaPerDay, 2)}
+                              </div>
+                            </div>
+                          </div>
+
+                          <small
+                            style={{
+                              display: "block",
+                              marginTop: 6,
+                              opacity: .52,
+                            }}
+                          >
+                            Эквивалент: {formatNumber(
+                              dino.levelOneCopies,
+                              0,
+                            )} × Lv.1
+                          </small>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: 12,
+                    padding: 10,
+                    borderRadius: 12,
+                    background: "rgba(255,255,255,.04)",
+                  }}
+                >
+                  <small style={{ lineHeight: 1.45, opacity: .68 }}>
+                    Значения «за день» показывают теоретические 24 часа
+                    непрерывного производства. Фактический сбор ограничен
+                    вместимостью гнезда: когда оно заполнено, новые яйца
+                    больше не накапливаются до следующего сбора.
+                  </small>
+                </div>
+              </div>
+            ) : null}
 
             {tasksOpen ? (
               <div
