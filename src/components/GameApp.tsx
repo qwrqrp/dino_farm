@@ -61,6 +61,7 @@ export default function GameApp() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isCollecting, setIsCollecting] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
+  const [isMerging, setIsMerging] = useState(false);
 
   const eggsPerHour = useMemo(() => {
     return state.board.reduce((sum: number, level) => {
@@ -258,7 +259,9 @@ export default function GameApp() {
     }
   };
 
-  const chooseSlot = (index: number) => {
+  const chooseSlot = async (index: number) => {
+    if (isMerging) return;
+
     const level = state.board[index];
 
     if (!level) {
@@ -268,6 +271,7 @@ export default function GameApp() {
 
     if (selected === null) {
       setSelected(index);
+      setToast(`Выбран динозавр Level ${level}. Выберите второго такого же уровня.`);
       return;
     }
 
@@ -278,19 +282,67 @@ export default function GameApp() {
 
     const firstLevel = state.board[selected];
 
-    if (firstLevel === level && level < 16) {
-      setState((s) => {
-        const board = [...s.board];
-        board[selected] = null;
-        board[index] = level + 1;
-        return { ...s, board };
-      });
-
-      setSelected(null);
-      setToast(`MERGE локально! Получен динозавр Level ${level + 1}`);
-    } else {
+    if (firstLevel !== level) {
       setSelected(index);
       setToast("Для merge выберите двух динозавров одинакового уровня");
+      return;
+    }
+
+    if (level >= 16) {
+      setSelected(null);
+      setToast("Level 16 — максимальный уровень");
+      return;
+    }
+
+    const fromSlot = selected;
+    const toSlot = index;
+
+    setIsMerging(true);
+    setToast("Объединяем динозавров на сервере...");
+
+    try {
+      const response = await fetch("/api/merge-dino", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fromSlot, toSlot }),
+        cache: "no-store",
+      });
+
+      const raw = await response.text();
+      const contentType = response.headers.get("content-type") ?? "";
+
+      if (!contentType.includes("application/json")) {
+        throw new Error(`API вернул не JSON (HTTP ${response.status})`);
+      }
+
+      const data = JSON.parse(raw) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+        merged?: { id: string; level: number; boardSlot: number | null };
+        board?: Slot[];
+      };
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || data.error || "Не удалось выполнить merge");
+      }
+
+      setState((previous) => ({
+        ...previous,
+        board:
+          Array.isArray(data.board) && data.board.length === 16
+            ? data.board
+            : previous.board,
+      }));
+
+      setSelected(null);
+      setToast(`MERGE ✓ Получен динозавр Level ${data.merged?.level ?? level + 1}`);
+    } catch (error) {
+      console.error("Failed to merge dinosaur", error);
+      setSelected(null);
+      setToast(error instanceof Error ? error.message : "Ошибка merge");
+    } finally {
+      setIsMerging(false);
     }
   };
 
@@ -354,7 +406,7 @@ export default function GameApp() {
               <div><span className="eyebrow">MERGE FARM</span><h2>Игровая доска</h2></div>
               <button className="coin-button" onClick={buyDino} disabled={isLoading || isBuying || Boolean(loadError)}>{isBuying ? "⏳ ПОКУПКА..." : "+ 🦕 100"}</button>
             </div>
-            <p className="hint">Данные загружены из Neon. Сбор яиц и покупка динозавра сохраняются на сервере; merge пока локальный.</p>
+            <p className="hint">Данные загружены из Neon. Сбор, покупка и merge сохраняются в Neon через сервер.</p>
             <div className="board">
               {state.board.map((level, index) => (
                 <button
@@ -362,7 +414,7 @@ export default function GameApp() {
                   className={`slot ${selected === index ? "selected" : ""}`}
                   onClick={() => chooseSlot(index)}
                   aria-label={level ? `Динозавр уровня ${level}` : "Пустая клетка"}
-                  disabled={isLoading || Boolean(loadError)}
+                  disabled={isLoading || isMerging || Boolean(loadError)}
                 >
                   {level ? <><span className="dino">🦖</span><b>Lv.{level}</b></> : <span className="plus">+</span>}
                 </button>
