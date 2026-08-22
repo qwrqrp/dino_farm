@@ -68,6 +68,30 @@ type GameHistorySummary = {
   merges: number;
 };
 
+type AdminPlayerItem = {
+  id: string;
+  telegramId: string | null;
+  username: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  createdAt: string;
+  coins: number;
+  dna: number;
+  dinosaurCount: number;
+  maxLevel: number;
+  nestCapacity: number;
+  currentEggs: number;
+  totalEggsCollected: number;
+  tasksCompleted: number;
+  achievements: number;
+  dailyStreak: number;
+  dailyClaims: number;
+  referrals: number;
+  withdrawals: number;
+  paidWithdrawals: number;
+  paidUsdt: number;
+};
+
 const EMPTY_SUMMARY: Summary = {
   pending: 0,
   approved: 0,
@@ -125,6 +149,22 @@ function gameActionLabel(actionType: string) {
   return actionType;
 }
 
+function adminPlayerName(player: AdminPlayerItem) {
+  const fullName = [
+    player.firstName,
+    player.lastName,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  if (fullName) return fullName;
+  if (player.username) {
+    return `@${player.username}`;
+  }
+  return "Игрок";
+}
+
 export default function AdminPage() {
   const [key, setKey] = useState("");
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -134,7 +174,7 @@ export default function AdminPage() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [summary, setSummary] = useState<Summary>(EMPTY_SUMMARY);
   const [filter, setFilter] = useState("ACTIVE");
-  const [section, setSection] = useState<"withdrawals" | "leaderboard" | "history">("withdrawals");
+  const [section, setSection] = useState<"withdrawals" | "leaderboard" | "history" | "players">("withdrawals");
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardPlayer[]>([]);
   const [leaderboardTotalPlayers, setLeaderboardTotalPlayers] = useState(0);
@@ -146,6 +186,10 @@ export default function AdminPage() {
     purchases: 0,
     merges: 0,
   });
+  const [playersLoading, setPlayersLoading] = useState(false);
+  const [players, setPlayers] = useState<AdminPlayerItem[]>([]);
+  const [playersTotal, setPlayersTotal] = useState(0);
+  const [playerSearch, setPlayerSearch] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -285,6 +329,61 @@ export default function AdminPage() {
       }
     },
     [historyFilter],
+  );
+
+  const loadPlayers = useCallback(
+    async (search = playerSearch) => {
+      setPlayersLoading(true);
+      setMessage("");
+
+      try {
+        const normalized = search.trim();
+
+        const response = await fetch(
+          `/api/admin/players?q=${encodeURIComponent(
+            normalized,
+          )}`,
+          {
+            cache: "no-store",
+            credentials: "include",
+          },
+        );
+
+        if (response.status === 401) {
+          setAuthenticated(false);
+          setPlayers([]);
+          return;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          throw new Error(
+            data.message ||
+              data.error ||
+              "Ошибка загрузки игроков",
+          );
+        }
+
+        setPlayers(
+          Array.isArray(data.players)
+            ? data.players
+            : [],
+        );
+        setPlayersTotal(
+          data.totalPlayers ?? 0,
+        );
+      } catch (error) {
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Ошибка загрузки игроков",
+        );
+      } finally {
+        setPlayersLoading(false);
+      }
+    },
+    [playerSearch],
   );
 
   const login = async () => {
@@ -457,7 +556,9 @@ export default function AdminPage() {
                 ? "Таблица лидеров"
                 : section === "history"
                   ? "История игры"
-                  : "Заявки на вывод"}
+                  : section === "players"
+                    ? "Игроки"
+                    : "Заявки на вывод"}
             </h1>
           </div>
 
@@ -468,7 +569,9 @@ export default function AdminPage() {
                   ? void loadLeaderboard()
                   : section === "history"
                     ? void loadHistory()
-                    : void load()
+                    : section === "players"
+                      ? void loadPlayers()
+                      : void load()
               }
               style={styles.secondaryButton}
             >
@@ -532,6 +635,23 @@ export default function AdminPage() {
             }}
           >
             📜 История
+          </button>
+
+
+          <button
+            onClick={() => {
+              setSection("players");
+              setPlayerSearch("");
+              void loadPlayers("");
+            }}
+            style={{
+              ...styles.filterButton,
+              ...(section === "players"
+                ? styles.filterButtonActive
+                : {}),
+            }}
+          >
+            👥 Игроки
           </button>
         </section>
 
@@ -1025,6 +1145,305 @@ export default function AdminPage() {
               История записывается только с момента установки
               этого обновления. Старые покупки и merge до установки
               здесь не появятся.
+            </div>
+          </>
+        ) : null}
+
+
+        {section === "players" ? (
+          <>
+            <section style={styles.summaryGrid}>
+              <div style={styles.summaryCard}>
+                <span style={styles.muted}>
+                  Всего Telegram-игроков
+                </span>
+                <b style={styles.summaryNumber}>
+                  {playersTotal}
+                </b>
+              </div>
+
+              <div style={styles.summaryCard}>
+                <span style={styles.muted}>
+                  Показано
+                </span>
+                <b style={styles.summaryNumber}>
+                  {players.length}
+                </b>
+              </div>
+            </section>
+
+            <section style={styles.card}>
+              <div style={styles.playerName}>
+                🔎 Найти игрока
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  marginTop: 10,
+                  flexWrap: "wrap",
+                }}
+              >
+                <input
+                  value={playerSearch}
+                  onChange={(event) =>
+                    setPlayerSearch(
+                      event.target.value,
+                    )
+                  }
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      void loadPlayers(
+                        playerSearch,
+                      );
+                    }
+                  }}
+                  placeholder="Имя, username или Telegram ID"
+                  style={{
+                    ...styles.input,
+                    flex: "1 1 240px",
+                    marginTop: 0,
+                  }}
+                />
+
+                <button
+                  onClick={() =>
+                    void loadPlayers(
+                      playerSearch,
+                    )
+                  }
+                  style={styles.primaryButton}
+                >
+                  НАЙТИ
+                </button>
+
+                {playerSearch ? (
+                  <button
+                    onClick={() => {
+                      setPlayerSearch("");
+                      void loadPlayers("");
+                    }}
+                    style={styles.secondaryButton}
+                  >
+                    СБРОСИТЬ
+                  </button>
+                ) : null}
+              </div>
+            </section>
+
+            {message ? (
+              <div style={styles.notice}>
+                {message}
+              </div>
+            ) : null}
+
+            {playersLoading ? (
+              <div style={styles.empty}>
+                Загружаем игроков...
+              </div>
+            ) : players.length === 0 ? (
+              <div style={styles.empty}>
+                Игроки не найдены.
+              </div>
+            ) : (
+              <section style={styles.list}>
+                {players.map((player) => (
+                  <article
+                    key={player.id}
+                    style={styles.card}
+                  >
+                    <div style={styles.cardTop}>
+                      <div>
+                        <div
+                          style={
+                            styles.playerName
+                          }
+                        >
+                          👤{" "}
+                          {adminPlayerName(
+                            player,
+                          )}
+                        </div>
+
+                        <div
+                          style={styles.muted}
+                        >
+                          {player.username
+                            ? `@${player.username} · `
+                            : ""}
+                          Telegram ID:{" "}
+                          {player.telegramId ||
+                            "—"}
+                        </div>
+                      </div>
+
+                      <span
+                        style={{
+                          ...styles.status,
+                          ...styles.approved,
+                        }}
+                      >
+                        Lv.{player.maxLevel}
+                      </span>
+                    </div>
+
+                    <div
+                      style={styles.amountRow}
+                    >
+                      <div>
+                        <span
+                          style={styles.muted}
+                        >
+                          Coins
+                        </span>
+                        <div
+                          style={styles.amount}
+                        >
+                          {player.coins.toLocaleString(
+                            "ru-RU",
+                            {
+                              maximumFractionDigits: 2,
+                            },
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span
+                          style={styles.muted}
+                        >
+                          DNA
+                        </span>
+                        <div
+                          style={styles.amount}
+                        >
+                          {player.dna.toLocaleString(
+                            "ru-RU",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            },
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style={styles.detailGrid}
+                    >
+                      <div>
+                        <span style={styles.muted}>
+                          Динозавров
+                        </span>
+                        <div style={styles.detailValue}>
+                          {player.dinosaurCount}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Макс. уровень
+                        </span>
+                        <div style={styles.detailValue}>
+                          Lv.{player.maxLevel}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Гнездо
+                        </span>
+                        <div style={styles.detailValue}>
+                          {player.nestCapacity.toLocaleString(
+                            "ru-RU",
+                          )}{" "}
+                          яиц
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Яиц собрано
+                        </span>
+                        <div style={styles.detailValue}>
+                          {player.totalEggsCollected.toLocaleString(
+                            "ru-RU",
+                            {
+                              maximumFractionDigits: 0,
+                            },
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Задания
+                        </span>
+                        <div style={styles.detailValue}>
+                          {player.tasksCompleted}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Достижения
+                        </span>
+                        <div style={styles.detailValue}>
+                          {player.achievements}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Daily
+                        </span>
+                        <div style={styles.detailValue}>
+                          streak {player.dailyStreak} ·{" "}
+                          {player.dailyClaims} всего
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Рефералы
+                        </span>
+                        <div style={styles.detailValue}>
+                          {player.referrals}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Выплаты
+                        </span>
+                        <div style={styles.detailValue}>
+                          {player.paidWithdrawals} оплачено ·{" "}
+                          {player.paidUsdt.toFixed(8)} USDT
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Регистрация
+                        </span>
+                        <div style={styles.detailValue}>
+                          {new Date(
+                            player.createdAt,
+                          ).toLocaleString(
+                            "ru-RU",
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </section>
+            )}
+
+            <div style={styles.notice}>
+              Раздел только для просмотра. Балансы и данные
+              игроков здесь не изменяются.
             </div>
           </>
         ) : null}
