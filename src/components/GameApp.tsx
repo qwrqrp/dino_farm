@@ -157,8 +157,16 @@ export default function GameApp() {
         cache: "no-store",
       });
 
-      const data = (await response.json()) as {
+      const raw = await response.text();
+      const contentType = response.headers.get("content-type") ?? "";
+
+      if (!contentType.includes("application/json")) {
+        throw new Error(`API вернул не JSON (HTTP ${response.status})`);
+      }
+
+      const data = JSON.parse(raw) as {
         ok?: boolean;
+        error?: string;
         message?: string;
         collectedEggs?: number;
         coinsReward?: number;
@@ -169,7 +177,7 @@ export default function GameApp() {
       };
 
       if (!response.ok || !data.ok) {
-        throw new Error(data.message || "Не удалось собрать яйца");
+        throw new Error(data.message || data.error || "Не удалось собрать яйца");
       }
 
       setState((previous) => ({
