@@ -346,7 +346,6 @@ export default function GameApp() {
     item?: ShopItem;
   } | null>(null);
   const [isMerging, setIsMerging] = useState(false);
-  const [isMoving, setIsMoving] = useState(false);
   const [pendingMerge, setPendingMerge] = useState<{
     fromSlot: number;
     toSlot: number;
@@ -760,103 +759,19 @@ export default function GameApp() {
     });
   };
 
-  const moveDinosaur = async (
-    fromSlot: number,
-    toSlot: number,
-  ) => {
-    if (isMoving || isMerging) return;
-
-    setIsMoving(true);
-    setToast("Перемещаем динозавра...");
-
-    try {
-      const response = await fetch(
-        "/api/move-dino",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            fromSlot,
-            toSlot,
-          }),
-          cache: "no-store",
-          credentials: "include",
-        },
-      );
-
-      const data = (await response.json()) as {
-        ok?: boolean;
-        error?: string;
-        message?: string;
-        moved?: {
-          id: string;
-          level: number;
-          boardSlot: number | null;
-        };
-        board?: Slot[];
-      };
-
-      if (!response.ok || !data.ok) {
-        throw new Error(
-          data.message ||
-            data.error ||
-            "Не удалось переместить динозавра",
-        );
-      }
-
-      setState((previous) => ({
-        ...previous,
-        board:
-          Array.isArray(data.board) &&
-          data.board.length === 16
-            ? data.board
-            : previous.board,
-      }));
-
-      setSelected(null);
-      setToast(
-        `🦖 Lv.${data.moved?.level ?? "?"} перемещён в клетку ${toSlot + 1} ✓`,
-      );
-    } catch (error) {
-      console.error(
-        "Failed to move dinosaur",
-        error,
-      );
-      setSelected(null);
-      setToast(
-        error instanceof Error
-          ? error.message
-          : "Ошибка перемещения",
-      );
-    } finally {
-      setIsMoving(false);
-    }
-  };
-
   const chooseSlot = async (index: number) => {
-    if (isMerging || isMoving) return;
+    if (isMerging) return;
 
     const level = state.board[index];
 
     if (!level) {
-      if (selected !== null) {
-        await moveDinosaur(
-          selected,
-          index,
-        );
-      } else {
-        setSelected(null);
-      }
+      setSelected(null);
       return;
     }
 
     if (selected === null) {
       setSelected(index);
-      setToast(
-        `Выбран динозавр Lv.${level}. Нажмите пустую клетку для перемещения или такого же динозавра для merge.`,
-      );
+      setToast(`Выбран динозавр Level ${level}. Выберите второго такого же уровня.`);
       return;
     }
 
@@ -869,9 +784,7 @@ export default function GameApp() {
 
     if (firstLevel !== level) {
       setSelected(index);
-      setToast(
-        `Выбран Lv.${level}. Для merge нужен второй Lv.${level}, либо нажмите пустую клетку для перемещения.`,
-      );
+      setToast("Для merge выберите двух динозавров одинакового уровня");
       return;
     }
 
@@ -5125,7 +5038,7 @@ export default function GameApp() {
               <button
                 className="coin-button"
                 onClick={cancelMerge}
-                disabled={isMerging || isMoving}
+                disabled={isMerging}
                 style={{ width: "100%" }}
               >
                 ОТМЕНА
@@ -5134,7 +5047,7 @@ export default function GameApp() {
               <button
                 className="primary"
                 onClick={() => void confirmMerge()}
-                disabled={isMerging || isMoving}
+                disabled={isMerging}
                 style={{ width: "100%" }}
               >
                 {isMerging ? "⏳ MERGE..." : "ПОДТВЕРДИТЬ"}
