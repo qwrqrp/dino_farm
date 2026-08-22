@@ -56,7 +56,11 @@ async function buyItem(userId: string, itemCode: string) {
         throw new Error("DNA_NOT_FOR_SALE");
       }
 
-      if (!(["DINO", "NEST_CAPACITY"] as const).includes(item.kind as "DINO" | "NEST_CAPACITY")) {
+      if (item.kind === "NEST_CAPACITY") {
+        throw new Error("NEST_UPGRADE_ONLY");
+      }
+
+      if (item.kind !== "DINO") {
         throw new Error("UNSUPPORTED_ITEM_KIND");
       }
 
@@ -123,13 +127,6 @@ async function buyItem(userId: string, itemCode: string) {
             createdAt: created.createdAt,
           },
         ];
-      } else if (item.kind === "NEST_CAPACITY") {
-        await tx.nest.update({
-          where: { userId },
-          data: {
-            capacity: { increment: item.amount },
-          },
-        });
       } else {
         throw new Error("UNSUPPORTED_ITEM_KIND");
       }
@@ -231,6 +228,7 @@ export async function POST(request: Request) {
         INSUFFICIENT_COINS: 400,
         BOARD_FULL: 409,
         DNA_NOT_FOR_SALE: 400,
+        NEST_UPGRADE_ONLY: 400,
         UNSUPPORTED_ITEM_KIND: 400,
       };
 
@@ -240,6 +238,7 @@ export async function POST(request: Request) {
         INSUFFICIENT_COINS: "Недостаточно Coins",
         BOARD_FULL: "Игровая доска заполнена",
         DNA_NOT_FOR_SALE: "DNA нельзя покупать. Эта валюта зарабатывается в игре и предназначена для вывода в деньги.",
+        NEST_UPGRADE_ONLY: "Вместимость гнезда теперь улучшается только через экран «Гнездо».",
         UNSUPPORTED_ITEM_KIND: "Этот товар пока не поддерживается",
       };
 
