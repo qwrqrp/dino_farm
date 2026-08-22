@@ -11,6 +11,7 @@ import {
   createProviderPayment,
   getDepositMethod,
   getDepositMethodsForUi,
+  getMinimumUsdForMethod,
   isNowPaymentsConfigured,
   normalizeUsdAmount,
   serializeDeposit,
@@ -69,6 +70,9 @@ export async function GET() {
       prisma.deposit.findMany({
         where: {
           userId: player.userId,
+          status: {
+            not: "CREATE_FAILED",
+          },
         },
         orderBy: {
           createdAt: "desc",
@@ -227,6 +231,31 @@ export async function POST(
             `${method.label} сейчас недоступен у платёжного провайдера.`,
         },
         { status: 409 },
+      );
+    }
+
+    const providerMinimumUsd =
+      await getMinimumUsdForMethod(
+        method,
+      );
+
+    if (
+      providerMinimumUsd !== null &&
+      amountUsd < providerMinimumUsd
+    ) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "MINIMUM_PAYMENT_AMOUNT",
+          minimumUsd:
+            providerMinimumUsd,
+          message:
+            `Для ${method.label} сейчас минимальная сумма около $${providerMinimumUsd.toFixed(
+              2,
+            )}. Увеличьте сумму или выберите другую криптовалюту.`,
+        },
+        { status: 400 },
       );
     }
 
@@ -414,16 +443,30 @@ export async function POST(
           )
         : null;
 
+    const isMinimumError =
+      Boolean(
+        providerMessage &&
+          /less than minimal|minimum/i.test(
+            providerMessage,
+          ),
+      );
+
     return NextResponse.json(
       {
         ok: false,
-        error:
-          "FAILED_TO_CREATE_DEPOSIT",
-        message:
-          providerMessage ||
-          "Не удалось создать криптоплатёж. Попробуйте ещё раз.",
+        error: isMinimumError
+          ? "MINIMUM_PAYMENT_AMOUNT"
+          : "FAILED_TO_CREATE_DEPOSIT",
+        message: isMinimumError
+          ? "Сумма ниже текущего минимума платёжной сети. Увеличьте сумму или выберите другую криптовалюту."
+          : providerMessage ||
+            "Не удалось создать криптоплатёж. Попробуйте ещё раз.",
       },
-      { status: 500 },
+      {
+        status: isMinimumError
+          ? 400
+          : 500,
+      },
     );
   }
 }
