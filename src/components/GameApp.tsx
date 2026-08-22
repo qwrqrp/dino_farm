@@ -1386,6 +1386,7 @@ export default function GameApp() {
           deposit?: DepositItem;
           error?: string;
           message?: string;
+          minimumUsd?: number;
         };
 
       if (
@@ -1393,6 +1394,29 @@ export default function GameApp() {
         !data.ok ||
         !data.deposit
       ) {
+        if (
+          data.error ===
+            "MINIMUM_PAYMENT_AMOUNT" &&
+          Number.isFinite(
+            data.minimumUsd,
+          ) &&
+          (data.minimumUsd ?? 0) > 0
+        ) {
+          const minimum =
+            data.minimumUsd as number;
+
+          setDepositAmount(
+            minimum.toFixed(2),
+          );
+
+          throw new Error(
+            data.message ||
+              `Минимальная сумма сейчас $${minimum.toFixed(
+                2,
+              )}.`,
+          );
+        }
+
         throw new Error(
           data.message ||
             data.error ||
@@ -3109,6 +3133,20 @@ export default function GameApp() {
                   </strong>
                   . Coins начисляются только после
                   подтверждения криптоплатежа.
+                </p>
+
+                <p
+                  className="hint"
+                  style={{
+                    marginTop: -4,
+                    opacity: .72,
+                  }}
+                >
+                  ⚠️ У каждой криптовалюты есть свой
+                  динамический минимум сети. Если
+                  выбранная сумма ниже него, игра
+                  покажет актуальный минимум до
+                  создания платежа.
                 </p>
 
                 {depositStatus === "loading" ||
