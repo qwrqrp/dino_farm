@@ -30,6 +30,7 @@ model User {
   taskClaims      TaskClaim[]
   achievementClaims AchievementClaim[]
   gameActionLogs GameActionLog[]
+  deposits Deposit[]
 }
 
 model Balance {
@@ -196,4 +197,33 @@ model GameActionLog {
 
   @@index([userId, createdAt])
   @@index([actionType, createdAt])
+}
+
+
+model Deposit {
+  id                 String    @id
+  userId             String
+  provider           String    @default("NOWPAYMENTS")
+  providerPaymentId  String?   @unique
+  providerPurchaseId String?
+  methodCode         String
+  payCurrency        String
+  network            String
+  usdAmount          Decimal   @db.Decimal(18, 2)
+  baseCoins          Float
+  bonusPercent       Float     @default(0)
+  bonusCoins         Float     @default(0)
+  creditedCoins      Float     @default(0)
+  status             String    @default("CREATING")
+  payAmount          Decimal?  @db.Decimal(36, 18)
+  actuallyPaid       Decimal?  @db.Decimal(36, 18)
+  payAddress         String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @default(now()) @updatedAt
+  creditedAt         DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status])
 }
