@@ -440,14 +440,15 @@ export default function GameApp() {
   };
 
   useEffect(() => {
-    if (tab !== "friends" || authMode !== "telegram" || referralStatus !== "idle") {
+    if (tab !== "friends" || authMode !== "telegram") {
       return;
     }
 
     let cancelled = false;
-    setReferralStatus("loading");
 
     async function loadReferrals() {
+      setReferralStatus("loading");
+
       try {
         const response = await fetch("/api/referrals", {
           cache: "no-store",
@@ -477,7 +478,7 @@ export default function GameApp() {
     return () => {
       cancelled = true;
     };
-  }, [tab, authMode, referralStatus]);
+  }, [tab, authMode]);
 
   const inviteFriend = async () => {
     const inviteLink = referralInfo?.inviteLink;
