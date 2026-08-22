@@ -46,6 +46,28 @@ type LeaderboardPlayer = {
   createdAt: string;
 };
 
+type GameActionItem = {
+  id: string;
+  actionType: "PURCHASE_DINO" | "MERGE_DINO";
+  sourceLevel: number | null;
+  resultLevel: number;
+  coinsSpent: number;
+  createdAt: string;
+  user: {
+    id: string;
+    telegramId: string | null;
+    username: string | null;
+    firstName: string | null;
+    lastName: string | null;
+  };
+};
+
+type GameHistorySummary = {
+  total: number;
+  purchases: number;
+  merges: number;
+};
+
 const EMPTY_SUMMARY: Summary = {
   pending: 0,
   approved: 0,
@@ -73,6 +95,36 @@ function statusLabel(status: string) {
   return status;
 }
 
+function gameActionPlayerName(item: GameActionItem) {
+  const name = [
+    item.user.firstName,
+    item.user.lastName,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  if (name) return name;
+  if (item.user.username) {
+    return `@${item.user.username}`;
+  }
+  if (item.user.telegramId) {
+    return `Telegram ${item.user.telegramId}`;
+  }
+
+  return item.user.id;
+}
+
+function gameActionLabel(actionType: string) {
+  if (actionType === "PURCHASE_DINO") {
+    return "Покупка";
+  }
+  if (actionType === "MERGE_DINO") {
+    return "Merge";
+  }
+  return actionType;
+}
+
 export default function AdminPage() {
   const [key, setKey] = useState("");
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -82,10 +134,18 @@ export default function AdminPage() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [summary, setSummary] = useState<Summary>(EMPTY_SUMMARY);
   const [filter, setFilter] = useState("ACTIVE");
-  const [section, setSection] = useState<"withdrawals" | "leaderboard">("withdrawals");
+  const [section, setSection] = useState<"withdrawals" | "leaderboard" | "history">("withdrawals");
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboard, setLeaderboard] = useState<LeaderboardPlayer[]>([]);
   const [leaderboardTotalPlayers, setLeaderboardTotalPlayers] = useState(0);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [gameHistory, setGameHistory] = useState<GameActionItem[]>([]);
+  const [historyFilter, setHistoryFilter] = useState<"ALL" | "PURCHASE_DINO" | "MERGE_DINO">("ALL");
+  const [historySummary, setHistorySummary] = useState<GameHistorySummary>({
+    total: 0,
+    purchases: 0,
+    merges: 0,
+  });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -166,6 +226,66 @@ export default function AdminPage() {
       setLeaderboardLoading(false);
     }
   }, []);
+
+  const loadHistory = useCallback(
+    async (
+      filter: "ALL" | "PURCHASE_DINO" | "MERGE_DINO" =
+        historyFilter,
+    ) => {
+      setHistoryLoading(true);
+      setMessage("");
+
+      try {
+        const response = await fetch(
+          `/api/admin/game-history?type=${encodeURIComponent(
+            filter,
+          )}`,
+          {
+            cache: "no-store",
+            credentials: "include",
+          },
+        );
+
+        if (response.status === 401) {
+          setAuthenticated(false);
+          setGameHistory([]);
+          return;
+        }
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          throw new Error(
+            data.message ||
+              data.error ||
+              "Ошибка загрузки истории",
+          );
+        }
+
+        setGameHistory(
+          Array.isArray(data.actions)
+            ? data.actions
+            : [],
+        );
+        setHistorySummary(
+          data.summary || {
+            total: 0,
+            purchases: 0,
+            merges: 0,
+          },
+        );
+      } catch (error) {
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Ошибка загрузки истории",
+        );
+      } finally {
+        setHistoryLoading(false);
+      }
+    },
+    [historyFilter],
+  );
 
   const login = async () => {
     if (!key.trim()) return;
@@ -332,7 +452,13 @@ export default function AdminPage() {
         <header style={styles.header}>
           <div>
             <div style={styles.eyebrow}>DINO FARM</div>
-            <h1 style={styles.title}>{section === "leaderboard" ? "Таблица лидеров" : "Заявки на вывод"}</h1>
+            <h1 style={styles.title}>
+              {section === "leaderboard"
+                ? "Таблица лидеров"
+                : section === "history"
+                  ? "История игры"
+                  : "Заявки на вывод"}
+            </h1>
           </div>
 
           <div style={styles.headerActions}>
@@ -340,7 +466,9 @@ export default function AdminPage() {
               onClick={() =>
                 section === "leaderboard"
                   ? void loadLeaderboard()
-                  : void load()
+                  : section === "history"
+                    ? void loadHistory()
+                    : void load()
               }
               style={styles.secondaryButton}
             >
@@ -388,6 +516,22 @@ export default function AdminPage() {
             }}
           >
             🏆 Лидеры
+          </button>
+
+
+          <button
+            onClick={() => {
+              setSection("history");
+              void loadHistory();
+            }}
+            style={{
+              ...styles.filterButton,
+              ...(section === "history"
+                ? styles.filterButtonActive
+                : {}),
+            }}
+          >
+            📜 История
           </button>
         </section>
 
@@ -718,6 +862,173 @@ export default function AdminPage() {
             )}
           </>
         ) : null}
+
+        {section === "history" ? (
+          <>
+            <section style={styles.summaryGrid}>
+              <div style={styles.summaryCard}>
+                <span style={styles.muted}>Всего действий</span>
+                <b style={styles.summaryNumber}>
+                  {historySummary.total}
+                </b>
+              </div>
+
+              <div style={styles.summaryCard}>
+                <span style={styles.muted}>Покупок</span>
+                <b style={styles.summaryNumber}>
+                  {historySummary.purchases}
+                </b>
+              </div>
+
+              <div style={styles.summaryCard}>
+                <span style={styles.muted}>Merge</span>
+                <b style={styles.summaryNumber}>
+                  {historySummary.merges}
+                </b>
+              </div>
+            </section>
+
+            <section style={styles.filters}>
+              {[
+                ["ALL", "Все"],
+                ["PURCHASE_DINO", "🛒 Покупки"],
+                ["MERGE_DINO", "🦖 Merge"],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  onClick={() => {
+                    const nextFilter = value as
+                      | "ALL"
+                      | "PURCHASE_DINO"
+                      | "MERGE_DINO";
+
+                    setHistoryFilter(nextFilter);
+                    void loadHistory(nextFilter);
+                  }}
+                  style={{
+                    ...styles.filterButton,
+                    ...(historyFilter === value
+                      ? styles.filterButtonActive
+                      : {}),
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </section>
+
+            {message ? (
+              <div style={styles.notice}>{message}</div>
+            ) : null}
+
+            {historyLoading ? (
+              <div style={styles.empty}>
+                Загружаем историю...
+              </div>
+            ) : gameHistory.length === 0 ? (
+              <div style={styles.empty}>
+                История пока пустая. Новые покупки и merge
+                появятся здесь после установки обновления.
+              </div>
+            ) : (
+              <section style={styles.list}>
+                {gameHistory.map((item) => (
+                  <article
+                    key={item.id}
+                    style={styles.card}
+                  >
+                    <div style={styles.cardTop}>
+                      <div>
+                        <div style={styles.playerName}>
+                          {gameActionPlayerName(item)}
+                        </div>
+                        <div style={styles.muted}>
+                          {item.user.username
+                            ? `@${item.user.username} · `
+                            : ""}
+                          Telegram ID:{" "}
+                          {item.user.telegramId || "—"}
+                        </div>
+                      </div>
+
+                      <span
+                        style={{
+                          ...styles.status,
+                          ...(item.actionType ===
+                          "PURCHASE_DINO"
+                            ? styles.approved
+                            : styles.paid),
+                        }}
+                      >
+                        {gameActionLabel(
+                          item.actionType,
+                        )}
+                      </span>
+                    </div>
+
+                    <div style={styles.amountRow}>
+                      <div>
+                        <span style={styles.muted}>
+                          Действие
+                        </span>
+                        <div style={styles.amount}>
+                          {item.actionType ===
+                          "PURCHASE_DINO"
+                            ? `Куплен Lv.${item.resultLevel}`
+                            : `Lv.${item.sourceLevel ?? "?"} + Lv.${item.sourceLevel ?? "?"} → Lv.${item.resultLevel}`}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Потрачено
+                        </span>
+                        <div style={styles.amount}>
+                          {item.coinsSpent.toLocaleString(
+                            "ru-RU",
+                            {
+                              maximumFractionDigits: 2,
+                            },
+                          )}{" "}
+                          Coins
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={styles.detailGrid}>
+                      <div>
+                        <span style={styles.muted}>
+                          Результат
+                        </span>
+                        <div style={styles.detailValue}>
+                          🦖 Lv.{item.resultLevel}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Дата и время
+                        </span>
+                        <div style={styles.detailValue}>
+                          {new Date(
+                            item.createdAt,
+                          ).toLocaleString("ru-RU")}
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </section>
+            )}
+
+            <div style={styles.notice}>
+              История записывается только с момента установки
+              этого обновления. Старые покупки и merge до установки
+              здесь не появятся.
+            </div>
+          </>
+        ) : null}
+
       </div>
     </main>
   );
