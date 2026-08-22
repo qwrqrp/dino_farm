@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { dinosaurs, formatNumber, gameConfig, MAX_DINOSAUR_LEVEL } from "@/lib/game-config";
+import { dinosaurs, formatNumber, gameConfig, getDinosaurConfig, MAX_DINOSAUR_LEVEL } from "@/lib/game-config";
 
 type Tab = "nest" | "game" | "shop" | "friends" | "menu";
 type Slot = number | null;
@@ -554,6 +554,17 @@ export default function GameApp() {
       return;
     }
 
+    const resultConfig = getDinosaurConfig(level + 1);
+    const mergeFee = resultConfig?.mergeFeeCoins ?? 0;
+
+    if (state.coins < mergeFee) {
+      setSelected(null);
+      setToast(
+        `Для merge в Lv.${level + 1} нужно ${formatNumber(mergeFee, 0)} Coins`,
+      );
+      return;
+    }
+
     const fromSlot = selected;
     const toSlot = index;
 
@@ -581,6 +592,8 @@ export default function GameApp() {
         error?: string;
         message?: string;
         merged?: { id: string; level: number; boardSlot: number | null };
+        mergeFee?: number;
+        coins?: number;
         board?: Slot[];
       };
 
@@ -590,6 +603,7 @@ export default function GameApp() {
 
       setState((previous) => ({
         ...previous,
+        coins: data.coins ?? previous.coins,
         board:
           Array.isArray(data.board) && data.board.length === 16
             ? data.board
@@ -597,7 +611,12 @@ export default function GameApp() {
       }));
 
       setSelected(null);
-      setToast(`MERGE ✓ Получен динозавр Level ${data.merged?.level ?? level + 1}`);
+      setToast(
+        `MERGE ✓ Lv.${data.merged?.level ?? level + 1} · комиссия ${formatNumber(
+          data.mergeFee ?? mergeFee,
+          0,
+        )} Coins`,
+      );
     } catch (error) {
       console.error("Failed to merge dinosaur", error);
       setSelected(null);
@@ -1344,8 +1363,8 @@ export default function GameApp() {
                   }}
                 >
                   Два одинаковых динозавра объединяются в один следующего
-                  уровня. Производство рассчитывается на сервере по этой же
-                  таблице.
+                  уровня. Merge оплачивается Coins. Комиссия подобрана так,
+                  чтобы окупаемость уровней оставалась контролируемой.
                 </p>
 
                 <div
@@ -1483,14 +1502,92 @@ export default function GameApp() {
                           })}
                         </div>
 
+                        <div
+                          style={{
+                            marginTop: 8,
+                            display: "grid",
+                            gridTemplateColumns:
+                              "repeat(2, minmax(0, 1fr))",
+                            gap: 6,
+                          }}
+                        >
+                          <div
+                            style={{
+                              padding: "8px 9px",
+                              borderRadius: 10,
+                              background: "rgba(255,255,255,.04)",
+                              minWidth: 0,
+                            }}
+                          >
+                            <small
+                              style={{
+                                display: "block",
+                                opacity: .60,
+                              }}
+                            >
+                              {dino.level === 1
+                                ? "Цена Lv.1"
+                                : "Merge комиссия"}
+                            </small>
+                            <strong
+                              style={{
+                                display: "block",
+                                marginTop: 2,
+                                fontSize: 13,
+                              }}
+                            >
+                              {formatNumber(
+                                dino.level === 1
+                                  ? gameConfig.levelOnePriceCoins
+                                  : dino.mergeFeeCoins,
+                                0,
+                              )}{" "}
+                              Coins
+                            </strong>
+                          </div>
+
+                          <div
+                            style={{
+                              padding: "8px 9px",
+                              borderRadius: 10,
+                              background: "rgba(255,255,255,.04)",
+                              minWidth: 0,
+                            }}
+                          >
+                            <small
+                              style={{
+                                display: "block",
+                                opacity: .60,
+                              }}
+                            >
+                              Окупаемость
+                            </small>
+                            <strong
+                              style={{
+                                display: "block",
+                                marginTop: 2,
+                                fontSize: 13,
+                              }}
+                            >
+                              ≈ {formatNumber(dino.paybackDays, 0)} дней
+                            </strong>
+                          </div>
+                        </div>
+
                         <small
                           style={{
                             display: "block",
                             marginTop: 7,
-                            opacity: .50,
+                            opacity: .56,
+                            lineHeight: 1.4,
                           }}
                         >
-                          Для merge: {formatNumber(
+                          Полная экв. стоимость:{" "}
+                          {formatNumber(
+                            dino.equivalentCostCoins,
+                            0,
+                          )} Coins · для merge:{" "}
+                          {formatNumber(
                             dino.levelOneCopies,
                             0,
                           )} × Lv.1
@@ -1509,11 +1606,11 @@ export default function GameApp() {
                   }}
                 >
                   <small style={{ lineHeight: 1.45, opacity: .68 }}>
-                    Расчёты за 30, 180 и 365 дней сделаны без реинвестирования:
-                    дневной доход × количество дней. Coins и DNA начисляются
-                    в одинаковом количестве. Это потенциальный доход при
-                    непрерывном производстве; если гнездо переполнено, новые
-                    яйца не накапливаются до следующего сбора.
+                    Расчёты за 30, 180 и 365 дней сделаны без реинвестирования.
+                    «Окупаемость» = полная стоимость получения уровня ÷ его
+                    Coins-доход за день. DNA, задания, ежедневные бонусы и
+                    рефералы в окупаемость не включены. При переполненном
+                    гнезде новые яйца не накапливаются до следующего сбора.
                   </small>
                 </div>
               </div>
