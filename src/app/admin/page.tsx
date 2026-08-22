@@ -32,6 +32,20 @@ type Summary = {
   rejected: number;
 };
 
+type LeaderboardPlayer = {
+  rank: number;
+  userId: string;
+  telegramId: string | null;
+  name: string;
+  username: string | null;
+  dinoCount: number;
+  maxLevel: number;
+  dailyCoins: number;
+  dailyDna: number;
+  eggsPerHour: number;
+  createdAt: string;
+};
+
 const EMPTY_SUMMARY: Summary = {
   pending: 0,
   approved: 0,
@@ -68,6 +82,10 @@ export default function AdminPage() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [summary, setSummary] = useState<Summary>(EMPTY_SUMMARY);
   const [filter, setFilter] = useState("ACTIVE");
+  const [section, setSection] = useState<"withdrawals" | "leaderboard">("withdrawals");
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardPlayer[]>([]);
+  const [leaderboardTotalPlayers, setLeaderboardTotalPlayers] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -108,6 +126,46 @@ export default function AdminPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const loadLeaderboard = useCallback(async () => {
+    setLeaderboardLoading(true);
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/leaderboard", {
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      if (response.status === 401) {
+        setAuthenticated(false);
+        setLeaderboard([]);
+        setLeaderboardTotalPlayers(0);
+        return;
+      }
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(
+          data.message || data.error || "Ошибка загрузки рейтинга",
+        );
+      }
+
+      setLeaderboard(
+        Array.isArray(data.top) ? data.top : [],
+      );
+      setLeaderboardTotalPlayers(data.totalPlayers ?? 0);
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Ошибка загрузки рейтинга",
+      );
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  }, []);
 
   const login = async () => {
     if (!key.trim()) return;
@@ -274,12 +332,16 @@ export default function AdminPage() {
         <header style={styles.header}>
           <div>
             <div style={styles.eyebrow}>DINO FARM</div>
-            <h1 style={styles.title}>Заявки на вывод</h1>
+            <h1 style={styles.title}>{section === "leaderboard" ? "Таблица лидеров" : "Заявки на вывод"}</h1>
           </div>
 
           <div style={styles.headerActions}>
             <button
-              onClick={() => void load()}
+              onClick={() =>
+                section === "leaderboard"
+                  ? void loadLeaderboard()
+                  : void load()
+              }
               style={styles.secondaryButton}
             >
               ↻ Обновить
@@ -293,6 +355,44 @@ export default function AdminPage() {
           </div>
         </header>
 
+        <section
+          style={{
+            display: "flex",
+            gap: 8,
+            flexWrap: "wrap",
+            marginBottom: 14,
+          }}
+        >
+          <button
+            onClick={() => setSection("withdrawals")}
+            style={{
+              ...styles.filterButton,
+              ...(section === "withdrawals"
+                ? styles.filterButtonActive
+                : {}),
+            }}
+          >
+            💸 Выплаты
+          </button>
+
+          <button
+            onClick={() => {
+              setSection("leaderboard");
+              void loadLeaderboard();
+            }}
+            style={{
+              ...styles.filterButton,
+              ...(section === "leaderboard"
+                ? styles.filterButtonActive
+                : {}),
+            }}
+          >
+            🏆 Лидеры
+          </button>
+        </section>
+
+        {section === "withdrawals" ? (
+          <>
         <section style={styles.summaryGrid}>
           <div style={styles.summaryCard}>
             <span style={styles.muted}>Ожидают</span>
@@ -478,6 +578,146 @@ export default function AdminPage() {
             })}
           </section>
         )}
+          </>
+        ) : null}
+
+        {section === "leaderboard" ? (
+          <>
+            <section style={styles.summaryGrid}>
+              <div style={styles.summaryCard}>
+                <span style={styles.muted}>Игроков</span>
+                <b style={styles.summaryNumber}>
+                  {leaderboardTotalPlayers}
+                </b>
+              </div>
+
+              <div style={styles.summaryCard}>
+                <span style={styles.muted}>Показано</span>
+                <b style={styles.summaryNumber}>
+                  {leaderboard.length}
+                </b>
+              </div>
+            </section>
+
+            {message ? (
+              <div style={styles.notice}>{message}</div>
+            ) : null}
+
+            {leaderboardLoading ? (
+              <div style={styles.empty}>Загружаем рейтинг...</div>
+            ) : leaderboard.length === 0 ? (
+              <div style={styles.empty}>Рейтинг пока пуст.</div>
+            ) : (
+              <section style={styles.list}>
+                {leaderboard.map((player) => (
+                  <article
+                    key={player.userId}
+                    style={styles.card}
+                  >
+                    <div style={styles.cardTop}>
+                      <div>
+                        <div style={styles.playerName}>
+                          #{player.rank} {player.name}
+                        </div>
+                        <div style={styles.muted}>
+                          {player.username
+                            ? `@${player.username} · `
+                            : ""}
+                          Telegram ID: {player.telegramId || "—"}
+                        </div>
+                      </div>
+
+                      <span
+                        style={{
+                          ...styles.status,
+                          ...styles.paid,
+                        }}
+                      >
+                        TOP {player.rank}
+                      </span>
+                    </div>
+
+                    <div style={styles.amountRow}>
+                      <div>
+                        <span style={styles.muted}>
+                          Coins / день
+                        </span>
+                        <div style={styles.amount}>
+                          {player.dailyCoins.toLocaleString(
+                            "ru-RU",
+                            {
+                              maximumFractionDigits: 2,
+                            },
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          DNA / день
+                        </span>
+                        <div style={styles.amount}>
+                          {player.dailyDna.toLocaleString(
+                            "ru-RU",
+                            {
+                              maximumFractionDigits: 2,
+                            },
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={styles.detailGrid}>
+                      <div>
+                        <span style={styles.muted}>
+                          Динозавров
+                        </span>
+                        <div style={styles.detailValue}>
+                          {player.dinoCount}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Максимальный уровень
+                        </span>
+                        <div style={styles.detailValue}>
+                          Lv.{player.maxLevel}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Производство
+                        </span>
+                        <div style={styles.detailValue}>
+                          {player.eggsPerHour.toLocaleString(
+                            "ru-RU",
+                            {
+                              maximumFractionDigits: 2,
+                            },
+                          )}{" "}
+                          яиц/ч
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          В игре с
+                        </span>
+                        <div style={styles.detailValue}>
+                          {new Date(
+                            player.createdAt,
+                          ).toLocaleDateString("ru-RU")}
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </section>
+            )}
+          </>
+        ) : null}
       </div>
     </main>
   );
