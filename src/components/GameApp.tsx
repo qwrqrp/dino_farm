@@ -5322,496 +5322,94 @@ export default function GameApp() {
             </div>
 
             {walletHistoryOpen ? (
-              <div
-                className="form-card"
-                style={{
-                  marginTop: 16,
-                  borderRadius: 20,
-                  background: "#10281e",
-                  border:
-                    "1px solid rgba(255,255,255,.08)",
-                  padding: 14,
-                  width: "100%",
-                  minWidth: 0,
-                  boxSizing:
-                    "border-box",
-                }}
-              >
-                <div
-                  className="section-head"
-                  style={{
-                    width: "100%",
-                    minWidth: 0,
-                    alignItems: "center",
-                  }}
-                >
+              <div className="form-card wallet-art-panel">
+                <div className="wallet-art-head">
                   <div>
-                    <span className="eyebrow">
-                      WALLET HISTORY
-                    </span>
-                    <h2>
-                      💰 История баланса
-                    </h2>
+                    <span className="eyebrow">WALLET HISTORY</span>
+                    <h2>История баланса</h2>
                   </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 6,
-                      flex:
-                        "0 0 auto",
-                    }}
-                  >
-                    <button
-                      className="coin-button"
-                      onClick={() =>
-                        void loadWalletHistory()
-                      }
-                    >
-                      ↻
-                    </button>
-
-                    <button
-                      className="coin-button"
-                      onClick={() =>
-                        setWalletHistoryOpen(
-                          false,
-                        )
-                      }
-                    >
-                      ✕
-                    </button>
+                  <div className="wallet-art-actions">
+                    <button className="coin-button" onClick={() => void loadWalletHistory()} aria-label="Обновить историю">↻</button>
+                    <button className="coin-button" onClick={() => setWalletHistoryOpen(false)} aria-label="Закрыть историю">×</button>
                   </div>
                 </div>
 
-                {walletHistoryStatus ===
-                  "loading" ||
-                walletHistoryStatus ===
-                  "idle" ? (
-                  <p>
-                    Загружаем операции...
-                  </p>
-                ) : walletHistoryStatus ===
-                  "error" ? (
-                  <>
-                    <p>
-                      Не удалось загрузить
-                      историю.
-                    </p>
-                    <button
-                      className="primary"
-                      onClick={() =>
-                        void loadWalletHistory()
-                      }
-                    >
-                      ПОВТОРИТЬ
-                    </button>
-                  </>
+                {walletHistoryStatus === "loading" || walletHistoryStatus === "idle" ? (
+                  <div className="wallet-art-message">Загружаем операции...</div>
+                ) : walletHistoryStatus === "error" ? (
+                  <div className="wallet-art-message wallet-art-error">
+                    <strong>Не удалось загрузить историю</strong>
+                    <button className="primary" onClick={() => void loadWalletHistory()}>ПОВТОРИТЬ</button>
+                  </div>
                 ) : (
                   <>
                     {walletHistorySummary ? (
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns:
-                            "repeat(2, minmax(0, 1fr))",
-                          gap: 8,
-                          marginTop: 10,
-                        }}
-                      >
-                        <div
-                          style={{
-                            minWidth: 0,
-                            padding: 11,
-                            borderRadius: 14,
-                            background:
-                              "rgba(167,243,72,.08)",
-                          }}
-                        >
-                          <small
-                            style={{
-                              opacity: .65,
-                            }}
-                          >
-                            Пополнено
-                          </small>
-
-                          <strong
-                            style={{
-                              display:
-                                "block",
-                              marginTop: 4,
-                              fontSize: 16,
-                            }}
-                          >
-                            $
-                            {walletHistorySummary.depositedUsd.toFixed(
-                              2,
-                            )}
-                          </strong>
-
-                          <small>
-                            +
-                            {formatNumber(
-                              walletHistorySummary.creditedCoins,
-                              0,
-                            )}{" "}
-                            Coins
-                          </small>
-                        </div>
-
-                        <div
-                          style={{
-                            minWidth: 0,
-                            padding: 11,
-                            borderRadius: 14,
-                            background:
-                              "rgba(255,255,255,.04)",
-                          }}
-                        >
-                          <small
-                            style={{
-                              opacity: .65,
-                            }}
-                          >
-                            Выплачено
-                          </small>
-
-                          <strong
-                            style={{
-                              display:
-                                "block",
-                              marginTop: 4,
-                              fontSize: 16,
-                            }}
-                          >
-                            {walletHistorySummary.paidUsdt.toFixed(
-                              8,
-                            )}{" "}
-                            USDT
-                          </strong>
-
-                          <small>
-                            {formatNumber(
-                              walletHistorySummary.paidDna,
-                              2,
-                            )}{" "}
-                            DNA
-                          </small>
-                        </div>
+                      <div className="wallet-art-summary">
+                        <article>
+                          <small>Пополнено</small>
+                          <strong>${walletHistorySummary.depositedUsd.toFixed(2)}</strong>
+                          <span>+{formatNumber(walletHistorySummary.creditedCoins, 0)} Coins</span>
+                        </article>
+                        <article>
+                          <small>Выплачено</small>
+                          <strong>{walletHistorySummary.paidUsdt.toFixed(8)} USDT</strong>
+                          <span>{formatNumber(walletHistorySummary.paidDna, 2)} DNA</span>
+                        </article>
                       </div>
                     ) : null}
 
-                    {walletHistorySummary &&
-                    walletHistorySummary.bonusCoins >
-                      0 ? (
-                      <div
-                        style={{
-                          marginTop: 8,
-                          padding: 10,
-                          borderRadius: 12,
-                          background:
-                            "rgba(255,215,106,.08)",
-                          fontSize: 13,
-                        }}
-                      >
-                        🎁 Получено бонусных
-                        Coins:{" "}
-                        <b>
-                          {formatNumber(
-                            walletHistorySummary.bonusCoins,
-                            0,
-                          )}
-                        </b>
+                    {walletHistorySummary && walletHistorySummary.bonusCoins > 0 ? (
+                      <div className="wallet-art-bonus">
+                        <span>Бонусные Coins</span>
+                        <b>+{formatNumber(walletHistorySummary.bonusCoins, 0)}</b>
                       </div>
                     ) : null}
 
-                    {walletHistory.length ===
-                    0 ? (
-                      <div
-                        className="card"
-                        style={{
-                          display:
-                            "block",
-                          marginTop: 12,
-                        }}
-                      >
-                        <strong>
-                          Операций пока нет
-                        </strong>
-                        <p>
-                          Здесь появятся
-                          пополнения Coins и
-                          заявки на вывод DNA.
-                        </p>
+                    {walletHistory.length === 0 ? (
+                      <div className="card wallet-art-empty">
+                        <strong>Операций пока нет</strong>
+                        <p>Здесь появятся пополнения Coins и заявки на вывод DNA.</p>
                       </div>
                     ) : (
-                      <div
-                        style={{
-                          display: "grid",
-                          gap: 8,
-                          marginTop: 12,
-                        }}
-                      >
-                        {walletHistory.map(
-                          (item) => {
-                            const meta =
-                              walletOperationStatus(
-                                item.type,
-                                item.status,
-                              );
-
-                            return (
-                              <div
-                                key={`${item.type}-${item.id}`}
-                                style={{
-                                  minWidth:
-                                    0,
-                                  padding:
-                                    12,
-                                  borderRadius:
-                                    14,
-                                  background:
-                                    "rgba(255,255,255,.04)",
-                                  border:
-                                    "1px solid rgba(255,255,255,.07)",
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    display:
-                                      "flex",
-                                    alignItems:
-                                      "flex-start",
-                                    justifyContent:
-                                      "space-between",
-                                    gap: 10,
-                                  }}
-                                >
-                                  <div
-                                    style={{
-                                      minWidth:
-                                        0,
-                                    }}
-                                  >
-                                    <strong
-                                      style={{
-                                        display:
-                                          "block",
-                                      }}
-                                    >
-                                      {item.type ===
-                                      "DEPOSIT"
-                                        ? "💳 Пополнение Coins"
-                                        : "🧬 Вывод DNA"}
-                                    </strong>
-
-                                    <small
-                                      style={{
-                                        display:
-                                          "block",
-                                        marginTop:
-                                          3,
-                                        opacity:
-                                          .62,
-                                      }}
-                                    >
-                                      {formatDepositDate(
-                                        item.createdAt,
-                                      )}
-                                    </small>
-                                  </div>
-
-                                  <b
-                                    style={{
-                                      color:
-                                        meta.color,
-                                      fontSize:
-                                        12,
-                                      textAlign:
-                                        "right",
-                                      whiteSpace:
-                                        "nowrap",
-                                    }}
-                                  >
-                                    {meta.icon}{" "}
-                                    {meta.label}
-                                  </b>
+                      <div className="wallet-art-list">
+                        {walletHistory.map((item) => {
+                          const meta = walletOperationStatus(item.type, item.status);
+                          return (
+                            <article key={`${item.type}-${item.id}`} className="wallet-art-operation">
+                              <div className="wallet-art-operation-head">
+                                <div>
+                                  <strong>{item.type === "DEPOSIT" ? "Пополнение Coins" : "Вывод DNA"}</strong>
+                                  <small>{formatDepositDate(item.createdAt)}</small>
                                 </div>
-
-                                {item.type ===
-                                  "DEPOSIT" &&
-                                item.deposit ? (
-                                  <div
-                                    style={{
-                                      marginTop:
-                                        10,
-                                      display:
-                                        "grid",
-                                      gridTemplateColumns:
-                                        "repeat(2, minmax(0, 1fr))",
-                                      gap: 7,
-                                    }}
-                                  >
-                                    <div>
-                                      <small
-                                        style={{
-                                          opacity:
-                                            .6,
-                                        }}
-                                      >
-                                        Сумма
-                                      </small>
-                                      <div>
-                                        <b>
-                                          $
-                                          {item.deposit.usdAmount.toFixed(
-                                            2,
-                                          )}
-                                        </b>
-                                      </div>
-                                    </div>
-
-                                    <div>
-                                      <small
-                                        style={{
-                                          opacity:
-                                            .6,
-                                        }}
-                                      >
-                                        Coins
-                                      </small>
-                                      <div>
-                                        <b>
-                                          {item.deposit.creditedCoins >
-                                          0
-                                            ? `+${formatNumber(
-                                                item.deposit.creditedCoins,
-                                                0,
-                                              )}`
-                                            : formatNumber(
-                                                item.deposit.baseCoins,
-                                                0,
-                                              )}
-                                        </b>
-                                      </div>
-                                    </div>
-
-                                    {item.deposit.bonusCoins >
-                                    0 ? (
-                                      <div
-                                        style={{
-                                          gridColumn:
-                                            "1 / -1",
-                                        }}
-                                      >
-                                        <small
-                                          style={{
-                                            opacity:
-                                              .6,
-                                          }}
-                                        >
-                                          Бонус
-                                        </small>
-                                        <div>
-                                          🎁 +
-                                          {formatNumber(
-                                            item.deposit.bonusCoins,
-                                            0,
-                                          )}{" "}
-                                          Coins (
-                                          {
-                                            item
-                                              .deposit
-                                              .bonusPercent
-                                          }
-                                          %)
-                                        </div>
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                ) : null}
-
-                                {item.type ===
-                                  "WITHDRAWAL" &&
-                                item.withdrawal ? (
-                                  <div
-                                    style={{
-                                      marginTop:
-                                        10,
-                                      display:
-                                        "grid",
-                                      gridTemplateColumns:
-                                        "repeat(2, minmax(0, 1fr))",
-                                      gap: 7,
-                                    }}
-                                  >
-                                    <div>
-                                      <small
-                                        style={{
-                                          opacity:
-                                            .6,
-                                        }}
-                                      >
-                                        DNA
-                                      </small>
-                                      <div>
-                                        <b>
-                                          {formatNumber(
-                                            item.withdrawal.dnaAmount,
-                                            2,
-                                          )}
-                                        </b>
-                                      </div>
-                                    </div>
-
-                                    <div>
-                                      <small
-                                        style={{
-                                          opacity:
-                                            .6,
-                                        }}
-                                      >
-                                        К выплате
-                                      </small>
-                                      <div>
-                                        <b>
-                                          {item.withdrawal.usdtAmount.toFixed(
-                                            8,
-                                          )}{" "}
-                                          USDT
-                                        </b>
-                                      </div>
-                                    </div>
-
-                                    <div
-                                      style={{
-                                        gridColumn:
-                                          "1 / -1",
-                                      }}
-                                    >
-                                      <small
-                                        style={{
-                                          opacity:
-                                            .6,
-                                        }}
-                                      >
-                                        Сеть
-                                      </small>
-                                      <div>
-                                        {
-                                          item
-                                            .withdrawal
-                                            .network
-                                        }
-                                      </div>
-                                    </div>
-                                  </div>
-                                ) : null}
+                                <b className="wallet-art-status" style={{ color: meta.color }}>{meta.label}</b>
                               </div>
-                            );
-                          },
-                        )}
+
+                              {item.type === "DEPOSIT" && item.deposit ? (
+                                <div className="wallet-art-operation-grid">
+                                  <div><small>Сумма</small><b>${item.deposit.usdAmount.toFixed(2)}</b></div>
+                                  <div>
+                                    <small>Coins</small>
+                                    <b>{item.deposit.creditedCoins > 0 ? `+${formatNumber(item.deposit.creditedCoins, 0)}` : formatNumber(item.deposit.baseCoins, 0)}</b>
+                                  </div>
+                                  {item.deposit.bonusCoins > 0 ? (
+                                    <div className="wallet-art-wide">
+                                      <small>Бонус</small>
+                                      <b>+{formatNumber(item.deposit.bonusCoins, 0)} Coins ({item.deposit.bonusPercent}%)</b>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              ) : null}
+
+                              {item.type === "WITHDRAWAL" && item.withdrawal ? (
+                                <div className="wallet-art-operation-grid">
+                                  <div><small>DNA</small><b>{formatNumber(item.withdrawal.dnaAmount, 2)}</b></div>
+                                  <div><small>К выплате</small><b>{item.withdrawal.usdtAmount.toFixed(8)} USDT</b></div>
+                                  <div className="wallet-art-wide"><small>Сеть</small><b>{item.withdrawal.network}</b></div>
+                                </div>
+                              ) : null}
+                            </article>
+                          );
+                        })}
                       </div>
                     )}
                   </>
@@ -5821,7 +5419,7 @@ export default function GameApp() {
 
             {profileOpen ? (
               <div
-                className="form-card"
+                className="form-card profile-art-panel"
                 style={{
                   marginTop: 16,
                   borderRadius: 20,
@@ -5833,7 +5431,7 @@ export default function GameApp() {
                 }}
               >
                 <div
-                  className="section-head"
+                  className="section-head profile-art-head"
                   style={{
                     width: "100%",
                     minWidth: 0,
@@ -5842,7 +5440,7 @@ export default function GameApp() {
                 >
                   <div>
                     <span className="eyebrow">PLAYER PROFILE</span>
-                    <h2>👤 Мой профиль</h2>
+                    <h2>Мой профиль</h2>
                   </div>
 
                   <div
@@ -5883,6 +5481,7 @@ export default function GameApp() {
                 ) : profile ? (
                   <>
                     <div
+                      className="profile-player-card"
                       style={{
                         padding: 12,
                         marginTop: 8,
@@ -5936,6 +5535,7 @@ export default function GameApp() {
                     </div>
 
                     <div
+                      className="profile-stats-grid"
                       style={{
                         display: "grid",
                         gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
@@ -5983,6 +5583,7 @@ export default function GameApp() {
                       ].map((item) => (
                         <div
                           key={item.label}
+                          className="profile-stat-card"
                           style={{
                             padding: 10,
                             borderRadius: 12,
@@ -6007,6 +5608,7 @@ export default function GameApp() {
                     </div>
 
                     <div
+                      className="profile-detail-card profile-farm-card"
                       style={{
                         marginTop: 10,
                         padding: 12,
@@ -6014,7 +5616,7 @@ export default function GameApp() {
                         background: "rgba(255,255,255,.04)",
                       }}
                     >
-                      <strong>🌱 Ферма</strong>
+                      <strong>Ферма</strong>
 
                       <div
                         style={{
@@ -6101,6 +5703,7 @@ export default function GameApp() {
                     </div>
 
                     <div
+                      className="profile-detail-card profile-progress-card"
                       style={{
                         marginTop: 10,
                         padding: 12,
@@ -6108,7 +5711,7 @@ export default function GameApp() {
                         background: "rgba(255,255,255,.04)",
                       }}
                     >
-                      <strong>🏅 Прогресс</strong>
+                      <strong>Прогресс</strong>
 
                       <div
                         style={{
@@ -6181,6 +5784,7 @@ export default function GameApp() {
                     </div>
 
                     <div
+                      className="profile-summary-grid"
                       style={{
                         marginTop: 10,
                         display: "grid",
@@ -6190,13 +5794,14 @@ export default function GameApp() {
                       }}
                     >
                       <div
+                        className="profile-summary-card"
                         style={{
                           padding: 12,
                           borderRadius: 14,
                           background: "rgba(255,255,255,.04)",
                         }}
                       >
-                        <strong>👥 Рефералы</strong>
+                        <strong>Рефералы</strong>
                         <div
                           style={{
                             marginTop: 8,
@@ -6217,13 +5822,14 @@ export default function GameApp() {
                       </div>
 
                       <div
+                        className="profile-summary-card"
                         style={{
                           padding: 12,
                           borderRadius: 14,
                           background: "rgba(255,255,255,.04)",
                         }}
                       >
-                        <strong>💸 Выплаты</strong>
+                        <strong>Выплаты</strong>
                         <div
                           style={{
                             marginTop: 8,
@@ -6242,6 +5848,7 @@ export default function GameApp() {
                     </div>
 
                     <div
+                      className="profile-detail-card profile-collection-card"
                       style={{
                         marginTop: 10,
                         padding: 12,
@@ -6249,7 +5856,7 @@ export default function GameApp() {
                         background: "rgba(255,255,255,.04)",
                       }}
                     >
-                      <strong>🦖 Коллекция</strong>
+                      <strong>Коллекция</strong>
 
                       <div
                         style={{
@@ -6264,6 +5871,7 @@ export default function GameApp() {
                             count > 0 ? (
                               <span
                                 key={index}
+                                className="profile-level-chip"
                                 style={{
                                   padding: "7px 9px",
                                   borderRadius: 999,
@@ -6287,453 +5895,172 @@ export default function GameApp() {
             ) : null}
 
             {profitPlanOpen ? (
-              <div
-                className="form-card"
-                style={{
-                  marginTop: 16,
-                  borderRadius: 20,
-                  background: "#10281e",
-                  border: "1px solid rgba(255,255,255,.08)",
-                  padding: 14,
-                  width: "100%",
-                  minWidth: 0,
-                }}
-              >
-                <div
-                  className="section-head"
-                  style={{
-                    width: "100%",
-                    minWidth: 0,
-                    alignItems: "center",
-                  }}
-                >
+              <div className="form-card profit-art-panel">
+                <div className="profit-art-head">
                   <div>
-                    <span className="eyebrow">PROFIT PLAN</span>
-                    <h2>📊 Моя ферма</h2>
+                    <span className="eyebrow">FARM ANALYTICS</span>
+                    <h2>Profit Plan</h2>
                   </div>
 
                   <button
                     className="coin-button"
                     onClick={() => setProfitPlanOpen(false)}
-                    style={{ flex: "0 0 auto" }}
+                    aria-label="Закрыть Profit Plan"
                   >
-                    ✕
+                    ×
                   </button>
                 </div>
 
-                {profitPlan.totalDinosaurs === 0 ? (
-                  <div
-                    style={{
-                      padding: 14,
-                      marginTop: 8,
-                      borderRadius: 14,
-                      background: "rgba(255,255,255,.04)",
-                    }}
-                  >
-                    <strong>На доске пока нет динозавров</strong>
-                    <p
-                      style={{
-                        margin: "6px 0 0",
-                        opacity: .68,
-                        fontSize: 12,
-                        lineHeight: 1.45,
-                      }}
-                    >
-                      Добавьте динозавров на ферму, и здесь появится
-                      персональный расчёт доходности.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                        gap: 8,
-                        width: "100%",
-                        marginTop: 8,
-                      }}
-                    >
-                      <div
-                        style={{
-                          padding: 12,
-                          borderRadius: 14,
-                          background: "rgba(255,255,255,.05)",
-                          minWidth: 0,
-                        }}
-                      >
-                        <small style={{ opacity: .64 }}>
-                          Динозавров
-                        </small>
-                        <strong
-                          style={{
-                            display: "block",
-                            marginTop: 3,
-                            fontSize: 22,
-                          }}
-                        >
-                          {profitPlan.totalDinosaurs}
-                        </strong>
-                      </div>
+                <div className="profit-art-intro">
+                  Расчёт по текущему составу фермы и действующей игровой экономике.
+                </div>
 
-                      <div
-                        style={{
-                          padding: 12,
-                          borderRadius: 14,
-                          background: "rgba(255,255,255,.05)",
-                          minWidth: 0,
-                        }}
-                      >
-                        <small style={{ opacity: .64 }}>
-                          Производство
-                        </small>
-                        <strong
-                          style={{
-                            display: "block",
-                            marginTop: 3,
-                            fontSize: 17,
-                            overflowWrap: "anywhere",
-                          }}
-                        >
-                          {formatNumber(eggsPerHour, 2)} яиц/ч
-                        </strong>
-                      </div>
+                <div className="profit-art-summary">
+                  <article>
+                    <small>Динозавров</small>
+                    <strong>{profitPlan.totalDinosaurs}</strong>
+                    <span>на ферме</span>
+                  </article>
 
-                      <div
-                        style={{
-                          padding: 12,
-                          borderRadius: 14,
-                          background: "rgba(255,255,255,.05)",
-                          minWidth: 0,
-                        }}
-                      >
-                        <small style={{ opacity: .64 }}>
-                          Coins / день
-                        </small>
-                        <strong
-                          style={{
-                            display: "block",
-                            marginTop: 3,
-                            fontSize: 19,
-                          }}
-                        >
-                          {formatNumber(profitPlan.dailyCoins, 2)}
-                        </strong>
-                      </div>
+                  <article>
+                    <small>Coins / день</small>
+                    <strong>{formatNumber(profitPlan.dailyCoins, 2)}</strong>
+                    <span>текущий доход</span>
+                  </article>
 
-                      <div
-                        style={{
-                          padding: 12,
-                          borderRadius: 14,
-                          background: "rgba(255,255,255,.05)",
-                          minWidth: 0,
-                        }}
-                      >
-                        <small style={{ opacity: .64 }}>
-                          DNA / день
-                        </small>
-                        <strong
-                          style={{
-                            display: "block",
-                            marginTop: 3,
-                            fontSize: 19,
-                          }}
-                        >
-                          {formatNumber(profitPlan.dailyDna, 2)}
-                        </strong>
-                      </div>
-                    </div>
+                  <article>
+                    <small>DNA / день</small>
+                    <strong>{formatNumber(profitPlan.dailyDna, 2)}</strong>
+                    <span>текущий доход</span>
+                  </article>
 
-                    <div
-                      style={{
-                        marginTop: 12,
-                        display: "grid",
-                        gap: 8,
-                        width: "100%",
-                      }}
-                    >
-                      {[
-                        { label: "1 день", days: 1 },
-                        { label: "30 дней", days: 30 },
-                        { label: "180 дней", days: 180 },
-                        { label: "1 год", days: 365 },
-                      ].map((period) => {
-                        const coins =
-                          profitPlan.dailyCoins * period.days;
-                        const dna =
-                          profitPlan.dailyDna * period.days;
+                  <article>
+                    <small>Стоимость фермы</small>
+                    <strong>
+                      {formatNumber(profitPlan.equivalentCostCoins, 0)}
+                    </strong>
+                    <span>Coins</span>
+                  </article>
+                </div>
 
-                        return (
-                          <article
-                            key={period.days}
-                            style={{
-                              width: "100%",
-                              minWidth: 0,
-                              padding: 11,
-                              borderRadius: 14,
-                              border:
-                                "1px solid rgba(255,255,255,.07)",
-                              background:
-                                "rgba(255,255,255,.035)",
-                            }}
-                          >
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                gap: 10,
-                              }}
-                            >
-                              <strong>{period.label}</strong>
-                              <small style={{ opacity: .55 }}>
-                                без реинвестирования
-                              </small>
-                            </div>
+                <div className="profit-art-payback">
+                  <small>Расчётная окупаемость текущей фермы</small>
+                  <strong>
+                    {profitPlan.dailyCoins > 0
+                      ? `≈ ${formatNumber(profitPlan.paybackDays, 0)} дней`
+                      : "Нет дохода"}
+                  </strong>
+                </div>
 
-                            <div
-                              style={{
-                                marginTop: 8,
-                                display: "grid",
-                                gridTemplateColumns:
-                                  "repeat(2, minmax(0, 1fr))",
-                                gap: 7,
-                              }}
-                            >
-                              <div
-                                style={{
-                                  padding: "8px 9px",
-                                  borderRadius: 10,
-                                  background:
-                                    "rgba(255,255,255,.04)",
-                                  minWidth: 0,
-                                }}
-                              >
-                                <small style={{ opacity: .62 }}>
-                                  Coins
-                                </small>
-                                <strong
-                                  style={{
-                                    display: "block",
-                                    marginTop: 2,
-                                    overflowWrap: "anywhere",
-                                  }}
-                                >
-                                  {formatNumber(coins, 2)}
-                                </strong>
-                              </div>
-
-                              <div
-                                style={{
-                                  padding: "8px 9px",
-                                  borderRadius: 10,
-                                  background:
-                                    "rgba(255,255,255,.04)",
-                                  minWidth: 0,
-                                }}
-                              >
-                                <small style={{ opacity: .62 }}>
-                                  DNA
-                                </small>
-                                <strong
-                                  style={{
-                                    display: "block",
-                                    marginTop: 2,
-                                    overflowWrap: "anywhere",
-                                  }}
-                                >
-                                  {formatNumber(dna, 2)}
-                                </strong>
-                              </div>
-                            </div>
-                          </article>
-                        );
-                      })}
-                    </div>
-
-                    <div
-                      style={{
-                        marginTop: 12,
-                        padding: 12,
-                        borderRadius: 14,
-                        background: "rgba(255,255,255,.04)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: 10,
-                          alignItems: "baseline",
-                        }}
-                      >
-                        <span
-                          style={{
-                            opacity: .68,
-                            fontSize: 12,
-                          }}
-                        >
-                          Теоретическая стоимость фермы
-                        </span>
-                        <strong>
-                          {formatNumber(
-                            profitPlan.equivalentCostCoins,
-                            0,
-                          )}{" "}
-                          Coins
-                        </strong>
-                      </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: 10,
-                          alignItems: "baseline",
-                          marginTop: 7,
-                        }}
-                      >
-                        <span
-                          style={{
-                            opacity: .68,
-                            fontSize: 12,
-                          }}
-                        >
-                          Coins-окупаемость
-                        </span>
-                        <strong>
-                          ≈{" "}
-                          {formatNumber(
-                            profitPlan.paybackDays,
-                            0,
-                          )}{" "}
-                          дней
-                        </strong>
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        marginTop: 12,
-                        padding: 12,
-                        borderRadius: 14,
-                        background: "rgba(255,255,255,.04)",
-                      }}
-                    >
-                      <strong
-                        style={{
-                          display: "block",
-                          marginBottom: 8,
-                        }}
-                      >
-                        Состав фермы
+                <div className="profit-art-periods">
+                  {[
+                    { label: "1 день", days: 1 },
+                    { label: "30 дней", days: 30 },
+                    { label: "180 дней", days: 180 },
+                    { label: "1 год", days: 365 },
+                  ].map((period) => (
+                    <article key={period.days}>
+                      <small>{period.label}</small>
+                      <strong>
+                        {formatNumber(profitPlan.dailyCoins * period.days, 2)}
                       </strong>
+                      <span>Coins</span>
+                      <b>
+                        {formatNumber(profitPlan.dailyDna * period.days, 2)} DNA
+                      </b>
+                    </article>
+                  ))}
+                </div>
 
-                      <div
-                        style={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 6,
-                        }}
-                      >
-                        {profitPlan.levelCounts.map(
-                          (count, index) =>
-                            count > 0 ? (
-                              <span
-                                key={index}
-                                style={{
-                                  padding: "7px 9px",
-                                  borderRadius: 999,
-                                  background:
-                                    "rgba(167,243,72,.10)",
-                                  border:
-                                    "1px solid rgba(167,243,72,.20)",
-                                  fontSize: 12,
-                                  fontWeight: 800,
-                                }}
-                              >
-                                🦖 Lv.{index + 1} × {count}
-                              </span>
-                            ) : null,
-                        )}
-                      </div>
+                <div className="profit-art-composition">
+                  <div className="profit-art-subhead">
+                    <span className="eyebrow">CURRENT FARM</span>
+                    <h3>Состав фермы</h3>
+                  </div>
+
+                  {profitPlan.totalDinosaurs > 0 ? (
+                    <div className="profit-art-levels">
+                      {profitPlan.levelCounts.map(
+                        (count, index) =>
+                          count > 0 ? (
+                            <article key={index}>
+                              <div className="profit-art-dino-wrap">
+                                <img
+                                  src={
+                                    (index + 1) % 3 === 1
+                                      ? "/assets/game/dinosaurs/trex.webp"
+                                      : (index + 1) % 3 === 2
+                                        ? "/assets/game/dinosaurs/triceratops.webp"
+                                        : "/assets/game/dinosaurs/stegosaurus.webp"
+                                  }
+                                  alt=""
+                                  className="profit-art-dino"
+                                  draggable={false}
+                                  aria-hidden="true"
+                                />
+                                <b>Lv.{index + 1}</b>
+                              </div>
+
+                              <div>
+                                <strong>× {count}</strong>
+                                <small>
+                                  {formatNumber(
+                                    dinosaurs[index].dailyCoins * count,
+                                    2,
+                                  )} Coins / день
+                                </small>
+                                <small>
+                                  {formatNumber(
+                                    dinosaurs[index].dailyDna * count,
+                                    2,
+                                  )} DNA / день
+                                </small>
+                              </div>
+                            </article>
+                          ) : null,
+                      )}
                     </div>
+                  ) : (
+                    <div className="profit-art-empty">
+                      На ферме пока нет динозавров.
+                    </div>
+                  )}
+                </div>
 
-                    <small
-                      style={{
-                        display: "block",
-                        marginTop: 10,
-                        opacity: .58,
-                        lineHeight: 1.45,
-                      }}
-                    >
-                      Это расчёт по текущему составу вашей фермы и
-                      установленной игровой экономике. Он не учитывает
-                      будущие покупки, merge, задания, ежедневные бонусы
-                      и реферальные награды. При заполненном гнезде
-                      производство перестаёт накапливаться до сбора.
-                    </small>
-                  </>
-                )}
+                <div className="profit-art-note">
+                  Это расчёт по текущему составу вашей фермы и установленной
+                  игровой экономике. Он не учитывает будущие покупки, merge,
+                  задания, ежедневные бонусы и реферальные награды. При
+                  заполненном гнезде производство перестаёт накапливаться до
+                  сбора.
+                </div>
               </div>
             ) : null}
 
             {levelsOpen ? (
-              <div
-                className="form-card"
-                style={{
-                  marginTop: 16,
-                  borderRadius: 20,
-                  background: "#10281e",
-                  border: "1px solid rgba(255,255,255,.08)",
-                  padding: 14,
-                  width: "100%",
-                  minWidth: 0,
-                }}
-              >
-                <div
-                  className="section-head"
-                  style={{
-                    width: "100%",
-                    minWidth: 0,
-                    alignItems: "center",
-                  }}
-                >
+              <div className="form-card levels-art-panel">
+                <div className="levels-art-head">
                   <div>
                     <span className="eyebrow">DINO ECONOMY</span>
-                    <h2>📈 Lv.1–Lv.{MAX_DINOSAUR_LEVEL}</h2>
+                    <h2>Lv.1–Lv.{MAX_DINOSAUR_LEVEL}</h2>
                   </div>
 
                   <button
                     className="coin-button"
                     onClick={() => setLevelsOpen(false)}
-                    style={{ flex: "0 0 auto" }}
+                    aria-label="Закрыть уровни"
                   >
-                    ✕
+                    ×
                   </button>
                 </div>
 
-                <p
-                  style={{
-                    margin: "4px 0 12px",
-                    opacity: .72,
-                    fontSize: 12,
-                    lineHeight: 1.45,
-                  }}
-                >
-                  Два одинаковых динозавра объединяются в один следующего
-                  уровня. Merge оплачивается Coins. Комиссия подобрана так,
-                  чтобы окупаемость уровней оставалась контролируемой.
-                </p>
+                <div className="levels-art-intro">
+                  Два одинаковых динозавра объединяются в один следующего уровня.
+                  Merge оплачивается Coins. Доход и окупаемость ниже рассчитаны
+                  по текущей игровой экономике.
+                </div>
 
-                <div
-                  style={{
-                    display: "grid",
-                    gap: 7,
-                    width: "100%",
-                    minWidth: 0,
-                  }}
-                >
+                <div className="levels-art-list">
                   {dinosaurs.map((dino) => {
                     const periods = [
                       { label: "1 день", days: 1 },
@@ -6742,159 +6069,77 @@ export default function GameApp() {
                       { label: "1 год", days: 365 },
                     ] as const;
 
+                    const unlocked = dino.level <= dinoUnlockedLevel;
+
                     return (
                       <article
                         key={dino.level}
-                        style={{
-                          width: "100%",
-                          minWidth: 0,
-                          padding: 11,
-                          borderRadius: 14,
-                          border:
-                            dino.level === MAX_DINOSAUR_LEVEL
-                              ? "1px solid rgba(167,243,72,.45)"
-                              : "1px solid rgba(255,255,255,.07)",
-                          background:
-                            dino.level === MAX_DINOSAUR_LEVEL
-                              ? "rgba(167,243,72,.08)"
-                              : "rgba(255,255,255,.035)",
-                        }}
+                        className={`levels-art-card ${
+                          unlocked ? "levels-art-unlocked" : "levels-art-locked"
+                        } ${
+                          dino.level === MAX_DINOSAUR_LEVEL
+                            ? "levels-art-max"
+                            : ""
+                        }`}
                       >
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            gap: 10,
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 9,
-                              minWidth: 0,
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: 46,
-                                height: 46,
-                                flex: "0 0 auto",
-                                borderRadius: 13,
-                                display: "grid",
-                                placeItems: "center",
-                                background: "rgba(255,255,255,.05)",
-                              }}
-                            >
-                              <div style={{ textAlign: "center" }}>
-                                <div style={{ fontSize: 17 }}>🦖</div>
-                                <strong style={{ fontSize: 10 }}>
-                                  Lv.{dino.level}
-                                </strong>
-                              </div>
-                            </div>
-
-                            <div style={{ minWidth: 0 }}>
-                              <strong
-                                style={{
-                                  display: "block",
-                                  fontSize: 15,
-                                }}
-                              >
-                                {formatNumber(dino.dailyCoins, 2)} Coins +{" "}
-                                {formatNumber(dino.dailyDna, 2)} DNA
-                              </strong>
-                              <small style={{ opacity: .62 }}>
-                                в сутки · {formatNumber(dino.eggsPerHour, 2)} яиц/ч
-                              </small>
-                            </div>
+                        <div className="levels-art-card-head">
+                          <div className="levels-art-dino-wrap">
+                            <img
+                              src={
+                                dino.level % 3 === 1
+                                  ? "/assets/game/dinosaurs/trex.webp"
+                                  : dino.level % 3 === 2
+                                    ? "/assets/game/dinosaurs/triceratops.webp"
+                                    : "/assets/game/dinosaurs/stegosaurus.webp"
+                              }
+                              alt=""
+                              className="levels-art-dino"
+                              draggable={false}
+                              aria-hidden="true"
+                            />
+                            <b>Lv.{dino.level}</b>
                           </div>
+
+                          <div className="levels-art-income">
+                            <strong>
+                              {formatNumber(dino.dailyCoins, 2)} Coins
+                            </strong>
+                            <strong>
+                              {formatNumber(dino.dailyDna, 2)} DNA
+                            </strong>
+                            <small>
+                              в сутки · {formatNumber(dino.eggsPerHour, 2)} яиц/ч
+                            </small>
+                          </div>
+
+                          <span className="levels-art-state">
+                            {unlocked ? "ОТКРЫТ" : "НЕ ОТКРЫТ"}
+                          </span>
                         </div>
 
-                        <div
-                          style={{
-                            marginTop: 9,
-                            display: "grid",
-                            gridTemplateColumns:
-                              "repeat(2, minmax(0, 1fr))",
-                            gap: 6,
-                          }}
-                        >
+                        <div className="levels-art-periods">
                           {periods.map((period) => {
                             const amount =
                               dino.dailyCoins * period.days;
 
                             return (
-                              <div
-                                key={period.days}
-                                style={{
-                                  padding: "8px 9px",
-                                  borderRadius: 10,
-                                  background: "rgba(255,255,255,.04)",
-                                  minWidth: 0,
-                                }}
-                              >
-                                <small
-                                  style={{
-                                    display: "block",
-                                    opacity: .60,
-                                  }}
-                                >
-                                  {period.label}
-                                </small>
-                                <strong
-                                  style={{
-                                    display: "block",
-                                    marginTop: 2,
-                                    fontSize: 13,
-                                    overflowWrap: "anywhere",
-                                  }}
-                                >
-                                  {formatNumber(amount, 2)}
-                                </strong>
-                                <small style={{ opacity: .72 }}>
-                                  Coins + столько же DNA
-                                </small>
+                              <div key={period.days}>
+                                <small>{period.label}</small>
+                                <strong>{formatNumber(amount, 2)}</strong>
+                                <span>Coins + столько же DNA</span>
                               </div>
                             );
                           })}
                         </div>
 
-                        <div
-                          style={{
-                            marginTop: 8,
-                            display: "grid",
-                            gridTemplateColumns:
-                              "repeat(2, minmax(0, 1fr))",
-                            gap: 6,
-                          }}
-                        >
-                          <div
-                            style={{
-                              padding: "8px 9px",
-                              borderRadius: 10,
-                              background: "rgba(255,255,255,.04)",
-                              minWidth: 0,
-                            }}
-                          >
-                            <small
-                              style={{
-                                display: "block",
-                                opacity: .60,
-                              }}
-                            >
+                        <div className="levels-art-economy">
+                          <div>
+                            <small>
                               {dino.level === 1
                                 ? "Цена Lv.1"
                                 : "Merge комиссия"}
                             </small>
-                            <strong
-                              style={{
-                                display: "block",
-                                marginTop: 2,
-                                fontSize: 13,
-                              }}
-                            >
+                            <strong>
                               {formatNumber(
                                 dino.level === 1
                                   ? gameConfig.levelOnePriceCoins
@@ -6905,72 +6150,46 @@ export default function GameApp() {
                             </strong>
                           </div>
 
-                          <div
-                            style={{
-                              padding: "8px 9px",
-                              borderRadius: 10,
-                              background: "rgba(255,255,255,.04)",
-                              minWidth: 0,
-                            }}
-                          >
-                            <small
-                              style={{
-                                display: "block",
-                                opacity: .60,
-                              }}
-                            >
-                              Окупаемость
-                            </small>
-                            <strong
-                              style={{
-                                display: "block",
-                                marginTop: 2,
-                                fontSize: 13,
-                              }}
-                            >
+                          <div>
+                            <small>Окупаемость</small>
+                            <strong>
                               ≈ {formatNumber(dino.paybackDays, 0)} дней
                             </strong>
                           </div>
                         </div>
 
-                        <small
-                          style={{
-                            display: "block",
-                            marginTop: 7,
-                            opacity: .56,
-                            lineHeight: 1.4,
-                          }}
-                        >
-                          Полная экв. стоимость:{" "}
-                          {formatNumber(
-                            dino.equivalentCostCoins,
-                            0,
-                          )} Coins · для merge:{" "}
-                          {formatNumber(
-                            dino.levelOneCopies,
-                            0,
-                          )} × Lv.1
-                        </small>
+                        <div className="levels-art-equivalent">
+                          <span>
+                            Полная экв. стоимость{" "}
+                            <b>
+                              {formatNumber(
+                                dino.equivalentCostCoins,
+                                0,
+                              )} Coins
+                            </b>
+                          </span>
+
+                          <span>
+                            Для merge{" "}
+                            <b>
+                              {formatNumber(
+                                dino.levelOneCopies,
+                                0,
+                              )} × Lv.1
+                            </b>
+                          </span>
+                        </div>
                       </article>
                     );
                   })}
                 </div>
 
-                <div
-                  style={{
-                    marginTop: 12,
-                    padding: 10,
-                    borderRadius: 12,
-                    background: "rgba(255,255,255,.04)",
-                  }}
-                >
-                  <small style={{ lineHeight: 1.45, opacity: .68 }}>
-                    Расчёты за 30, 180 и 365 дней сделаны без реинвестирования.
-                    «Окупаемость» = полная стоимость получения уровня ÷ его
-                    Coins-доход за день. DNA, задания, ежедневные бонусы и
-                    рефералы в окупаемость не включены. При переполненном
-                    гнезде новые яйца не накапливаются до следующего сбора.
-                  </small>
+                <div className="levels-art-note">
+                  Расчёты за 30, 180 и 365 дней сделаны без реинвестирования.
+                  Окупаемость = полная стоимость получения уровня ÷ его
+                  Coins-доход за день. DNA, задания, ежедневные бонусы и
+                  рефералы в окупаемость не включены. При заполненном гнезде
+                  новые яйца не накапливаются до следующего сбора.
                 </div>
               </div>
             ) : null}
@@ -7558,117 +6777,59 @@ export default function GameApp() {
             ) : null}
 
             {dailyOpen ? (
-              <div
-                className="form-card"
-                style={{
-                  marginTop: 16,
-                  borderRadius: 20,
-                  background: "#10281e",
-                  border: "1px solid rgba(255,255,255,.08)",
-                  padding: 14,
-                  width: "100%",
-                  minWidth: 0,
-                }}
-              >
-                <div
-                  className="section-head"
-                  style={{ width: "100%", minWidth: 0 }}
-                >
+              <div className="form-card daily-art-panel">
+                <div className="daily-art-head">
                   <div>
                     <span className="eyebrow">DAILY REWARD</span>
-                    <h2>🎁 Ежедневный бонус</h2>
+                    <h2>Ежедневный бонус</h2>
                   </div>
 
                   <button
                     className="coin-button"
                     onClick={() => setDailyOpen(false)}
-                    style={{ flex: "0 0 auto" }}
+                    aria-label="Закрыть ежедневный бонус"
                   >
-                    ✕
+                    ×
                   </button>
                 </div>
 
                 {dailyStatus === "loading" || dailyStatus === "idle" ? (
-                  <p>Загружаем ежедневный бонус...</p>
+                  <div className="daily-art-message">
+                    Загружаем ежедневный бонус...
+                  </div>
                 ) : dailyStatus === "error" ? (
-                  <>
-                    <p>Не удалось загрузить бонус.</p>
+                  <div className="daily-art-message daily-art-error">
+                    <strong>Не удалось загрузить бонус</strong>
                     <button
                       className="primary"
                       onClick={() => void loadDailyReward()}
                     >
                       ПОВТОРИТЬ
                     </button>
-                  </>
+                  </div>
                 ) : dailyInfo ? (
                   <>
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
-                        gap: 8,
-                        width: "100%",
-                        marginTop: 8,
-                      }}
-                    >
-                      <div
-                        style={{
-                          padding: 12,
-                          borderRadius: 14,
-                          background: "rgba(255,255,255,.05)",
-                        }}
-                      >
-                        <small style={{ opacity: .68 }}>
-                          Следующая награда
-                        </small>
-                        <div
-                          style={{
-                            marginTop: 4,
-                            fontSize: 22,
-                            fontWeight: 900,
-                          }}
-                        >
+                    <div className="daily-art-summary">
+                      <article>
+                        <small>Следующая награда</small>
+                        <strong>
                           +{formatNumber(dailyInfo.nextRewardCoins, 0)}
-                        </div>
-                        <small>Coins</small>
-                      </div>
+                        </strong>
+                        <span>Coins</span>
+                      </article>
 
-                      <div
-                        style={{
-                          padding: 12,
-                          borderRadius: 14,
-                          background: "rgba(255,255,255,.05)",
-                        }}
-                      >
-                        <small style={{ opacity: .68 }}>
-                          Серия
-                        </small>
-                        <div
-                          style={{
-                            marginTop: 4,
-                            fontSize: 22,
-                            fontWeight: 900,
-                          }}
-                        >
-                          {dailyInfo.streak}/7
-                        </div>
-                        <small>
+                      <article>
+                        <small>Текущая серия</small>
+                        <strong>{dailyInfo.streak}/7</strong>
+                        <span>
                           {dailyInfo.canClaim
                             ? "Можно забрать"
                             : formatDailyRemaining(dailyInfo.nextClaimAt)}
-                        </small>
-                      </div>
+                        </span>
+                      </article>
                     </div>
 
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-                        gap: 5,
-                        marginTop: 12,
-                        width: "100%",
-                      }}
-                    >
+                    <div className="daily-art-calendar">
                       {dailyInfo.rewards.map((reward, index) => {
                         const day = index + 1;
                         const completed =
@@ -7677,325 +6838,228 @@ export default function GameApp() {
                         const next = day === dailyInfo.nextDay;
 
                         return (
-                          <div
+                          <article
                             key={day}
-                            style={{
-                              minWidth: 0,
-                              padding: "8px 3px",
-                              borderRadius: 11,
-                              textAlign: "center",
-                              border: next
-                                ? "1px solid rgba(167,243,72,.70)"
-                                : "1px solid rgba(255,255,255,.07)",
-                              background: next
-                                ? "rgba(167,243,72,.12)"
-                                : completed
-                                  ? "rgba(85,190,112,.12)"
-                                  : "rgba(255,255,255,.035)",
-                            }}
+                            className={`daily-art-day ${
+                              completed ? "daily-art-day-complete" : ""
+                            } ${
+                              next ? "daily-art-day-next" : ""
+                            }`}
                           >
-                            <small
-                              style={{
-                                display: "block",
-                                opacity: .64,
-                                fontSize: 9,
-                              }}
-                            >
-                              Д{day}
-                            </small>
-                            <strong
-                              style={{
-                                display: "block",
-                                marginTop: 3,
-                                fontSize: 10,
-                                overflow: "hidden",
-                              }}
-                            >
-                              {completed ? "✓" : reward}
-                            </strong>
-                          </div>
+                            <small>День {day}</small>
+
+                            <div className="daily-art-reward">
+                              {completed ? (
+                                <span className="daily-art-check">✓</span>
+                              ) : (
+                                <strong>
+                                  +{formatNumber(reward, 0)}
+                                </strong>
+                              )}
+                            </div>
+
+                            <span>
+                              {completed ? "Получено" : "Coins"}
+                            </span>
+                          </article>
                         );
                       })}
                     </div>
 
-                    <p
-                      style={{
-                        margin: "12px 0 0",
-                        opacity: .74,
-                        fontSize: 12,
-                        lineHeight: 1.45,
-                      }}
-                    >
-                      Награда выдаётся только в Coins. Новый бонус доступен
-                      через 24 часа. Если пропустить более 48 часов, серия
-                      начинается с первого дня.
-                    </p>
+                    <div className="daily-art-rules">
+                      <strong>Как работает серия</strong>
+                      <span>
+                        Новый бонус доступен через 24 часа. Если пропустить
+                        более 48 часов, серия начинается с первого дня.
+                        Награды выдаются только в Coins.
+                      </span>
+                    </div>
 
                     <button
-                      className="primary"
+                      className="primary daily-art-claim"
                       onClick={claimDailyReward}
                       disabled={
                         isClaimingDaily || !dailyInfo.canClaim
                       }
-                      style={{ marginTop: 12 }}
                     >
                       {isClaimingDaily
-                        ? "⏳ ПОЛУЧАЕМ..."
+                        ? "ПОЛУЧАЕМ..."
                         : dailyInfo.canClaim
-                          ? `🎁 ЗАБРАТЬ +${formatNumber(
+                          ? `ЗАБРАТЬ +${formatNumber(
                               dailyInfo.nextRewardCoins,
                               0,
                             )} COINS`
-                          : `⏱ ${formatDailyRemaining(
+                          : formatDailyRemaining(
                               dailyInfo.nextClaimAt,
-                            )}`}
+                            )}
                     </button>
 
-                    <small
-                      style={{
-                        display: "block",
-                        marginTop: 9,
-                        opacity: .65,
-                      }}
-                    >
-                      Всего получено: {dailyInfo.totalClaims} бонусов ·{" "}
-                      {formatNumber(dailyInfo.totalCoins, 0)} Coins
-                    </small>
+                    <div className="daily-art-total">
+                      <span>Получено бонусов</span>
+                      <b>{dailyInfo.totalClaims}</b>
+                      <span>Всего Coins</span>
+                      <b>{formatNumber(dailyInfo.totalCoins, 0)}</b>
+                    </div>
                   </>
                 ) : null}
               </div>
             ) : null}
 
             {withdrawalOpen ? (
-              <div
-                className="form-card"
-                style={{
-                  marginTop: 16,
-                  borderRadius: 20,
-                  background: "#10281e",
-                  border: "1px solid rgba(255,255,255,.08)",
-                  padding: 14,
-                  width: "100%",
-                  minWidth: 0,
-                }}
-              >
-                <div className="section-head" style={{ width: "100%", minWidth: 0 }}>
+              <div className="form-card withdraw-art-panel">
+                <div className="withdraw-art-head">
                   <div>
                     <span className="eyebrow">WITHDRAWAL</span>
                     <h2>DNA → USDT</h2>
                   </div>
+
                   <button
                     className="coin-button"
                     onClick={() => setWithdrawalOpen(false)}
-                    style={{ flex: "0 0 auto" }}
+                    aria-label="Закрыть вывод"
                   >
-                    ✕
+                    ×
                   </button>
                 </div>
 
-                {withdrawalStatus === "loading" || withdrawalStatus === "idle" ? (
-                  <p>Загружаем параметры вывода...</p>
+                {withdrawalStatus === "loading" ||
+                withdrawalStatus === "idle" ? (
+                  <div className="withdraw-art-message">
+                    Загружаем параметры вывода...
+                  </div>
                 ) : withdrawalStatus === "error" ? (
-                  <>
-                    <p>Не удалось загрузить заявки.</p>
-                    <button className="primary" onClick={() => void loadWithdrawals()}>
+                  <div className="withdraw-art-message withdraw-art-error">
+                    <strong>Не удалось загрузить заявки</strong>
+                    <button
+                      className="primary"
+                      onClick={() => void loadWithdrawals()}
+                    >
                       ПОВТОРИТЬ
                     </button>
-                  </>
+                  </div>
                 ) : withdrawalConfig ? (
                   <>
-                    <p>
-                      Курс: <strong>1 DNA = {withdrawalConfig.usdtPerDna.toFixed(4)} USDT</strong>
-                    </p>
-                    <p>
-                      Минимальный вывод:{" "}
-                      <strong>
-                        {formatNumber(
-                          withdrawalConfig.minDna,
-                          0,
-                        )}{" "}
-                        DNA ={" "}
-                        {withdrawalConfig.minUsdt.toFixed(
-                          2,
-                        )}{" "}
-                        USDT
-                      </strong>
-                    </p>
+                    <div className="withdraw-art-summary">
+                      <article>
+                        <small>Доступно</small>
+                        <strong>{formatNumber(state.dna, 4)} DNA</strong>
+                        <span>
+                          {(state.dna * withdrawalConfig.usdtPerDna).toFixed(8)} USDT
+                        </span>
+                      </article>
 
-                    <div
-                      style={{
-                        margin:
-                          "8px 0 10px",
-                        padding: 10,
-                        borderRadius: 12,
-                        background:
-                          "rgba(167,243,72,.08)",
-                        border:
-                          "1px solid rgba(167,243,72,.18)",
-                        fontSize: 13,
-                        lineHeight: 1.45,
-                      }}
-                    >
-                      ✅ Сетевая комиссия
-                      оплачивается проектом.
-                      Игрок получает полностью
-                      указанную сумму USDT.
+                      <article>
+                        <small>Минимум</small>
+                        <strong>
+                          {formatNumber(withdrawalConfig.minDna, 0)} DNA
+                        </strong>
+                        <span>{withdrawalConfig.minUsdt.toFixed(2)} USDT</span>
+                      </article>
                     </div>
 
-                    <p>
-                      Доступно:{" "}
-                      <strong>
-                        {formatNumber(
-                          state.dna,
-                          4,
-                        )}{" "}
-                        DNA
-                      </strong>
-                    </p>
+                    <div className="withdraw-art-rate">
+                      <span>Курс</span>
+                      <b>
+                        1 DNA = {withdrawalConfig.usdtPerDna.toFixed(4)} USDT
+                      </b>
+                    </div>
+
+                    <div className="withdraw-art-fee-note">
+                      <strong>Сетевая комиссия оплачивается проектом</strong>
+                      <span>
+                        На кошелёк игрок получает полностью указанную сумму USDT.
+                      </span>
+                    </div>
 
                     {withdrawals.some(
                       (item) =>
-                        item.status ===
-                          "PENDING" ||
-                        item.status ===
-                          "APPROVED",
+                        item.status === "PENDING" ||
+                        item.status === "APPROVED",
                     ) ? (
-                      <p
-                        className="hint"
-                        style={{
-                          marginTop: 6,
-                        }}
-                      >
-                        🔄 Статус активной
-                        заявки обновляется
-                        автоматически примерно
-                        каждые 15 секунд.
-                      </p>
+                      <div className="withdraw-art-auto-status">
+                        Статус активной заявки обновляется автоматически примерно каждые 15 секунд.
+                      </div>
                     ) : null}
 
-                    <label style={{ display: "grid", gap: 6, marginTop: 12, width: "100%", minWidth: 0 }}>
-                      <span>Количество DNA</span>
-                      <input
-                        type="number"
-                        min={withdrawalConfig.minDna}
-                        step="0.0001"
-                        value={withdrawDna}
-                        onChange={(event) => setWithdrawDna(event.target.value)}
-                        style={{ width: "100%", minWidth: 0, padding: 12, borderRadius: 12 }}
-                      />
-                    </label>
+                    <div className="withdraw-art-form">
+                      <label>
+                        <span>Количество DNA</span>
+                        <input
+                          type="number"
+                          min={withdrawalConfig.minDna}
+                          step="0.0001"
+                          value={withdrawDna}
+                          onChange={(event) => setWithdrawDna(event.target.value)}
+                        />
+                      </label>
 
-                    <label style={{ display: "grid", gap: 6, marginTop: 12, width: "100%", minWidth: 0 }}>
-                      <span>Сеть USDT</span>
-                      <input
-                        type="text"
-                        value={withdrawNetwork}
-                        onChange={(event) => setWithdrawNetwork(event.target.value)}
-                        placeholder="Например: TON / TRC20 / BEP20"
-                        maxLength={32}
-                        style={{ width: "100%", minWidth: 0, padding: 12, borderRadius: 12 }}
-                      />
-                    </label>
+                      <label>
+                        <span>Сеть USDT</span>
+                        <input
+                          type="text"
+                          value={withdrawNetwork}
+                          onChange={(event) => setWithdrawNetwork(event.target.value)}
+                          placeholder="Например: TON / TRC20 / BEP20"
+                          maxLength={32}
+                        />
+                      </label>
 
-                    <label style={{ display: "grid", gap: 6, marginTop: 12, width: "100%", minWidth: 0 }}>
-                      <span>Адрес USDT-кошелька</span>
-                      <input
-                        type="text"
-                        value={withdrawWallet}
-                        onChange={(event) => setWithdrawWallet(event.target.value)}
-                        placeholder="Введите адрес кошелька"
-                        maxLength={180}
-                        autoComplete="off"
-                        style={{ width: "100%", minWidth: 0, padding: 12, borderRadius: 12 }}
-                      />
-                    </label>
+                      <label>
+                        <span>Адрес USDT-кошелька</span>
+                        <input
+                          type="text"
+                          value={withdrawWallet}
+                          onChange={(event) => setWithdrawWallet(event.target.value)}
+                          placeholder="Введите адрес кошелька"
+                          maxLength={180}
+                          autoComplete="off"
+                        />
+                      </label>
+                    </div>
 
-                    <div
-                      className="card"
-                      style={{
-                        marginTop: 12,
-                        width: "100%",
-                        minWidth: 0,
-                        flexDirection: "column",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      <strong>К получению</strong>
-                      <p style={{ margin: "4px 0", fontSize: 22, fontWeight: 900 }}>
-                        {withdrawalPreview.toFixed(8)} USDT
-                      </p>
-                      <small style={{ lineHeight: 1.4 }}>
-                        Это сумма, которую игрок должен получить на кошелёк.
-                        Сетевая комиссия оплачивается проектом отдельно.
-                        DNA резервируется сразу после создания заявки.
-                      </small>
+                    <div className="withdraw-art-preview">
+                      <small>К получению</small>
+                      <strong>{withdrawalPreview.toFixed(8)} USDT</strong>
+                      <span>
+                        DNA резервируется сразу после создания заявки. Сетевая комиссия оплачивается проектом отдельно.
+                      </span>
                     </div>
 
                     <button
-                      className="primary"
+                      className="primary withdraw-art-submit"
                       onClick={submitWithdrawal}
                       disabled={isSubmittingWithdrawal}
                     >
                       {isSubmittingWithdrawal
-                        ? "⏳ СОЗДАЁМ..."
-                        : "💸 ЗАПРОСИТЬ ВЫПЛАТУ"}
+                        ? "СОЗДАЁМ..."
+                        : "ЗАПРОСИТЬ ВЫПЛАТУ"}
                     </button>
 
-                    <div
-                      style={{
-                        marginTop: 18,
-                        width: "100%",
-                        minWidth: 0,
-                      }}
-                    >
-                      <div
-                        className="section-head"
-                        style={{
-                          width: "100%",
-                          minWidth: 0,
-                          alignItems: "center",
-                          marginBottom: 10,
-                        }}
-                      >
+                    <div className="withdraw-art-history">
+                      <div className="withdraw-art-history-head">
                         <div>
                           <span className="eyebrow">HISTORY</span>
-                          <h3 style={{ margin: "2px 0 0" }}>История выплат</h3>
+                          <h3>История выплат</h3>
                         </div>
 
                         <button
                           className="coin-button"
                           onClick={() => void loadWithdrawals()}
-                          disabled={false}
-                          style={{ flex: "0 0 auto" }}
+                          aria-label="Обновить выплаты"
                         >
                           ↻
                         </button>
                       </div>
 
                       {withdrawals.length === 0 ? (
-                        <div
-                          className="card"
-                          style={{
-                            width: "100%",
-                            minWidth: 0,
-                            flexDirection: "column",
-                            alignItems: "flex-start",
-                          }}
-                        >
+                        <div className="card withdraw-art-empty">
                           <strong>Заявок пока нет</strong>
-                          <small style={{ lineHeight: 1.45 }}>
+                          <small>
                             После первого вывода заявка появится здесь вместе со статусом и суммой.
                           </small>
                         </div>
                       ) : (
-                        <div
-                          style={{
-                            display: "grid",
-                            gap: 10,
-                            width: "100%",
-                            minWidth: 0,
-                          }}
-                        >
+                        <div className="withdraw-art-list">
                           {withdrawals.slice(0, 12).map((item) => {
                             const status = withdrawalStatusMeta(
                               item.status,
@@ -8005,181 +7069,71 @@ export default function GameApp() {
                             return (
                               <article
                                 key={item.id}
-                                style={{
-                                  width: "100%",
-                                  minWidth: 0,
-                                  borderRadius: 16,
-                                  border: "1px solid rgba(255,255,255,.08)",
-                                  background: "rgba(5, 22, 15, .55)",
-                                  padding: 12,
-                                  overflow: "hidden",
-                                }}
+                                className="withdraw-art-item"
                               >
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "flex-start",
-                                    gap: 10,
-                                    width: "100%",
-                                  }}
-                                >
-                                  <div style={{ minWidth: 0 }}>
-                                    <div
-                                      style={{
-                                        fontSize: 18,
-                                        fontWeight: 900,
-                                        lineHeight: 1.2,
-                                      }}
-                                    >
+                                <div className="withdraw-art-item-top">
+                                  <div>
+                                    <strong>
                                       {item.usdtAmount.toFixed(8)} USDT
-                                    </div>
-                                    <small style={{ opacity: .72 }}>
+                                    </strong>
+                                    <small>
                                       {formatNumber(item.dnaAmount, 4)} DNA
                                     </small>
                                   </div>
 
                                   <span
+                                    className="withdraw-art-status"
                                     style={{
-                                      flex: "0 0 auto",
-                                      maxWidth: "58%",
-                                      padding: "6px 8px",
-                                      borderRadius: 999,
-                                      border: `1px solid ${status.border}`,
+                                      borderColor: status.border,
                                       background: status.background,
                                       color: status.color,
-                                      fontSize: 11,
-                                      fontWeight: 900,
-                                      lineHeight: 1.2,
-                                      textAlign: "center",
                                     }}
                                   >
-                                    {status.icon} {status.label}
+                                    {status.label}
                                   </span>
                                 </div>
 
-                                <div
-                                  style={{
-                                    marginTop: 10,
-                                    display: "grid",
-                                    gridTemplateColumns: "1fr 1fr",
-                                    gap: 8,
-                                    width: "100%",
-                                    minWidth: 0,
-                                  }}
-                                >
-                                  <div
-                                    style={{
-                                      padding: 9,
-                                      borderRadius: 12,
-                                      background: "rgba(255,255,255,.04)",
-                                      minWidth: 0,
-                                    }}
-                                  >
-                                    <small style={{ opacity: .65 }}>Сеть</small>
-                                    <div
-                                      style={{
-                                        marginTop: 3,
-                                        fontWeight: 800,
-                                        overflowWrap: "anywhere",
-                                      }}
-                                    >
-                                      {item.network}
-                                    </div>
+                                <div className="withdraw-art-item-grid">
+                                  <div>
+                                    <small>Сеть</small>
+                                    <b>{item.network}</b>
                                   </div>
 
-                                  <div
-                                    style={{
-                                      padding: 9,
-                                      borderRadius: 12,
-                                      background: "rgba(255,255,255,.04)",
-                                      minWidth: 0,
-                                    }}
-                                  >
-                                    <small style={{ opacity: .65 }}>Дата</small>
-                                    <div
-                                      style={{
-                                        marginTop: 3,
-                                        fontWeight: 700,
-                                        fontSize: 12,
-                                        lineHeight: 1.35,
-                                      }}
-                                    >
-                                      {formatWithdrawalDate(item.createdAt)}
-                                    </div>
+                                  <div>
+                                    <small>Дата</small>
+                                    <b>{formatWithdrawalDate(item.createdAt)}</b>
                                   </div>
-                                </div>
 
-                                <div
-                                  style={{
-                                    marginTop: 8,
-                                    padding: 9,
-                                    borderRadius: 12,
-                                    background: "rgba(255,255,255,.04)",
-                                    minWidth: 0,
-                                  }}
-                                >
-                                  <small style={{ opacity: .65 }}>Кошелёк</small>
-                                  <div
-                                    style={{
-                                      marginTop: 3,
-                                      fontFamily: "monospace",
-                                      fontSize: 12,
-                                      overflowWrap: "anywhere",
-                                    }}
-                                  >
-                                    {shortWallet(item.walletAddress)}
+                                  <div className="withdraw-art-wallet">
+                                    <small>Кошелёк</small>
+                                    <b>{shortWallet(item.walletAddress)}</b>
                                   </div>
                                 </div>
 
                                 {item.status === "PENDING" ? (
-                                  <small
-                                    style={{
-                                      display: "block",
-                                      marginTop: 9,
-                                      opacity: .72,
-                                      lineHeight: 1.4,
-                                    }}
-                                  >
-                                    Заявка ожидает автоматической проверки и выплаты. DNA уже зарезервирована.
-                                  </small>
-                                ) : null}
+                                  <>
+                                    <small className="withdraw-art-note">
+                                      Заявка ожидает автоматической проверки и выплаты. DNA уже зарезервирована.
+                                    </small>
 
-                                {item.status === "PENDING" ? (
-                                  <button
-                                    className="coin-button"
-                                    disabled={
-                                      cancelingWithdrawalId !==
-                                      null
-                                    }
-                                    onClick={() =>
-                                      void cancelWithdrawal(
-                                        item,
-                                      )
-                                    }
-                                    style={{
-                                      width: "100%",
-                                      maxWidth: "none",
-                                      marginTop: 9,
-                                      borderColor:
-                                        "rgba(255,92,108,.34)",
-                                    }}
-                                  >
-                                    {cancelingWithdrawalId ===
-                                    item.id
-                                      ? "⏳ ОТМЕНЯЕМ..."
-                                      : "↩️ ОТМЕНИТЬ ЗАЯВКУ"}
-                                  </button>
+                                    <button
+                                      className="coin-button withdraw-art-cancel"
+                                      disabled={cancelingWithdrawalId !== null}
+                                      onClick={() =>
+                                        void cancelWithdrawal(item)
+                                      }
+                                    >
+                                      {cancelingWithdrawalId === item.id
+                                        ? "ОТМЕНЯЕМ..."
+                                        : "ОТМЕНИТЬ ЗАЯВКУ"}
+                                    </button>
+                                  </>
                                 ) : null}
 
                                 {item.status === "APPROVED" ? (
                                   <small
-                                    style={{
-                                      display: "block",
-                                      marginTop: 9,
-                                      color: status.color,
-                                      lineHeight: 1.4,
-                                    }}
+                                    className="withdraw-art-note"
+                                    style={{ color: status.color }}
                                   >
                                     Заявка одобрена и ожидает отправки USDT.
                                   </small>
@@ -8187,28 +7141,19 @@ export default function GameApp() {
 
                                 {item.status === "PAID" ? (
                                   <small
-                                    style={{
-                                      display: "block",
-                                      marginTop: 9,
-                                      color: status.color,
-                                      lineHeight: 1.4,
-                                    }}
+                                    className="withdraw-art-note"
+                                    style={{ color: status.color }}
                                   >
-                                    Выплата отмечена администратором как отправленная.
+                                    Выплата отправлена на указанный кошелёк.
                                   </small>
                                 ) : null}
 
                                 {item.status === "REJECTED" ? (
                                   <small
-                                    style={{
-                                      display: "block",
-                                      marginTop: 9,
-                                      color: status.color,
-                                      lineHeight: 1.4,
-                                    }}
+                                    className="withdraw-art-note"
+                                    style={{ color: status.color }}
                                   >
-                                    {item.note ===
-                                    "CANCELED_BY_PLAYER"
+                                    {item.note === "CANCELED_BY_PLAYER"
                                       ? "Вы отменили эту заявку. Зарезервированная DNA возвращена на игровой баланс."
                                       : "Заявка отклонена. Зарезервированная DNA возвращена на игровой баланс."}
                                   </small>
