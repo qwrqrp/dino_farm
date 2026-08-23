@@ -411,3 +411,276 @@
     top:17px !important;
   }
 }
+
+/* =========================================================
+   APPROVED GAME ART — STAGE 4: EGG FLIGHT
+   Visual-only animation driven by EXISTING isCollecting.
+   No resource/timer/API changes.
+   ========================================================= */
+
+.egg-flight-layer{
+  position:absolute !important;
+  z-index:8 !important;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+}
+
+.egg-flight-art{
+  position:absolute;
+  z-index:3;
+  left:76%;
+  top:31%;
+  width:48px;
+  height:48px;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  transform-origin:center;
+  filter:
+    drop-shadow(0 5px 5px rgba(0,0,0,.18))
+    drop-shadow(0 0 9px rgba(255,211,62,.28));
+  animation:approvedEggFlight 1.15s cubic-bezier(.23,.72,.35,1) both;
+}
+
+/* Decorative sparkles only. */
+.egg-sparkle{
+  position:absolute;
+  z-index:2;
+  left:50%;
+  top:54%;
+  width:9px;
+  height:9px;
+  pointer-events:none;
+  opacity:0;
+  transform:translate(-50%,-50%) rotate(45deg) scale(.2);
+  background:#fff3a2;
+  box-shadow:
+    0 0 8px rgba(255,237,108,.95),
+    0 0 15px rgba(255,206,61,.55);
+  animation:approvedEggSparkle .55s ease-out .68s both;
+}
+
+.egg-sparkle::before,
+.egg-sparkle::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  border-radius:999px;
+  background:#fff8c9;
+  transform:translate(-50%,-50%);
+}
+
+.egg-sparkle::before{
+  width:3px;
+  height:17px;
+}
+
+.egg-sparkle::after{
+  width:17px;
+  height:3px;
+}
+
+.egg-sparkle-1{
+  margin-left:-38px;
+  margin-top:-12px;
+}
+
+.egg-sparkle-2{
+  margin-left:34px;
+  margin-top:-20px;
+  animation-delay:.74s;
+}
+
+.egg-sparkle-3{
+  margin-left:-18px;
+  margin-top:18px;
+  width:7px;
+  height:7px;
+  animation-delay:.79s;
+}
+
+.egg-sparkle-4{
+  margin-left:43px;
+  margin-top:14px;
+  width:6px;
+  height:6px;
+  animation-delay:.84s;
+}
+
+/* The existing nest receives a brief visual squash when the egg lands. */
+.hero-card:has(.egg-flight-layer) .nest-art-base{
+  animation:approvedNestReceiveEgg 1.15s ease both !important;
+}
+
+.hero-card:has(.egg-flight-layer) .nest-art-eggs{
+  animation:approvedNestEggsReceive 1.15s ease both;
+}
+
+/* Path:
+   start near right dinosaur -> little bounce -> curved travel -> nest center */
+@keyframes approvedEggFlight{
+  0%{
+    opacity:0;
+    transform:
+      translate3d(0,0,0)
+      scale(.25)
+      rotate(-12deg);
+  }
+
+  10%{
+    opacity:1;
+    transform:
+      translate3d(-4px,-8px,0)
+      scale(.92)
+      rotate(-5deg);
+  }
+
+  20%{
+    transform:
+      translate3d(-9px,-2px,0)
+      scale(1.06)
+      rotate(3deg);
+  }
+
+  34%{
+    transform:
+      translate3d(-22px,-25px,0)
+      scale(1)
+      rotate(12deg);
+  }
+
+  58%{
+    transform:
+      translate3d(-74px,12px,0)
+      scale(.92)
+      rotate(24deg);
+  }
+
+  78%{
+    opacity:1;
+    transform:
+      translate3d(-117px,88px,0)
+      scale(.78)
+      rotate(35deg);
+  }
+
+  92%{
+    opacity:1;
+    transform:
+      translate3d(-133px,128px,0)
+      scale(.60)
+      rotate(43deg);
+  }
+
+  100%{
+    opacity:0;
+    transform:
+      translate3d(-133px,137px,0)
+      scale(.38)
+      rotate(46deg);
+  }
+}
+
+@keyframes approvedEggSparkle{
+  0%{
+    opacity:0;
+    transform:translate(-50%,-50%) rotate(45deg) scale(.2);
+  }
+  42%{
+    opacity:1;
+    transform:translate(-50%,-50%) rotate(45deg) scale(1);
+  }
+  100%{
+    opacity:0;
+    transform:translate(-50%,-50%) rotate(75deg) scale(.35);
+  }
+}
+
+@keyframes approvedNestReceiveEgg{
+  0%,68%{
+    transform:translateX(-50%) scale(1);
+  }
+  78%{
+    transform:translateX(-50%) scale(1.03,.97);
+  }
+  88%{
+    transform:translateX(-50%) scale(.985,1.018);
+  }
+  100%{
+    transform:translateX(-50%) scale(1);
+  }
+}
+
+@keyframes approvedNestEggsReceive{
+  0%,68%{
+    filter:drop-shadow(0 7px 6px rgba(0,0,0,.18));
+  }
+  82%{
+    filter:
+      drop-shadow(0 7px 6px rgba(0,0,0,.18))
+      drop-shadow(0 0 9px rgba(255,234,111,.38));
+  }
+  100%{
+    filter:drop-shadow(0 7px 6px rgba(0,0,0,.18));
+  }
+}
+
+@media(max-width:430px){
+  .egg-flight-art{
+    left:78%;
+    top:29%;
+    width:43px;
+    height:43px;
+    animation-name:approvedEggFlightPhone;
+  }
+
+  @keyframes approvedEggFlightPhone{
+    0%{
+      opacity:0;
+      transform:translate3d(0,0,0) scale(.25) rotate(-12deg);
+    }
+    10%{
+      opacity:1;
+      transform:translate3d(-4px,-7px,0) scale(.92) rotate(-5deg);
+    }
+    22%{
+      transform:translate3d(-9px,-1px,0) scale(1.05) rotate(3deg);
+    }
+    42%{
+      transform:translate3d(-34px,-21px,0) scale(.97) rotate(14deg);
+    }
+    67%{
+      transform:translate3d(-84px,34px,0) scale(.82) rotate(28deg);
+    }
+    91%{
+      opacity:1;
+      transform:translate3d(-121px,116px,0) scale(.58) rotate(42deg);
+    }
+    100%{
+      opacity:0;
+      transform:translate3d(-121px,126px,0) scale(.38) rotate(46deg);
+    }
+  }
+}
+
+@media(max-width:370px){
+  .egg-flight-art{
+    left:77%;
+    top:28%;
+    width:39px;
+    height:39px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .egg-flight-layer{
+    display:none !important;
+  }
+
+  .hero-card:has(.egg-flight-layer) .nest-art-base,
+  .hero-card:has(.egg-flight-layer) .nest-art-eggs{
+    animation:none !important;
+  }
+}
