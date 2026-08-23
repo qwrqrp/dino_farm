@@ -1373,3 +1373,35 @@
     transition:none !important;
   }
 }
+
+/* =========================================================
+   STAGE 5C HOTFIX — CLEAN TRANSPARENT NAV ICONS
+   Assets contain no baked card/background.
+   Navigation logic remains unchanged.
+   ========================================================= */
+
+.bottom-nav-icon{
+  object-fit:contain !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  width:52px !important;
+  height:52px !important;
+}
+
+.bottom-nav > button.active .bottom-nav-icon{
+  transform:translateY(-3px) scale(1.10);
+}
+
+@media(max-width:430px){
+  .bottom-nav-icon{
+    width:49px !important;
+    height:49px !important;
+  }
+}
+
+@media(max-width:370px){
+  .bottom-nav-icon{
+    width:43px !important;
+    height:43px !important;
+  }
+}
