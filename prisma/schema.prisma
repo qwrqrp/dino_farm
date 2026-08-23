@@ -125,10 +125,26 @@ model Withdrawal {
   processedAt     DateTime?
   note            String?
 
+  // Automatic payout tracking / idempotency.
+  payoutExternalId      String?   @unique
+  providerPayoutId      String?   @unique
+  providerPayoutStatus  String?
+  payoutCurrency        String?
+  payoutFee             Decimal?  @db.Decimal(18, 8)
+  payoutLockedAt        DateTime?
+  payoutCreatedAt       DateTime?
+  payoutVerifiedAt      DateTime?
+  payoutCompletedAt     DateTime?
+  payoutLastCheckedAt   DateTime?
+  payoutFailureCode     String?
+  payoutFailureMessage  String?
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
+  @@index([providerPayoutStatus])
+  @@index([payoutLockedAt])
 }
 
 
