@@ -7,6 +7,11 @@ import {
   dnaToUsdt,
   withdrawalConfig,
 } from "@/lib/withdrawal-config";
+import {
+  formatTelegramDna,
+  formatTelegramUsdt,
+  sendTelegramToUser,
+} from "@/lib/telegram-notifications";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -313,6 +318,27 @@ export async function POST(request: Request) {
             };
           },
           { isolationLevel: "Serializable" },
+        );
+
+        await sendTelegramToUser(
+          player.userId,
+          [
+            "💸 DINO EGG FARM",
+            "",
+            "Заявка на вывод создана.",
+            `Зарезервировано: ${formatTelegramDna(
+              result.withdrawal.dnaAmount,
+            )} DNA`,
+            `К выплате: ${formatTelegramUsdt(
+              Number(
+                result.withdrawal.usdtAmount.toString(),
+              ),
+            )} USDT`,
+            `Сеть: ${result.withdrawal.network}`,
+            "",
+            "Статус: ожидает обработки.",
+            "Комиссию сети оплачивает проект.",
+          ].join("\n"),
         );
 
         return NextResponse.json(
