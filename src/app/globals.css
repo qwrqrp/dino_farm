@@ -62,3 +62,180 @@
     background-attachment:scroll;
   }
 }
+
+/* =========================================================
+   APPROVED GAME ART — STAGE 2: DINOSAURS
+   Real 2D character assets. No gameplay logic changes.
+   ========================================================= */
+
+.avatar{
+  overflow:hidden;
+}
+
+.avatar-dino-art{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  filter:drop-shadow(0 3px 3px rgba(0,0,0,.16));
+}
+
+.hero-dinosaurs{
+  position:absolute !important;
+  z-index:2 !important;
+  top:58px;
+  left:0;
+  right:0;
+  height:170px;
+  pointer-events:none;
+  overflow:visible;
+}
+
+.hero-dino{
+  position:absolute;
+  display:block;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  transform-origin:50% 85%;
+  filter:drop-shadow(0 8px 7px rgba(0,0,0,.22));
+  animation:approvedDinoIdle 4.2s ease-in-out infinite;
+}
+
+.hero-dino-triceratops{
+  left:-5px;
+  bottom:0;
+  width:128px;
+  animation-delay:-1.1s;
+}
+
+.hero-dino-stegosaurus{
+  left:50%;
+  bottom:18px;
+  width:120px;
+  transform:translateX(-50%);
+  animation-name:approvedDinoIdleCenter;
+  animation-delay:-2.2s;
+}
+
+.hero-dino-trex{
+  right:-3px;
+  bottom:0;
+  width:112px;
+  animation-delay:-3.1s;
+}
+
+.nest-screen .nest-visual,
+.nest-screen .hero-card h1,
+.nest-screen .hero-card p,
+.nest-screen .hero-card .progress,
+.nest-screen .hero-card .rate,
+.nest-screen .hero-card button{
+  position:relative;
+  z-index:4;
+}
+
+.nest-screen .nest-visual{
+  margin-top:118px;
+}
+
+.slot .dino{
+  width:48px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  font-size:0;
+}
+
+.board-dino-art{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  filter:drop-shadow(0 4px 3px rgba(0,0,0,.18));
+  transform-origin:50% 85%;
+  animation:approvedBoardDinoIdle 3.8s ease-in-out infinite;
+}
+
+.slot:nth-child(3n+2) .board-dino-art{
+  animation-delay:-1.2s;
+}
+
+.slot:nth-child(4n) .board-dino-art{
+  animation-delay:-2.4s;
+}
+
+.slot.selected .board-dino-art{
+  animation:approvedBoardDinoSelected .8s ease-in-out infinite alternate;
+}
+
+@keyframes approvedDinoIdle{
+  0%,100%{transform:translate3d(0,0,0) rotate(-.8deg)}
+  50%{transform:translate3d(0,-4px,0) rotate(.8deg)}
+}
+
+@keyframes approvedDinoIdleCenter{
+  0%,100%{transform:translateX(-50%) translate3d(0,0,0) rotate(-.6deg)}
+  50%{transform:translateX(-50%) translate3d(0,-4px,0) rotate(.7deg)}
+}
+
+@keyframes approvedBoardDinoIdle{
+  0%,100%{transform:translate3d(0,0,0) rotate(-1deg)}
+  50%{transform:translate3d(0,-2px,0) rotate(1deg)}
+}
+
+@keyframes approvedBoardDinoSelected{
+  from{transform:translate3d(0,0,0) scale(1.02) rotate(-1deg)}
+  to{transform:translate3d(0,-4px,0) scale(1.08) rotate(1deg)}
+}
+
+@media(max-width:430px){
+  .hero-dinosaurs{
+    top:54px;
+    height:154px;
+  }
+
+  .hero-dino-triceratops{
+    width:108px;
+    left:-8px;
+  }
+
+  .hero-dino-stegosaurus{
+    width:105px;
+  }
+
+  .hero-dino-trex{
+    width:96px;
+    right:-6px;
+  }
+
+  .nest-screen .nest-visual{
+    margin-top:105px;
+  }
+}
+
+@media(max-width:370px){
+  .hero-dinosaurs{
+    height:142px;
+  }
+
+  .hero-dino-triceratops{width:96px}
+  .hero-dino-stegosaurus{width:92px}
+  .hero-dino-trex{width:86px}
+
+  .slot .dino{
+    width:42px;
+    height:37px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .hero-dino,
+  .board-dino-art{
+    animation:none !important;
+  }
+}
