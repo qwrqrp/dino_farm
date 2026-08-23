@@ -239,3 +239,110 @@
     animation:none !important;
   }
 }
+
+/* =========================================================
+   APPROVED GAME ART — STAGE 3: NEST + EGGS
+   Real 2D assets. Existing state/progress only.
+   ========================================================= */
+
+.nest-screen .nest-visual.nest-art{
+  position:relative;
+  z-index:4;
+  width:min(300px,82vw);
+  height:205px;
+  margin:112px auto 4px;
+  display:block;
+  font-size:0;
+  line-height:0;
+  pointer-events:none;
+  filter:none;
+}
+
+.nest-art-base{
+  position:absolute;
+  z-index:2;
+  left:50%;
+  bottom:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  transform:translateX(-50%);
+  pointer-events:none;
+  user-select:none;
+  filter:drop-shadow(0 14px 10px rgba(0,0,0,.25));
+}
+
+.nest-art-eggs{
+  position:absolute;
+  z-index:3;
+  left:50%;
+  top:32px;
+  width:54%;
+  height:auto;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  transform-origin:50% 85%;
+  filter:drop-shadow(0 7px 6px rgba(0,0,0,.18));
+  transition:
+    transform .28s ease,
+    opacity .28s ease;
+}
+
+/* Visual fill only — no egg count changes. */
+.nest-art-eggs.nest-eggs-low{
+  opacity:.72;
+  transform:translateX(-50%) scale(.72);
+}
+
+.nest-art-eggs.nest-eggs-half{
+  opacity:.9;
+  transform:translateX(-50%) scale(.88);
+}
+
+.nest-art-eggs.nest-eggs-full{
+  opacity:1;
+  transform:translateX(-50%) scale(1);
+}
+
+/* Existing collect state/button remains untouched.
+   Only the visual nest reacts when the current collection animation runs. */
+.nest-screen .hero-card:has(.primary:disabled) .nest-art-base{
+  animation:approvedNestSoftPulse .7s ease-in-out infinite alternate;
+}
+
+@keyframes approvedNestSoftPulse{
+  from{transform:translateX(-50%) scale(1)}
+  to{transform:translateX(-50%) scale(1.015)}
+}
+
+@media(max-width:430px){
+  .nest-screen .nest-visual.nest-art{
+    width:min(270px,79vw);
+    height:188px;
+    margin-top:100px;
+  }
+
+  .nest-art-eggs{
+    top:31px;
+    width:52%;
+  }
+}
+
+@media(max-width:370px){
+  .nest-screen .nest-visual.nest-art{
+    width:min(238px,76vw);
+    height:166px;
+    margin-top:94px;
+  }
+
+  .nest-art-eggs{
+    top:27px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .nest-art-base{
+    animation:none !important;
+  }
+}
