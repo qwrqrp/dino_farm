@@ -1104,3 +1104,94 @@
     transform:translateY(18px);
   }
 }
+
+/* =========================================================
+   APPROVED GAME ART — STAGE 5B: UPGRADE NEST BUTTON
+   Reuses the existing real 2D game button asset.
+   Existing openNestUpgrades callback remains unchanged.
+   ========================================================= */
+
+.nest-screen .hero-card > .coin-button{
+  position:relative;
+  z-index:7;
+  width:min(300px,88%) !important;
+  min-height:60px;
+  margin:7px auto 18px !important;
+  padding:9px 42px !important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:0 !important;
+  border-radius:0 !important;
+
+  background:
+    url("/assets/game/ui/button-primary.webp")
+    center / 100% 100%
+    no-repeat !important;
+
+  color:#1c3a18 !important;
+  font-size:15px !important;
+  line-height:1.05;
+  font-weight:950;
+  letter-spacing:.01em;
+
+  text-shadow:
+    0 1px 0 rgba(255,255,255,.62),
+    0 2px 2px rgba(65,92,28,.16);
+
+  box-shadow:none !important;
+  filter:saturate(.72) brightness(.92);
+  transform-origin:center;
+
+  transition:
+    transform .12s ease,
+    filter .12s ease;
+}
+
+.nest-screen .hero-card > .coin-button::before,
+.nest-screen .hero-card > .coin-button::after{
+  display:none !important;
+}
+
+.nest-screen .hero-card > .coin-button:not(:disabled):active{
+  transform:translateY(3px) scale(.985) !important;
+  filter:saturate(.72) brightness(.84);
+}
+
+.nest-screen .hero-card > .coin-button:disabled{
+  opacity:.62;
+  filter:saturate(.45) brightness(.82);
+}
+
+/* Keep primary CTA visually stronger than upgrade CTA. */
+.nest-screen .hero-card > .primary{
+  filter:none;
+}
+
+@media(max-width:430px){
+  .nest-screen .hero-card > .coin-button{
+    width:min(288px,90%) !important;
+    min-height:58px;
+    margin-top:6px !important;
+    margin-bottom:18px !important;
+    padding-left:38px !important;
+    padding-right:38px !important;
+    font-size:14px !important;
+  }
+}
+
+@media(max-width:370px){
+  .nest-screen .hero-card > .coin-button{
+    width:min(264px,90%) !important;
+    min-height:54px;
+    padding-left:34px !important;
+    padding-right:34px !important;
+    font-size:13px !important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .nest-screen .hero-card > .coin-button{
+    transition:none !important;
+  }
+}
