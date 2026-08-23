@@ -5821,7 +5821,7 @@ export default function GameApp() {
 
             {profileOpen ? (
               <div
-                className="form-card profile-art-panel"
+                className="form-card"
                 style={{
                   marginTop: 16,
                   borderRadius: 20,
@@ -5833,7 +5833,7 @@ export default function GameApp() {
                 }}
               >
                 <div
-                  className="section-head profile-art-head"
+                  className="section-head"
                   style={{
                     width: "100%",
                     minWidth: 0,
@@ -5842,7 +5842,7 @@ export default function GameApp() {
                 >
                   <div>
                     <span className="eyebrow">PLAYER PROFILE</span>
-                    <h2>Мой профиль</h2>
+                    <h2>👤 Мой профиль</h2>
                   </div>
 
                   <div
@@ -5883,7 +5883,6 @@ export default function GameApp() {
                 ) : profile ? (
                   <>
                     <div
-                      className="profile-player-card"
                       style={{
                         padding: 12,
                         marginTop: 8,
@@ -5937,7 +5936,6 @@ export default function GameApp() {
                     </div>
 
                     <div
-                      className="profile-stats-grid"
                       style={{
                         display: "grid",
                         gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
@@ -5985,7 +5983,6 @@ export default function GameApp() {
                       ].map((item) => (
                         <div
                           key={item.label}
-                          className="profile-stat-card"
                           style={{
                             padding: 10,
                             borderRadius: 12,
@@ -6010,7 +6007,6 @@ export default function GameApp() {
                     </div>
 
                     <div
-                      className="profile-detail-card profile-farm-card"
                       style={{
                         marginTop: 10,
                         padding: 12,
@@ -6018,7 +6014,7 @@ export default function GameApp() {
                         background: "rgba(255,255,255,.04)",
                       }}
                     >
-                      <strong>Ферма</strong>
+                      <strong>🌱 Ферма</strong>
 
                       <div
                         style={{
@@ -6105,7 +6101,6 @@ export default function GameApp() {
                     </div>
 
                     <div
-                      className="profile-detail-card profile-progress-card"
                       style={{
                         marginTop: 10,
                         padding: 12,
@@ -6113,7 +6108,7 @@ export default function GameApp() {
                         background: "rgba(255,255,255,.04)",
                       }}
                     >
-                      <strong>Прогресс</strong>
+                      <strong>🏅 Прогресс</strong>
 
                       <div
                         style={{
@@ -6186,7 +6181,6 @@ export default function GameApp() {
                     </div>
 
                     <div
-                      className="profile-summary-grid"
                       style={{
                         marginTop: 10,
                         display: "grid",
@@ -6196,14 +6190,13 @@ export default function GameApp() {
                       }}
                     >
                       <div
-                        className="profile-summary-card"
                         style={{
                           padding: 12,
                           borderRadius: 14,
                           background: "rgba(255,255,255,.04)",
                         }}
                       >
-                        <strong>Рефералы</strong>
+                        <strong>👥 Рефералы</strong>
                         <div
                           style={{
                             marginTop: 8,
@@ -6224,14 +6217,13 @@ export default function GameApp() {
                       </div>
 
                       <div
-                        className="profile-summary-card"
                         style={{
                           padding: 12,
                           borderRadius: 14,
                           background: "rgba(255,255,255,.04)",
                         }}
                       >
-                        <strong>Выплаты</strong>
+                        <strong>💸 Выплаты</strong>
                         <div
                           style={{
                             marginTop: 8,
@@ -6250,7 +6242,6 @@ export default function GameApp() {
                     </div>
 
                     <div
-                      className="profile-detail-card profile-collection-card"
                       style={{
                         marginTop: 10,
                         padding: 12,
@@ -6258,7 +6249,7 @@ export default function GameApp() {
                         background: "rgba(255,255,255,.04)",
                       }}
                     >
-                      <strong>Коллекция</strong>
+                      <strong>🦖 Коллекция</strong>
 
                       <div
                         style={{
@@ -6273,7 +6264,6 @@ export default function GameApp() {
                             count > 0 ? (
                               <span
                                 key={index}
-                                className="profile-level-chip"
                                 style={{
                                   padding: "7px 9px",
                                   borderRadius: 999,
