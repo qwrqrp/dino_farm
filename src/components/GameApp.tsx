@@ -3312,7 +3312,14 @@ export default function GameApp() {
   return (
     <main className="app-shell">
       <header className="hud glass">
-        <div className="avatar">🦖</div>
+        <div className="avatar">
+          <img
+            src="/assets/game/dinosaurs/trex.webp"
+            alt=""
+            className="avatar-dino-art"
+            draggable={false}
+          />
+        </div>
         <div className="profile">
           <strong>{playerName}</strong>
           <span>{
@@ -3337,7 +3344,27 @@ export default function GameApp() {
             <div className="hero-card">
               <div className="sun">☀️</div>
               <div className="jungle">🌿🌴🌿</div>
-              <div className="nest-visual">🪺<span className="egg">🥚</span></div>
+              <div className="hero-dinosaurs" aria-hidden="true">
+              <img
+                src="/assets/game/dinosaurs/triceratops.webp"
+                alt=""
+                className="hero-dino hero-dino-triceratops"
+                draggable={false}
+              />
+              <img
+                src="/assets/game/dinosaurs/stegosaurus.webp"
+                alt=""
+                className="hero-dino hero-dino-stegosaurus"
+                draggable={false}
+              />
+              <img
+                src="/assets/game/dinosaurs/trex.webp"
+                alt=""
+                className="hero-dino hero-dino-trex"
+                draggable={false}
+              />
+            </div>
+            <div className="nest-visual">🪺<span className="egg">🥚</span></div>
               <h1>Гнездо</h1>
               <p>
                 {formatNumber(state.eggs, 2)} /{" "}
@@ -3689,7 +3716,27 @@ export default function GameApp() {
                   aria-label={level ? `Динозавр уровня ${level}` : "Пустая клетка"}
                   disabled={isLoading || isMerging || Boolean(loadError)}
                 >
-                  {level ? <><span className="dino">🦖</span><b>Lv.{level}</b></> : <span className="plus">+</span>}
+                  {level ? (
+                    <>
+                      <span className="dino">
+                        <img
+                          src={
+                            level % 3 === 1
+                              ? "/assets/game/dinosaurs/trex.webp"
+                              : level % 3 === 2
+                                ? "/assets/game/dinosaurs/triceratops.webp"
+                                : "/assets/game/dinosaurs/stegosaurus.webp"
+                          }
+                          alt=""
+                          className="board-dino-art"
+                          draggable={false}
+                        />
+                      </span>
+                      <b>Lv.{level}</b>
+                    </>
+                  ) : (
+                    <span className="plus">+</span>
+                  )}
                 </button>
               ))}
             </div>
