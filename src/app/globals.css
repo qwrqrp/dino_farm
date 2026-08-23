@@ -1364,3 +1364,209 @@ button:not(:disabled):active{
     opacity:.13;
   }
 }
+
+
+/* =========================================================
+   DINO FARM — CODE-ONLY PREMIUM VISUALS / STEP 5
+   SVG components only. No external images.
+   ========================================================= */
+
+.hero-card{
+  min-height:430px;
+  background:
+    radial-gradient(circle at 76% 15%,rgba(255,236,150,.18),transparent 18%),
+    linear-gradient(180deg,#73c9f0 0%,#88d9ce 23%,#4d9c62 52%,#386e3c 70%,#6e4a2c 100%);
+}
+
+.hero-card::before{
+  background:
+    radial-gradient(circle at 22% 18%,rgba(255,255,255,.28),transparent 15%),
+    linear-gradient(115deg,transparent 37%,rgba(255,255,255,.07) 48%,rgba(255,249,194,.1) 51%,transparent 63%);
+}
+
+.sun{
+  width:58px;
+  height:58px;
+  font-size:0;
+  filter:drop-shadow(0 0 16px rgba(255,221,106,.72));
+}
+.sun-sprite{
+  display:block;
+  width:100%;
+  height:100%;
+}
+
+.jungle{
+  width:calc(100% + 40px);
+  height:100px;
+  margin:32px -20px -8px;
+  font-size:0;
+  letter-spacing:0;
+  opacity:.95;
+}
+.jungle-sprite{
+  display:block;
+  width:100%;
+  height:100%;
+  filter:drop-shadow(0 8px 8px rgba(0,0,0,.16));
+}
+
+.nest-visual{
+  width:min(270px,78vw);
+  height:190px;
+  margin:0 auto -8px;
+  font-size:0;
+  display:grid;
+  place-items:center;
+}
+.nest-sprite{
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+}
+
+.egg-sprite{
+  display:block;
+  width:100%;
+  height:100%;
+}
+
+/* SVG dinosaurs replace emoji but keep the existing .dino hook */
+.slot .dino{
+  width:52px;
+  height:46px;
+  font-size:0;
+  display:grid;
+  place-items:center;
+}
+.dino-sprite{
+  width:100%;
+  height:100%;
+  display:block;
+  overflow:visible;
+  filter:drop-shadow(0 5px 4px rgba(0,0,0,.19));
+}
+
+.slot:nth-child(4n+1) .dino-sprite{
+  transform-origin:48% 82%;
+}
+.slot:nth-child(4n+2) .dino-sprite{
+  transform-origin:53% 82%;
+}
+.slot:nth-child(4n+3) .dino-sprite{
+  transform-origin:46% 82%;
+}
+.slot:nth-child(4n) .dino-sprite{
+  transform-origin:51% 82%;
+}
+
+/* The existing animation now animates the SVG wrapper cleanly */
+.slot .dino{
+  filter:none;
+}
+.slot .dino .dino-sprite{
+  animation:dinoSvgIdle 3s ease-in-out infinite;
+}
+.slot:nth-child(3n+2) .dino .dino-sprite{
+  animation-delay:-.85s;
+}
+.slot:nth-child(4n) .dino .dino-sprite{
+  animation-delay:-1.6s;
+}
+.slot.selected .dino .dino-sprite{
+  animation:dinoSvgSelected .78s ease-in-out infinite alternate;
+}
+
+/* Pure-code visual particles, no emoji assets */
+.collect-particles .visual-spark{
+  color:#fff4a8;
+  font-size:22px;
+  text-shadow:
+    0 0 8px rgba(255,248,178,.8),
+    0 0 18px rgba(204,255,120,.35);
+}
+.collect-particles .visual-dot{
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:
+    radial-gradient(circle,#fffbd0 0 28%,#bfff73 30% 58%,rgba(191,255,115,0) 62%);
+  box-shadow:0 0 9px rgba(207,255,119,.7);
+}
+
+.merge-preview-dino{
+  width:72px;
+  height:58px;
+  margin:0 auto 3px;
+}
+.merge-preview-dino.result{
+  width:86px;
+  height:70px;
+}
+.merge-preview-dino .dino-sprite{
+  animation:dinoSvgIdle 2.7s ease-in-out infinite;
+}
+
+/* Give the board more game-like depth while keeping hitboxes unchanged */
+.slot{
+  min-width:0;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.08),
+    inset 0 -12px 18px rgba(0,0,0,.08),
+    0 4px 8px rgba(0,0,0,.08);
+}
+.slot b{
+  border:1px solid rgba(255,255,255,.07);
+  box-shadow:0 3px 7px rgba(0,0,0,.14);
+}
+
+/* Code-only prehistoric atmosphere */
+.hero-card{
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.16),
+    inset 0 -45px 70px rgba(52,30,18,.16),
+    0 20px 45px rgba(0,0,0,.28);
+}
+
+@keyframes dinoSvgIdle{
+  0%,100%{
+    transform:translate3d(0,0,0) rotate(-1deg) scale(1);
+  }
+  45%{
+    transform:translate3d(0,-2px,0) rotate(.8deg) scale(1.025);
+  }
+  55%{
+    transform:translate3d(0,-2px,0) rotate(1.2deg) scale(1.03);
+  }
+}
+@keyframes dinoSvgSelected{
+  from{
+    transform:translate3d(0,0,0) rotate(-2deg) scale(1.04);
+  }
+  to{
+    transform:translate3d(0,-5px,0) rotate(2deg) scale(1.11);
+  }
+}
+
+@media(max-width:370px){
+  .hero-card{
+    min-height:405px;
+  }
+  .nest-visual{
+    width:min(235px,75vw);
+    height:165px;
+  }
+  .slot .dino{
+    width:45px;
+    height:40px;
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .slot .dino .dino-sprite,
+  .slot.selected .dino .dino-sprite,
+  .merge-preview-dino .dino-sprite{
+    animation:none !important;
+  }
+}
