@@ -3334,9 +3334,26 @@ export default function GameApp() {
       <section className="content">
         {tab === "nest" && (
           <div className="screen nest-screen">
-            <div className="hero-card">
+            <div
+              className={`hero-card ${
+                isCollecting ? "collecting" : ""
+              }`}
+            >
               <div className="sun">☀️</div>
               <div className="jungle">🌿🌴🌿</div>
+
+              <div
+                className="collect-particles"
+                aria-hidden="true"
+              >
+                <span>✨</span>
+                <span>🥚</span>
+                <span>✨</span>
+                <span>🪙</span>
+                <span>🧬</span>
+                <span>✨</span>
+              </div>
+
               <div className="nest-visual">🪺<span className="egg">🥚</span></div>
               <h1>Гнездо</h1>
               <p>
@@ -3680,18 +3697,43 @@ export default function GameApp() {
               <button className="coin-button" onClick={buyDino} disabled={isLoading || isBuying || Boolean(loadError)}>{isBuying ? "⏳ ПОКУПКА..." : "+ 🦕 100"}</button>
             </div>
             <p className="hint">Данные загружены из Neon. Сбор, покупка и merge сохраняются в Neon через сервер.</p>
-            <div className="board">
-              {state.board.map((level, index) => (
+            <div
+              className={`board ${
+                isMerging ? "merging" : ""
+              }`}
+            >
+              {isMerging ? (
+                <div
+                  className="merge-flash"
+                  aria-hidden="true"
+                >
+                  ✨
+                </div>
+              ) : null}
+
+              {state.board.map((level, index) => {
+                const mergeActive =
+                  isMerging &&
+                  pendingMerge &&
+                  (index === pendingMerge.fromSlot ||
+                    index === pendingMerge.toSlot);
+
+                return (
                 <button
                   key={index}
-                  className={`slot ${selected === index ? "selected" : ""}`}
+                  className={`slot ${
+                    selected === index ? "selected" : ""
+                  } ${
+                    mergeActive ? "merge-active" : ""
+                  }`}
                   onClick={() => chooseSlot(index)}
                   aria-label={level ? `Динозавр уровня ${level}` : "Пустая клетка"}
                   disabled={isLoading || isMerging || Boolean(loadError)}
                 >
                   {level ? <><span className="dino">🦖</span><b>Lv.{level}</b></> : <span className="plus">+</span>}
                 </button>
-              ))}
+                );
+              })}
             </div>
             <div className="card"><strong>Общее производство</strong><span>{formatNumber(eggsPerHour, 0)} яиц / час</span></div>
           </div>
