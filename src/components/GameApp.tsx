@@ -243,6 +243,8 @@ type WithdrawalConfigResponse = {
   currency: string;
   usdtPerDna: number;
   minDna: number;
+  minUsdt: number;
+  networkFeePaidBy: "PROJECT";
 };
 
 type WithdrawalItem = {
@@ -3013,7 +3015,14 @@ export default function GameApp() {
     const dnaAmount = Number(withdrawDna);
 
     if (!Number.isFinite(dnaAmount) || dnaAmount < withdrawalConfig.minDna) {
-      setToast(`Минимальная сумма вывода — ${withdrawalConfig.minDna} DNA.`);
+      setToast(
+        `Минимальная сумма вывода — ${formatNumber(
+          withdrawalConfig.minDna,
+          0,
+        )} DNA (${withdrawalConfig.minUsdt.toFixed(
+          2,
+        )} USDT).`,
+      );
       return;
     }
 
@@ -3078,7 +3087,12 @@ export default function GameApp() {
 
       setWithdrawDna(String(withdrawalConfig.minDna));
       setToast(
-        `Заявка создана: ${formatNumber(data.withdrawal.dnaAmount, 4)} DNA → ${data.withdrawal.usdtAmount.toFixed(8)} USDT. Статус PENDING.`,
+        `Заявка создана: ${formatNumber(
+          data.withdrawal.dnaAmount,
+          0,
+        )} DNA → ${data.withdrawal.usdtAmount.toFixed(
+          8,
+        )} USDT к получению.`,
       );
     } catch (error) {
       console.error("Failed to submit withdrawal", error);
@@ -7559,10 +7573,49 @@ export default function GameApp() {
                       Курс: <strong>1 DNA = {withdrawalConfig.usdtPerDna.toFixed(4)} USDT</strong>
                     </p>
                     <p>
-                      Минимальный вывод: <strong>{withdrawalConfig.minDna} DNA</strong>
+                      Минимальный вывод:{" "}
+                      <strong>
+                        {formatNumber(
+                          withdrawalConfig.minDna,
+                          0,
+                        )}{" "}
+                        DNA ={" "}
+                        {withdrawalConfig.minUsdt.toFixed(
+                          2,
+                        )}{" "}
+                        USDT
+                      </strong>
                     </p>
+
+                    <div
+                      style={{
+                        margin:
+                          "8px 0 10px",
+                        padding: 10,
+                        borderRadius: 12,
+                        background:
+                          "rgba(167,243,72,.08)",
+                        border:
+                          "1px solid rgba(167,243,72,.18)",
+                        fontSize: 13,
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      ✅ Сетевая комиссия
+                      оплачивается проектом.
+                      Игрок получает полностью
+                      указанную сумму USDT.
+                    </div>
+
                     <p>
-                      Доступно: <strong>{formatNumber(state.dna, 4)} DNA</strong>
+                      Доступно:{" "}
+                      <strong>
+                        {formatNumber(
+                          state.dna,
+                          4,
+                        )}{" "}
+                        DNA
+                      </strong>
                     </p>
 
                     {withdrawals.some(
@@ -7637,7 +7690,9 @@ export default function GameApp() {
                         {withdrawalPreview.toFixed(8)} USDT
                       </p>
                       <small style={{ lineHeight: 1.4 }}>
-                        Заявка проходит ручную проверку. DNA резервируется сразу после создания заявки.
+                        Это сумма, которую игрок должен получить на кошелёк.
+                        Сетевая комиссия оплачивается проектом отдельно.
+                        DNA резервируется сразу после создания заявки.
                       </small>
                     </div>
 
@@ -7646,7 +7701,9 @@ export default function GameApp() {
                       onClick={submitWithdrawal}
                       disabled={isSubmittingWithdrawal}
                     >
-                      {isSubmittingWithdrawal ? "⏳ СОЗДАЁМ..." : "💸 СОЗДАТЬ ЗАЯВКУ"}
+                      {isSubmittingWithdrawal
+                        ? "⏳ СОЗДАЁМ..."
+                        : "💸 ЗАПРОСИТЬ ВЫПЛАТУ"}
                     </button>
 
                     <div
@@ -7849,7 +7906,7 @@ export default function GameApp() {
                                       lineHeight: 1.4,
                                     }}
                                   >
-                                    Заявка ожидает проверки администратором. DNA уже зарезервирована.
+                                    Заявка ожидает автоматической проверки и выплаты. DNA уже зарезервирована.
                                   </small>
                                 ) : null}
 
