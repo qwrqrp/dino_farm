@@ -8411,14 +8411,25 @@ export default function GameApp() {
 
       <nav className="bottom-nav glass" aria-label="Главная навигация">
         {([
-          ["nest", "🪺", "Гнездо"],
-          ["game", "🎮", "Игра"],
-          ["shop", "🛒", "Магазин"],
-          ["friends", "👥", "Друзья"],
-          ["menu", "☰", "Меню"],
-        ] as const).map(([key, icon, label]) => (
-          <button key={key} className={tab === key ? "active" : ""} onClick={() => setTab(key)}>
-            <span>{icon}</span><small>{label}</small>
+          ["nest", "/assets/game/ui/nav/nest.webp", "Гнездо"],
+          ["game", "/assets/game/ui/nav/game.webp", "Игра"],
+          ["shop", "/assets/game/ui/nav/shop.webp", "Магазин"],
+          ["friends", "/assets/game/ui/nav/friends.webp", "Друзья"],
+          ["menu", "/assets/game/ui/nav/menu.webp", "Меню"],
+        ] as const).map(([key, iconSrc, label]) => (
+          <button
+            key={key}
+            className={tab === key ? "active" : ""}
+            onClick={() => setTab(key)}
+          >
+            <img
+              src={iconSrc}
+              alt=""
+              className="bottom-nav-icon"
+              draggable={false}
+              aria-hidden="true"
+            />
+            <small>{label}</small>
           </button>
         ))}
       </nav>
