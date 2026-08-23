@@ -5170,44 +5170,84 @@ export default function GameApp() {
         )}
 
         {tab === "friends" && (
-          <div className="screen">
-            <span className="eyebrow">REFERRALS</span><h2>Друзья</h2>
-            <div className="invite-card">
-              <div className="invite-art">👥🦕</div>
+          <div className="screen friends-art-screen">
+            <div className="friends-art-heading">
+              <span className="eyebrow">REFERRALS</span>
+              <h2>Друзья</h2>
+            </div>
+
+            <div className="invite-card friends-invite-card">
+              <img
+                src="/assets/game/ui/nav/friends.webp"
+                alt=""
+                className="friends-hero-art"
+                draggable={false}
+                aria-hidden="true"
+              />
+
               <h3>Стройте ферму вместе</h3>
-              {authMode !== "telegram" ? (
-                <p>Откройте игру через Telegram, чтобы получить личную ссылку приглашения.</p>
-              ) : referralStatus === "loading" ? (
-                <p>Загружаем вашу реферальную ссылку...</p>
-              ) : referralInfo?.enabled ? (
-                <>
-                  <p>Друг получает +{formatNumber(referralInfo.inviteeRewardCoins, 0)} Coins, а вы +{formatNumber(referralInfo.inviterRewardCoins, 0)} Coins после его первого входа.</p>
-                  <p><code>{referralInfo.inviteLink}</code></p>
-                </>
-              ) : (
-                <p>Реферальная ссылка пока недоступна. Попробуйте открыть игру через Telegram ещё раз.</p>
-              )}
+
+              <div className="friends-referral-copy">
+                {authMode !== "telegram" ? (
+                  <p>
+                    Откройте игру через Telegram, чтобы получить личную ссылку приглашения.
+                  </p>
+                ) : referralStatus === "loading" ? (
+                  <p>Загружаем вашу реферальную ссылку...</p>
+                ) : referralInfo?.enabled ? (
+                  <>
+                    <p>
+                      Друг получает +{formatNumber(referralInfo.inviteeRewardCoins, 0)} Coins,
+                      а вы +{formatNumber(referralInfo.inviterRewardCoins, 0)} Coins после его первого входа.
+                    </p>
+                    <div className="friends-link-box">
+                      <code>{referralInfo.inviteLink}</code>
+                    </div>
+                  </>
+                ) : (
+                  <p>
+                    Реферальная ссылка пока недоступна. Попробуйте открыть игру через Telegram ещё раз.
+                  </p>
+                )}
+              </div>
+
               <button
-                className="primary"
+                className="primary friends-invite-button"
                 onClick={inviteFriend}
                 disabled={authMode !== "telegram" || referralStatus === "loading"}
               >
                 ПРИГЛАСИТЬ ДРУГА
               </button>
             </div>
-            <div className="stats-grid">
-              <article className="stat-card"><span>Приглашено</span><strong>{referralInfo?.invitedCount ?? 0}</strong></article>
-              <article className="stat-card"><span>Бонус за друга</span><strong>+{formatNumber(referralInfo?.inviterRewardCoins ?? 500, 0)}</strong><small>Coins</small></article>
-              <article className="stat-card"><span>Начислено</span><strong>{formatNumber(referralInfo?.totalBonusCoins ?? 0, 0)}</strong><small>Coins</small></article>
+
+            <div className="stats-grid friends-stats-grid">
+              <article className="stat-card">
+                <span>Приглашено</span>
+                <strong>{referralInfo?.invitedCount ?? 0}</strong>
+              </article>
+              <article className="stat-card">
+                <span>Бонус за друга</span>
+                <strong>+{formatNumber(referralInfo?.inviterRewardCoins ?? 500, 0)}</strong>
+                <small>Coins</small>
+              </article>
+              <article className="stat-card">
+                <span>Начислено</span>
+                <strong>{formatNumber(referralInfo?.totalBonusCoins ?? 0, 0)}</strong>
+                <small>Coins</small>
+              </article>
             </div>
+
             {referralInfo?.recent?.length ? (
-              <div className="card">
+              <div className="card friends-recent-card">
                 <strong>Последние приглашённые</strong>
-                {referralInfo.recent.slice(0, 5).map((item) => (
-                  <p key={item.id}>
-                    👤 {item.friend.firstName || item.friend.username || "Игрок"} · +{formatNumber(item.rewardCoins, 0)} Coins
-                  </p>
-                ))}
+                <div className="friends-recent-list">
+                  {referralInfo.recent.slice(0, 5).map((item) => (
+                    <p key={item.id}>
+                      <span>{item.friend.firstName || item.friend.username || "Игрок"}</span>
+                      <b>+{formatNumber(item.rewardCoins, 0)} Coins</b>
+                    </p>
+                  ))}
+                </div>
               </div>
             ) : null}
           </div>
