@@ -3,9 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DinoSprite,
-  JungleSilhouette,
-  NestSprite,
-  SunSprite,
+  PrehistoricFarmScene,
 } from "@/components/game/GameVisuals";
 import {
   dinosaurs,
@@ -3345,12 +3343,10 @@ export default function GameApp() {
                 isCollecting ? "collecting" : ""
               }`}
             >
-              <div className="sun">
-                <SunSprite />
-              </div>
-              <div className="jungle">
-                <JungleSilhouette />
-              </div>
+              <PrehistoricFarmScene
+                fill={progress}
+                collecting={isCollecting}
+              />
 
               <div
                 className="collect-particles"
@@ -3362,10 +3358,6 @@ export default function GameApp() {
                 <span className="visual-dot" />
                 <span className="visual-spark">✦</span>
                 <span className="visual-dot" />
-              </div>
-
-              <div className="nest-visual">
-                <NestSprite fill={progress} />
               </div>
               <h1>Гнездо</h1>
               <p>
