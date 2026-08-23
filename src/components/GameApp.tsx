@@ -3364,6 +3364,21 @@ export default function GameApp() {
                 draggable={false}
               />
             </div>
+            {isCollecting ? (
+              <div className="egg-flight-layer" aria-hidden="true">
+                <img
+                  src="/assets/game/nest/egg-rare.webp"
+                  alt=""
+                  className="egg-flight-art"
+                  draggable={false}
+                />
+                <span className="egg-sparkle egg-sparkle-1" />
+                <span className="egg-sparkle egg-sparkle-2" />
+                <span className="egg-sparkle egg-sparkle-3" />
+                <span className="egg-sparkle egg-sparkle-4" />
+              </div>
+            ) : null}
+
             <div className="nest-visual nest-art" aria-hidden="true">
               <img
                 src="/assets/game/nest/nest.webp"
