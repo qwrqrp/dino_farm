@@ -760,3 +760,307 @@ button:not(:disabled):active{
     display:none;
   }
 }
+
+
+/* =========================================================
+   DINO FARM — SAFE ANIMATION LAYER / STEP 3
+   Modals, panels, shop and menu.
+   CSS ONLY — no React/game logic changes.
+   ========================================================= */
+
+/* ---------- MODAL WINDOWS ---------- */
+
+[role="dialog"][aria-modal="true"]{
+  animation:modalBackdropIn .26s ease-out both;
+}
+
+[role="dialog"][aria-modal="true"] > div{
+  transform-origin:50% 55%;
+  animation:modalCardIn .36s cubic-bezier(.18,.88,.25,1.12) both;
+}
+
+/* Gentle moving highlight inside modal cards */
+[role="dialog"][aria-modal="true"] > div{
+  position:relative;
+  isolation:isolate;
+}
+
+[role="dialog"][aria-modal="true"] > div::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  pointer-events:none;
+  width:150px;
+  height:150px;
+  right:-65px;
+  top:-70px;
+  border-radius:50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(196,255,113,.11),
+      transparent 70%
+    );
+  animation:modalGlow 4.8s ease-in-out infinite alternate;
+}
+
+/* ---------- OPENABLE GAME PANELS ---------- */
+
+.form-card{
+  animation:panelOpen .38s cubic-bezier(.2,.78,.2,1) both;
+  transform-origin:50% 0;
+}
+
+.form-card > .section-head:first-child{
+  animation:panelHeaderIn .4s cubic-bezier(.2,.78,.2,1) both;
+}
+
+.form-card .card{
+  animation:panelItemIn .36s cubic-bezier(.2,.78,.2,1) both;
+}
+
+/* Prevent extremely long panels from feeling visually static */
+.form-card::after{
+  content:"";
+  position:absolute;
+  pointer-events:none;
+}
+
+/* ---------- SHOP ---------- */
+
+.screen .primary,
+.screen .coin-button{
+  transform-origin:center;
+}
+
+/* Dinosaur/shop cards receive a tiny arcade-style lift */
+.screen .card{
+  position:relative;
+  overflow:hidden;
+}
+
+.screen .card::after{
+  content:"";
+  position:absolute;
+  pointer-events:none;
+  top:0;
+  left:-65%;
+  width:38%;
+  height:100%;
+  opacity:0;
+  transform:skewX(-18deg);
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255,255,255,.055),
+      transparent
+    );
+}
+
+@media (hover:hover){
+  .screen .card:hover::after{
+    opacity:1;
+    animation:cardSweep .7s ease-out both;
+  }
+}
+
+/* ---------- MENU ---------- */
+
+.menu-list button{
+  transform-origin:50% 50%;
+}
+
+.menu-list button span{
+  transition:
+    transform .2s ease,
+    color .2s ease;
+}
+
+.menu-list button b{
+  transition:
+    transform .2s ease,
+    filter .2s ease,
+    color .2s ease;
+}
+
+@media (hover:hover){
+  .menu-list button:hover span{
+    transform:translateX(2px);
+  }
+
+  .menu-list button:hover b{
+    transform:translateX(-2px);
+    filter:drop-shadow(0 0 7px rgba(185,237,118,.2));
+  }
+}
+
+/* ---------- NUMBERS / REWARDS ---------- */
+
+.stat-card strong{
+  text-shadow:0 0 18px rgba(207,255,125,.05);
+  transition:
+    text-shadow .25s ease,
+    transform .25s ease;
+}
+
+@media (hover:hover){
+  .stat-card:hover strong{
+    transform:translateY(-1px);
+    text-shadow:0 0 18px rgba(207,255,125,.15);
+  }
+}
+
+/* ---------- INPUTS ---------- */
+
+.form-card input:focus{
+  animation:inputFocusPulse .3s ease-out both;
+}
+
+/* ---------- BUTTON LOADING FEEDBACK ---------- */
+
+.primary:disabled,
+.coin-button:disabled{
+  transition:
+    opacity .2s ease,
+    filter .2s ease,
+    transform .2s ease;
+}
+
+.primary:disabled{
+  filter:saturate(.7);
+}
+
+/* ---------- SCROLL FEEL ---------- */
+
+.app-shell{
+  scrollbar-width:thin;
+  scrollbar-color:#315d43 transparent;
+}
+
+.app-shell::-webkit-scrollbar{
+  width:5px;
+}
+
+.app-shell::-webkit-scrollbar-track{
+  background:transparent;
+}
+
+.app-shell::-webkit-scrollbar-thumb{
+  background:#315d43;
+  border-radius:999px;
+}
+
+/* ---------- KEYFRAMES ---------- */
+
+@keyframes modalBackdropIn{
+  from{
+    opacity:0;
+    backdrop-filter:blur(0);
+  }
+  to{
+    opacity:1;
+  }
+}
+
+@keyframes modalCardIn{
+  0%{
+    opacity:0;
+    transform:
+      translateY(18px)
+      scale(.92);
+  }
+  65%{
+    opacity:1;
+    transform:
+      translateY(-2px)
+      scale(1.012);
+  }
+  100%{
+    opacity:1;
+    transform:none;
+  }
+}
+
+@keyframes modalGlow{
+  from{
+    transform:translate3d(0,0,0) scale(.85);
+    opacity:.4;
+  }
+  to{
+    transform:translate3d(-18px,20px,0) scale(1.15);
+    opacity:1;
+  }
+}
+
+@keyframes panelOpen{
+  from{
+    opacity:0;
+    transform:
+      translateY(12px)
+      scaleY(.975);
+  }
+  to{
+    opacity:1;
+    transform:none;
+  }
+}
+
+@keyframes panelHeaderIn{
+  from{
+    opacity:0;
+    transform:translateY(-5px);
+  }
+  to{
+    opacity:1;
+    transform:none;
+  }
+}
+
+@keyframes panelItemIn{
+  from{
+    opacity:.4;
+    transform:translateY(6px);
+  }
+  to{
+    opacity:1;
+    transform:none;
+  }
+}
+
+@keyframes cardSweep{
+  from{
+    transform:
+      translateX(0)
+      skewX(-18deg);
+  }
+  to{
+    transform:
+      translateX(430%)
+      skewX(-18deg);
+  }
+}
+
+@keyframes inputFocusPulse{
+  0%{
+    box-shadow:
+      0 0 0 0
+      rgba(142,214,94,.22);
+  }
+  100%{
+    box-shadow:
+      0 0 0 3px
+      rgba(142,214,94,.12);
+  }
+}
+
+/* Reduced-motion remains fully respected */
+@media (prefers-reduced-motion:reduce){
+  [role="dialog"][aria-modal="true"],
+  [role="dialog"][aria-modal="true"] > div,
+  .form-card,
+  .form-card > .section-head:first-child,
+  .form-card .card{
+    animation:none !important;
+  }
+}
