@@ -3421,13 +3421,28 @@ export default function GameApp() {
                 />
               ) : null}
             </div>
-              <h1>Гнездо</h1>
-              <p>
-                {formatNumber(state.eggs, 2)} /{" "}
-                {formatNumber(state.capacity, 0)} яиц
-              </p>
-              <div className="progress"><div style={{ width: `${progress}%` }} /></div>
-              <div className="rate">⚡ {formatNumber(eggsPerHour, 0)} яиц / час</div>
+              <div className="nest-info-art">
+                <img
+                  src="/assets/game/ui/panel.webp"
+                  alt=""
+                  className="nest-info-panel-art"
+                  draggable={false}
+                  aria-hidden="true"
+                />
+                <div className="nest-info-content">
+                  <h1>Гнездо</h1>
+                  <p>
+                    {formatNumber(state.eggs, 2)} /{" "}
+                    {formatNumber(state.capacity, 0)} яиц
+                  </p>
+                  <div className="progress">
+                    <div style={{ width: `${progress}%` }} />
+                  </div>
+                  <div className="rate">
+                    ⚡ {formatNumber(eggsPerHour, 0)} яиц / час
+                  </div>
+                </div>
+              </div>
               <button className="primary" onClick={collectEggs} disabled={isLoading || isCollecting || Boolean(loadError)}>{isCollecting ? "⏳ СОБИРАЕМ..." : "🥚 СОБРАТЬ ЯЙЦА"}</button>
               <button
                 className="coin-button"
