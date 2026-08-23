@@ -713,3 +713,157 @@
     height:45px !important;
   }
 }
+
+/* =========================================================
+   STAGE 4 MOBILE FIX — EGG FLIGHT IN TELEGRAM WEBVIEW
+   Visual positioning only. No gameplay changes.
+   ========================================================= */
+
+/*
+  Desktop path remains unchanged.
+  On phones the egg starts from the visible dinosaur zone and lands
+  around the center of the visible nest instead of using desktop offsets.
+*/
+
+@media(max-width:430px){
+  .egg-flight-layer{
+    position:absolute !important;
+    inset:0 !important;
+    z-index:20 !important;
+    overflow:visible !important;
+    pointer-events:none !important;
+  }
+
+  .egg-flight-art{
+    position:absolute !important;
+    left:72% !important;
+    top:22% !important;
+    width:54px !important;
+    height:54px !important;
+    opacity:1;
+    visibility:visible !important;
+    z-index:21 !important;
+    animation:
+      approvedEggFlightMobileVisible
+      1.18s
+      cubic-bezier(.22,.72,.32,1)
+      both !important;
+  }
+
+  .egg-sparkle{
+    z-index:22 !important;
+    left:50% !important;
+    top:58% !important;
+  }
+
+  @keyframes approvedEggFlightMobileVisible{
+    0%{
+      opacity:0;
+      transform:
+        translate3d(0,0,0)
+        scale(.25)
+        rotate(-10deg);
+    }
+
+    8%{
+      opacity:1;
+      transform:
+        translate3d(-2px,-8px,0)
+        scale(.90)
+        rotate(-5deg);
+    }
+
+    20%{
+      opacity:1;
+      transform:
+        translate3d(-8px,-15px,0)
+        scale(1.08)
+        rotate(3deg);
+    }
+
+    36%{
+      opacity:1;
+      transform:
+        translate3d(-28px,-8px,0)
+        scale(1)
+        rotate(11deg);
+    }
+
+    56%{
+      opacity:1;
+      transform:
+        translate3d(-60px,24px,0)
+        scale(.92)
+        rotate(20deg);
+    }
+
+    74%{
+      opacity:1;
+      transform:
+        translate3d(-88px,72px,0)
+        scale(.80)
+        rotate(29deg);
+    }
+
+    90%{
+      opacity:1;
+      transform:
+        translate3d(-105px,118px,0)
+        scale(.62)
+        rotate(38deg);
+    }
+
+    100%{
+      opacity:0;
+      transform:
+        translate3d(-105px,130px,0)
+        scale(.42)
+        rotate(42deg);
+    }
+  }
+}
+
+/* Narrow iPhones / Telegram mini-app */
+@media(max-width:390px){
+  .egg-flight-art{
+    left:70% !important;
+    top:21% !important;
+    width:50px !important;
+    height:50px !important;
+  }
+}
+
+/*
+  Do not completely hide the collection effect on mobile when the OS
+  has reduced-motion enabled. Show a short, static pop instead.
+*/
+@media(max-width:430px) and (prefers-reduced-motion:reduce){
+  .egg-flight-layer{
+    display:block !important;
+  }
+
+  .egg-flight-art{
+    display:block !important;
+    animation:approvedEggMobileReduced .7s ease-out both !important;
+  }
+
+  .egg-sparkle{
+    display:block !important;
+    animation:approvedEggSparkle .5s ease-out .28s both !important;
+  }
+
+  @keyframes approvedEggMobileReduced{
+    0%{
+      opacity:0;
+      transform:translate3d(-55px,70px,0) scale(.7);
+    }
+    35%{
+      opacity:1;
+      transform:translate3d(-55px,70px,0) scale(1);
+    }
+    100%{
+      opacity:0;
+      transform:translate3d(-55px,82px,0) scale(.8);
+    }
+  }
+}
