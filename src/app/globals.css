@@ -1195,3 +1195,181 @@
     transition:none !important;
   }
 }
+
+/* =========================================================
+   APPROVED GAME ART — STAGE 5C: BOTTOM NAVIGATION
+   Real 2D icon assets. Existing setTab navigation unchanged.
+   ========================================================= */
+
+.bottom-nav.glass{
+  isolation:isolate;
+  overflow:visible;
+  min-height:86px;
+  padding:9px 8px 8px !important;
+  gap:3px !important;
+  border:0 !important;
+  border-radius:24px 24px 0 0 !important;
+  background:
+    url("/assets/game/ui/panel.webp")
+    center / 112% 158%
+    no-repeat !important;
+  box-shadow:
+    0 -8px 18px rgba(0,0,0,.22),
+    0 -1px 0 rgba(255,220,143,.22) !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+.bottom-nav > button{
+  position:relative;
+  isolation:isolate;
+  min-width:0;
+  min-height:68px;
+  padding:3px 2px 5px !important;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-end;
+  gap:0;
+  border:0 !important;
+  border-radius:18px !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  overflow:visible;
+  transform-origin:50% 100%;
+  transition:
+    transform .14s ease,
+    filter .14s ease;
+}
+
+.bottom-nav > button::before,
+.bottom-nav > button::after{
+  content:"";
+  position:absolute;
+  pointer-events:none;
+}
+
+/* Active tab uses the existing real green game-button artwork. */
+.bottom-nav > button::before{
+  z-index:-1;
+  inset:2px 1px 0;
+  opacity:0;
+  background:
+    url("/assets/game/ui/button-primary.webp")
+    center / 100% 100%
+    no-repeat;
+  filter:saturate(.76) brightness(.72);
+  transition:opacity .14s ease;
+}
+
+.bottom-nav > button.active::before{
+  opacity:1;
+}
+
+.bottom-nav > button.active{
+  transform:translateY(-5px);
+  filter:brightness(1.08);
+}
+
+.bottom-nav > button:not(.active):active{
+  transform:translateY(2px) scale(.97);
+}
+
+.bottom-nav-icon{
+  display:block;
+  width:49px;
+  height:49px;
+  margin:0 auto -2px;
+  object-fit:cover;
+  border-radius:16px;
+  user-select:none;
+  pointer-events:none;
+  transform:translateZ(0);
+  filter:
+    drop-shadow(0 3px 3px rgba(0,0,0,.28))
+    saturate(.88);
+  transition:
+    transform .14s ease,
+    filter .14s ease;
+}
+
+.bottom-nav > button.active .bottom-nav-icon{
+  transform:translateY(-2px) scale(1.08);
+  filter:
+    drop-shadow(0 4px 4px rgba(0,0,0,.28))
+    drop-shadow(0 0 6px rgba(198,255,81,.42))
+    saturate(1.08);
+}
+
+.bottom-nav > button small{
+  position:relative;
+  z-index:2;
+  max-width:100%;
+  margin:0;
+  color:#f4e6c2 !important;
+  font-size:10px !important;
+  line-height:1.05;
+  font-weight:900 !important;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  text-shadow:
+    0 2px 0 rgba(64,29,15,.92),
+    0 2px 4px rgba(0,0,0,.35);
+}
+
+.bottom-nav > button.active small{
+  color:#f7ffbf !important;
+}
+
+@media(max-width:430px){
+  .bottom-nav.glass{
+    min-height:82px;
+    padding:8px 6px 7px !important;
+    gap:2px !important;
+  }
+
+  .bottom-nav > button{
+    min-height:65px;
+  }
+
+  .bottom-nav-icon{
+    width:46px;
+    height:46px;
+    border-radius:14px;
+  }
+
+  .bottom-nav > button small{
+    font-size:9px !important;
+  }
+}
+
+@media(max-width:370px){
+  .bottom-nav.glass{
+    min-height:76px;
+    padding-left:4px !important;
+    padding-right:4px !important;
+  }
+
+  .bottom-nav > button{
+    min-height:59px;
+  }
+
+  .bottom-nav-icon{
+    width:41px;
+    height:41px;
+    border-radius:13px;
+  }
+
+  .bottom-nav > button small{
+    font-size:8px !important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .bottom-nav > button,
+  .bottom-nav-icon,
+  .bottom-nav > button::before{
+    transition:none !important;
+  }
+}
