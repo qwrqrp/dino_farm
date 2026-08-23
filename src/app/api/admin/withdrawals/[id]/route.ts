@@ -72,6 +72,19 @@ export async function PATCH(
               throw new Error("WITHDRAWAL_NOT_FOUND");
             }
 
+            const automaticPayoutStarted =
+              Boolean(
+                withdrawal.payoutLockedAt ||
+                  withdrawal.providerBatchId ||
+                  withdrawal.providerPayoutId,
+              );
+
+            if (automaticPayoutStarted) {
+              throw new Error(
+                "AUTOMATIC_PAYOUT_IN_PROGRESS",
+              );
+            }
+
             if (action === "APPROVE") {
               if (withdrawal.status === "APPROVED") {
                 return withdrawal;
@@ -201,6 +214,22 @@ export async function PATCH(
         return NextResponse.json(
           { ok: false, error: "WITHDRAWAL_NOT_FOUND" },
           { status: 404 },
+        );
+      }
+
+      if (
+        error.message ===
+        "AUTOMATIC_PAYOUT_IN_PROGRESS"
+      ) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error:
+              "AUTOMATIC_PAYOUT_IN_PROGRESS",
+            message:
+              "Эта заявка уже обрабатывается автоматической системой выплат. Ручное изменение статуса заблокировано.",
+          },
+          { status: 409 },
         );
       }
 
