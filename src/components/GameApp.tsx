@@ -2,10 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  DinoSprite,
-  PrehistoricFarmScene,
-} from "@/components/game/GameVisuals";
-import {
   dinosaurs,
   formatNumber,
   gameConfig,
@@ -3316,9 +3312,7 @@ export default function GameApp() {
   return (
     <main className="app-shell">
       <header className="hud glass">
-        <div className="avatar">
-          <DinoSprite level={1} className="avatar-dino" />
-        </div>
+        <div className="avatar">🦖</div>
         <div className="profile">
           <strong>{playerName}</strong>
           <span>{
@@ -3332,41 +3326,18 @@ export default function GameApp() {
           }</span>
         </div>
         <div className="balances">
-          <span>
-            <i className="balance-token coin-token" aria-hidden="true" />
-            {formatNumber(state.coins, 2)}
-          </span>
-          <span>
-            <i className="balance-token dna-token" aria-hidden="true" />
-            {formatNumber(state.dna, 2)}
-          </span>
+          <span>🪙 {formatNumber(state.coins, 2)}</span>
+          <span>🧬 {formatNumber(state.dna, 2)}</span>
         </div>
       </header>
 
       <section className="content">
         {tab === "nest" && (
           <div className="screen nest-screen">
-            <div
-              className={`hero-card ${
-                isCollecting ? "collecting" : ""
-              }`}
-            >
-              <PrehistoricFarmScene
-                fill={progress}
-                collecting={isCollecting}
-              />
-
-              <div
-                className="collect-particles"
-                aria-hidden="true"
-              >
-                <span className="visual-spark">✦</span>
-                <span className="visual-dot" />
-                <span className="visual-spark">✧</span>
-                <span className="visual-dot" />
-                <span className="visual-spark">✦</span>
-                <span className="visual-dot" />
-              </div>
+            <div className="hero-card">
+              <div className="sun">☀️</div>
+              <div className="jungle">🌿🌴🌿</div>
+              <div className="nest-visual">🪺<span className="egg">🥚</span></div>
               <h1>Гнездо</h1>
               <p>
                 {formatNumber(state.eggs, 2)} /{" "}
@@ -3374,28 +3345,14 @@ export default function GameApp() {
               </p>
               <div className="progress"><div style={{ width: `${progress}%` }} /></div>
               <div className="rate">⚡ {formatNumber(eggsPerHour, 0)} яиц / час</div>
-              <button
-                className="primary"
-                onClick={collectEggs}
-                disabled={isLoading || isCollecting || Boolean(loadError)}
-              >
-                {isCollecting ? (
-                  "СОБИРАЕМ..."
-                ) : (
-                  <>
-                    <span className="button-game-icon collect-game-icon" aria-hidden="true" />
-                    <span>СОБРАТЬ ЯЙЦА</span>
-                  </>
-                )}
-              </button>
+              <button className="primary" onClick={collectEggs} disabled={isLoading || isCollecting || Boolean(loadError)}>{isCollecting ? "⏳ СОБИРАЕМ..." : "🥚 СОБРАТЬ ЯЙЦА"}</button>
               <button
                 className="coin-button"
                 onClick={openNestUpgrades}
                 disabled={isLoading || Boolean(loadError)}
                 style={{ marginTop: 10, width: "100%" }}
               >
-                <span className="button-game-icon upgrade-game-icon" aria-hidden="true" />
-                <span>УЛУЧШИТЬ ГНЕЗДО</span>
+                🪺 УЛУЧШИТЬ ГНЕЗДО
               </button>
             </div>
 
@@ -3723,52 +3680,18 @@ export default function GameApp() {
               <button className="coin-button" onClick={buyDino} disabled={isLoading || isBuying || Boolean(loadError)}>{isBuying ? "⏳ ПОКУПКА..." : "+ 🦕 100"}</button>
             </div>
             <p className="hint">Данные загружены из Neon. Сбор, покупка и merge сохраняются в Neon через сервер.</p>
-            <div
-              className={`board ${
-                isMerging ? "merging" : ""
-              }`}
-            >
-              {isMerging ? (
-                <div
-                  className="merge-flash"
-                  aria-hidden="true"
-                >
-                  ✨
-                </div>
-              ) : null}
-
-              {state.board.map((level, index) => {
-                const mergeActive =
-                  isMerging &&
-                  pendingMerge &&
-                  (index === pendingMerge.fromSlot ||
-                    index === pendingMerge.toSlot);
-
-                return (
+            <div className="board">
+              {state.board.map((level, index) => (
                 <button
                   key={index}
-                  className={`slot ${
-                    selected === index ? "selected" : ""
-                  } ${
-                    mergeActive ? "merge-active" : ""
-                  }`}
+                  className={`slot ${selected === index ? "selected" : ""}`}
                   onClick={() => chooseSlot(index)}
                   aria-label={level ? `Динозавр уровня ${level}` : "Пустая клетка"}
                   disabled={isLoading || isMerging || Boolean(loadError)}
                 >
-                  {level ? (
-                    <>
-                      <span className="dino">
-                        <DinoSprite level={level} />
-                      </span>
-                      <b>Lv.{level}</b>
-                    </>
-                  ) : (
-                    <span className="plus">+</span>
-                  )}
+                  {level ? <><span className="dino">🦖</span><b>Lv.{level}</b></> : <span className="plus">+</span>}
                 </button>
-                );
-              })}
+              ))}
             </div>
             <div className="card"><strong>Общее производство</strong><span>{formatNumber(eggsPerHour, 0)} яиц / час</span></div>
           </div>
@@ -8272,9 +8195,7 @@ export default function GameApp() {
                   background: "rgba(255,255,255,.04)",
                 }}
               >
-                <div className="merge-preview-dino">
-                  <DinoSprite level={pendingMerge.level} />
-                </div>
+                <div style={{ fontSize: 24 }}>🦖</div>
                 <strong>Lv.{pendingMerge.level}</strong>
               </div>
 
@@ -8287,9 +8208,7 @@ export default function GameApp() {
                   background: "rgba(255,255,255,.04)",
                 }}
               >
-                <div className="merge-preview-dino">
-                  <DinoSprite level={pendingMerge.level} />
-                </div>
+                <div style={{ fontSize: 24 }}>🦖</div>
                 <strong>Lv.{pendingMerge.level}</strong>
               </div>
             </div>
@@ -8313,9 +8232,7 @@ export default function GameApp() {
                 textAlign: "center",
               }}
             >
-              <div className="merge-preview-dino result">
-                <DinoSprite level={pendingMerge.resultLevel} />
-              </div>
+              <div style={{ fontSize: 28 }}>🦖</div>
               <strong style={{ fontSize: 18 }}>
                 Получите Lv.{pendingMerge.resultLevel}
               </strong>
@@ -8382,16 +8299,8 @@ export default function GameApp() {
           ["friends", "👥", "Друзья"],
           ["menu", "☰", "Меню"],
         ] as const).map(([key, icon, label]) => (
-          <button
-            key={key}
-            className={tab === key ? "active" : ""}
-            onClick={() => setTab(key)}
-          >
-            <span
-              className={`nav-game-icon nav-game-icon-${key}`}
-              aria-hidden="true"
-            />
-            <small>{label}</small>
+          <button key={key} className={tab === key ? "active" : ""} onClick={() => setTab(key)}>
+            <span>{icon}</span><small>{label}</small>
           </button>
         ))}
       </nav>
