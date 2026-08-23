@@ -5,6 +5,7 @@ import {
 } from "node:crypto";
 import {
   Prisma,
+  type Deposit,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
