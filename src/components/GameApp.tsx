@@ -608,6 +608,8 @@ export default function GameApp() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isCollecting, setIsCollecting] = useState(false);
+  const [showEggCollectFx, setShowEggCollectFx] = useState(false);
+  const eggCollectFxTimerRef = useRef<number | null>(null);
   const [isBuying, setIsBuying] = useState(false);
   const [pendingPurchase, setPendingPurchase] = useState<{
     source: "quick" | "shop" | "catalog";
@@ -966,6 +968,14 @@ export default function GameApp() {
     return () => window.clearInterval(timer);
   }, [eggsPerHour, isLoading, loadError]);
 
+  useEffect(() => {
+    return () => {
+      if (eggCollectFxTimerRef.current !== null) {
+        window.clearTimeout(eggCollectFxTimerRef.current);
+      }
+    };
+  }, []);
+
   const collectEggs = async () => {
     if (isCollecting) return;
 
@@ -1009,6 +1019,16 @@ export default function GameApp() {
         eggs: data.currentEggs ?? 0,
         lastTick: Date.now(),
       }));
+
+      if (eggCollectFxTimerRef.current !== null) {
+        window.clearTimeout(eggCollectFxTimerRef.current);
+      }
+
+      setShowEggCollectFx(true);
+      eggCollectFxTimerRef.current = window.setTimeout(() => {
+        setShowEggCollectFx(false);
+        eggCollectFxTimerRef.current = null;
+      }, 1250);
 
       setToast(
         `Собрано ${formatNumber(data.collectedEggs ?? 0, 0)} яиц: +${formatNumber(data.coinsReward ?? 0)} Coins и +${formatNumber(data.dnaReward ?? 0)} DNA ✓`,
@@ -3364,7 +3384,7 @@ export default function GameApp() {
                 draggable={false}
               />
             </div>
-            {isCollecting ? (
+            {showEggCollectFx ? (
               <div className="egg-flight-layer" aria-hidden="true">
                 <img
                   src="/assets/game/nest/egg-rare.webp"
