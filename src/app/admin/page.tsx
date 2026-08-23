@@ -16,6 +16,21 @@ type Withdrawal = {
   updatedAt: string;
   processedAt: string | null;
   note: string | null;
+
+  payoutExternalId: string | null;
+  providerBatchId: string | null;
+  providerPayoutId: string | null;
+  providerPayoutStatus: string | null;
+  payoutCurrency: string | null;
+  payoutFee: number | null;
+  payoutLockedAt: string | null;
+  payoutCreatedAt: string | null;
+  payoutVerifiedAt: string | null;
+  payoutCompletedAt: string | null;
+  payoutLastCheckedAt: string | null;
+  payoutFailureCode: string | null;
+  payoutFailureMessage: string | null;
+
   user: {
     id: string;
     telegramId: string | null;
@@ -30,6 +45,8 @@ type Summary = {
   approved: number;
   paid: number;
   rejected: number;
+  automaticProcessing: number;
+  providerErrors: number;
 };
 
 type LeaderboardPlayer = {
@@ -171,6 +188,8 @@ const EMPTY_SUMMARY: Summary = {
   approved: 0,
   paid: 0,
   rejected: 0,
+  automaticProcessing: 0,
+  providerErrors: 0,
 };
 
 function playerName(item: Withdrawal) {
@@ -191,6 +210,57 @@ function statusLabel(status: string) {
   if (status === "PAID") return "Оплачено";
   if (status === "REJECTED") return "Отклонено";
   return status;
+}
+
+function providerPayoutStatus(status: string | null) {
+  const normalized = String(status || "").toLowerCase();
+
+  if (normalized === "finished") {
+    return {
+      label: "Выплачено",
+      icon: "✅",
+      tone: "paid" as const,
+    };
+  }
+
+  if (
+    normalized === "failed" ||
+    normalized === "rejected" ||
+    normalized === "cancelled" ||
+    normalized === "canceled"
+  ) {
+    return {
+      label:
+        normalized === "cancelled" ||
+        normalized === "canceled"
+          ? "Отменено"
+          : normalized === "rejected"
+            ? "Отклонено"
+            : "Ошибка",
+      icon: "❌",
+      tone: "rejected" as const,
+    };
+  }
+
+  if (normalized) {
+    return {
+      label: status || "В обработке",
+      icon: "⏳",
+      tone: "approved" as const,
+    };
+  }
+
+  return {
+    label: "Ещё не создан",
+    icon: "⏳",
+    tone: "pending" as const,
+  };
+}
+
+function formatOptionalDate(value: string | null) {
+  return value
+    ? new Date(value).toLocaleString("ru-RU")
+    : "—";
 }
 
 function gameActionPlayerName(item: GameActionItem) {
@@ -2018,6 +2088,20 @@ export default function AdminPage() {
             <span style={styles.muted}>Отклонено</span>
             <b style={styles.summaryNumber}>{summary.rejected}</b>
           </div>
+
+          <div style={styles.summaryCard}>
+            <span style={styles.muted}>🤖 Автообработка</span>
+            <b style={styles.summaryNumber}>
+              {summary.automaticProcessing}
+            </b>
+          </div>
+
+          <div style={styles.summaryCard}>
+            <span style={styles.muted}>⚠️ Ошибки payout</span>
+            <b style={styles.summaryNumber}>
+              {summary.providerErrors}
+            </b>
+          </div>
         </section>
 
         <section style={styles.filters}>
@@ -2053,6 +2137,27 @@ export default function AdminPage() {
           <section style={styles.list}>
             {visible.map((item) => {
               const busy = busyId === item.id;
+
+              const automaticPayoutStarted = Boolean(
+                item.payoutLockedAt ||
+                  item.providerBatchId ||
+                  item.providerPayoutId ||
+                  item.payoutCreatedAt,
+              );
+
+              const providerState =
+                providerPayoutStatus(
+                  item.providerPayoutStatus,
+                );
+
+              const providerTone =
+                providerState.tone === "paid"
+                  ? styles.paid
+                  : providerState.tone === "rejected"
+                    ? styles.rejected
+                    : providerState.tone === "approved"
+                      ? styles.approved
+                      : styles.pending;
 
               return (
                 <article key={item.id} style={styles.card}>
@@ -2130,8 +2235,184 @@ export default function AdminPage() {
                     </button>
                   </div>
 
+                  <div style={styles.payoutMonitor}>
+                    <div style={styles.cardTop}>
+                      <div>
+                        <div style={styles.playerName}>
+                          🤖 Автоматическая выплата
+                        </div>
+                        <div style={styles.muted}>
+                          Данные синхронизируются worker&apos;ом через Neon.
+                        </div>
+                      </div>
+
+                      <span
+                        style={{
+                          ...styles.status,
+                          ...providerTone,
+                        }}
+                      >
+                        {providerState.icon}{" "}
+                        {providerState.label}
+                      </span>
+                    </div>
+
+                    <div style={styles.detailGrid}>
+                      <div>
+                        <span style={styles.muted}>
+                          Получателю
+                        </span>
+                        <div style={styles.detailValue}>
+                          {item.usdtAmount.toFixed(8)} USDT
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Комиссия проекта
+                        </span>
+                        <div style={styles.detailValue}>
+                          {item.payoutFee === null
+                            ? "—"
+                            : `${item.payoutFee.toFixed(
+                                8,
+                              )} ${(
+                                item.payoutCurrency ||
+                                "USDT"
+                              ).toUpperCase()}`}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Валюта NOWPayments
+                        </span>
+                        <div style={styles.detailValue}>
+                          {item.payoutCurrency
+                            ? item.payoutCurrency.toUpperCase()
+                            : "—"}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Worker взял заявку
+                        </span>
+                        <div style={styles.detailValue}>
+                          {formatOptionalDate(
+                            item.payoutLockedAt,
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Payout создан
+                        </span>
+                        <div style={styles.detailValue}>
+                          {formatOptionalDate(
+                            item.payoutCreatedAt,
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          2FA подтверждено
+                        </span>
+                        <div style={styles.detailValue}>
+                          {formatOptionalDate(
+                            item.payoutVerifiedAt,
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Завершено
+                        </span>
+                        <div style={styles.detailValue}>
+                          {formatOptionalDate(
+                            item.payoutCompletedAt,
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Последняя проверка
+                        </span>
+                        <div style={styles.detailValue}>
+                          {formatOptionalDate(
+                            item.payoutLastCheckedAt,
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={styles.payoutIds}>
+                      <div>
+                        <span style={styles.muted}>
+                          Batch ID
+                        </span>
+                        <code style={styles.wallet}>
+                          {item.providerBatchId || "—"}
+                        </code>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          Payout ID
+                        </span>
+                        <code style={styles.wallet}>
+                          {item.providerPayoutId || "—"}
+                        </code>
+                      </div>
+
+                      <div>
+                        <span style={styles.muted}>
+                          External ID
+                        </span>
+                        <code style={styles.wallet}>
+                          {item.payoutExternalId || "—"}
+                        </code>
+                      </div>
+                    </div>
+
+                    {item.payoutFailureCode ||
+                    item.payoutFailureMessage ? (
+                      <div style={styles.payoutError}>
+                        <b>
+                          ⚠️ Последняя ошибка payout
+                        </b>
+                        <div style={{ marginTop: 6 }}>
+                          {item.payoutFailureCode || "UNKNOWN"}
+                        </div>
+                        {item.payoutFailureMessage ? (
+                          <div
+                            style={{
+                              marginTop: 4,
+                              overflowWrap: "anywhere",
+                            }}
+                          >
+                            {item.payoutFailureMessage}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+
+                    {!automaticPayoutStarted &&
+                    item.status === "PENDING" ? (
+                      <div style={styles.payoutWaiting}>
+                        ⏳ Заявка ещё не передана автоматическому
+                        worker.
+                      </div>
+                    ) : null}
+                  </div>
+
                   <div style={styles.actions}>
-                    {item.status === "PENDING" ? (
+                    {item.status === "PENDING" &&
+                    !automaticPayoutStarted ? (
                       <>
                         <button
                           disabled={busy}
@@ -2154,7 +2435,8 @@ export default function AdminPage() {
                       </>
                     ) : null}
 
-                    {item.status === "APPROVED" ? (
+                    {item.status === "APPROVED" &&
+                    !automaticPayoutStarted ? (
                       <>
                         <button
                           disabled={busy}
@@ -2175,6 +2457,15 @@ export default function AdminPage() {
                           ✕ Отклонить
                         </button>
                       </>
+                    ) : null}
+
+                    {automaticPayoutStarted &&
+                    (item.status === "PENDING" ||
+                      item.status === "APPROVED") ? (
+                      <span style={styles.muted}>
+                        🔒 Ручные действия заблокированы:
+                        заявка уже передана автоматической системе.
+                      </span>
                     ) : null}
 
                     {busy ? (
@@ -3020,6 +3311,40 @@ const styles: Record<string, CSSProperties> = {
     background: "#163629",
     color: "white",
     cursor: "pointer",
+  },
+  payoutMonitor: {
+    marginTop: 16,
+    padding: 14,
+    borderRadius: 16,
+    background: "#0a2017",
+    border: "1px solid rgba(119,217,255,.18)",
+  },
+  payoutIds: {
+    marginTop: 14,
+    display: "grid",
+    gap: 10,
+    padding: 12,
+    borderRadius: 12,
+    background: "#071a13",
+    border: "1px solid rgba(255,255,255,.08)",
+  },
+  payoutError: {
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 12,
+    background: "#3b171a",
+    border: "1px solid #7a3438",
+    color: "#ffb5ba",
+    fontSize: 13,
+    lineHeight: 1.45,
+  },
+  payoutWaiting: {
+    marginTop: 12,
+    padding: 10,
+    borderRadius: 12,
+    background: "#513c10",
+    color: "#ffd875",
+    fontSize: 13,
   },
   actions: {
     display: "flex",
