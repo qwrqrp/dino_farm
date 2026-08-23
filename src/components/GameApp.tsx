@@ -3316,7 +3316,9 @@ export default function GameApp() {
   return (
     <main className="app-shell">
       <header className="hud glass">
-        <div className="avatar">🦖</div>
+        <div className="avatar">
+          <DinoSprite level={1} className="avatar-dino" />
+        </div>
         <div className="profile">
           <strong>{playerName}</strong>
           <span>{
@@ -3330,8 +3332,14 @@ export default function GameApp() {
           }</span>
         </div>
         <div className="balances">
-          <span>🪙 {formatNumber(state.coins, 2)}</span>
-          <span>🧬 {formatNumber(state.dna, 2)}</span>
+          <span>
+            <i className="balance-token coin-token" aria-hidden="true" />
+            {formatNumber(state.coins, 2)}
+          </span>
+          <span>
+            <i className="balance-token dna-token" aria-hidden="true" />
+            {formatNumber(state.dna, 2)}
+          </span>
         </div>
       </header>
 
@@ -3366,14 +3374,28 @@ export default function GameApp() {
               </p>
               <div className="progress"><div style={{ width: `${progress}%` }} /></div>
               <div className="rate">⚡ {formatNumber(eggsPerHour, 0)} яиц / час</div>
-              <button className="primary" onClick={collectEggs} disabled={isLoading || isCollecting || Boolean(loadError)}>{isCollecting ? "⏳ СОБИРАЕМ..." : "🥚 СОБРАТЬ ЯЙЦА"}</button>
+              <button
+                className="primary"
+                onClick={collectEggs}
+                disabled={isLoading || isCollecting || Boolean(loadError)}
+              >
+                {isCollecting ? (
+                  "СОБИРАЕМ..."
+                ) : (
+                  <>
+                    <span className="button-game-icon collect-game-icon" aria-hidden="true" />
+                    <span>СОБРАТЬ ЯЙЦА</span>
+                  </>
+                )}
+              </button>
               <button
                 className="coin-button"
                 onClick={openNestUpgrades}
                 disabled={isLoading || Boolean(loadError)}
                 style={{ marginTop: 10, width: "100%" }}
               >
-                🪺 УЛУЧШИТЬ ГНЕЗДО
+                <span className="button-game-icon upgrade-game-icon" aria-hidden="true" />
+                <span>УЛУЧШИТЬ ГНЕЗДО</span>
               </button>
             </div>
 
@@ -8360,8 +8382,16 @@ export default function GameApp() {
           ["friends", "👥", "Друзья"],
           ["menu", "☰", "Меню"],
         ] as const).map(([key, icon, label]) => (
-          <button key={key} className={tab === key ? "active" : ""} onClick={() => setTab(key)}>
-            <span>{icon}</span><small>{label}</small>
+          <button
+            key={key}
+            className={tab === key ? "active" : ""}
+            onClick={() => setTab(key)}
+          >
+            <span
+              className={`nav-game-icon nav-game-icon-${key}`}
+              aria-hidden="true"
+            />
+            <small>{label}</small>
           </button>
         ))}
       </nav>
