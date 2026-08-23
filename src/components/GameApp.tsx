@@ -3364,7 +3364,28 @@ export default function GameApp() {
                 draggable={false}
               />
             </div>
-            <div className="nest-visual">🪺<span className="egg">🥚</span></div>
+            <div className="nest-visual nest-art" aria-hidden="true">
+              <img
+                src="/assets/game/nest/nest.webp"
+                alt=""
+                className="nest-art-base"
+                draggable={false}
+              />
+              {state.eggs > 0 ? (
+                <img
+                  src="/assets/game/nest/egg-cluster.webp"
+                  alt=""
+                  className={`nest-art-eggs ${
+                    progress >= 75
+                      ? "nest-eggs-full"
+                      : progress >= 35
+                        ? "nest-eggs-half"
+                        : "nest-eggs-low"
+                  }`}
+                  draggable={false}
+                />
+              ) : null}
+            </div>
               <h1>Гнездо</h1>
               <p>
                 {formatNumber(state.eggs, 2)} /{" "}
