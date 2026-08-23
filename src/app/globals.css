@@ -684,3 +684,32 @@
     animation:none !important;
   }
 }
+
+/* =========================================================
+   STAGE 4 FIX — GUARANTEED VISIBLE COLLECTION FX
+   Trigger lifetime is now independent from API request speed.
+   ========================================================= */
+
+.egg-flight-art{
+  width:56px !important;
+  height:56px !important;
+  animation-duration:1.18s !important;
+}
+
+.egg-flight-layer{
+  overflow:visible !important;
+}
+
+@media(max-width:430px){
+  .egg-flight-art{
+    width:50px !important;
+    height:50px !important;
+  }
+}
+
+@media(max-width:370px){
+  .egg-flight-art{
+    width:45px !important;
+    height:45px !important;
+  }
+}
