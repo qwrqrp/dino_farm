@@ -6777,59 +6777,117 @@ export default function GameApp() {
             ) : null}
 
             {dailyOpen ? (
-              <div className="form-card daily-art-panel">
-                <div className="daily-art-head">
+              <div
+                className="form-card"
+                style={{
+                  marginTop: 16,
+                  borderRadius: 20,
+                  background: "#10281e",
+                  border: "1px solid rgba(255,255,255,.08)",
+                  padding: 14,
+                  width: "100%",
+                  minWidth: 0,
+                }}
+              >
+                <div
+                  className="section-head"
+                  style={{ width: "100%", minWidth: 0 }}
+                >
                   <div>
                     <span className="eyebrow">DAILY REWARD</span>
-                    <h2>Ежедневный бонус</h2>
+                    <h2>🎁 Ежедневный бонус</h2>
                   </div>
 
                   <button
                     className="coin-button"
                     onClick={() => setDailyOpen(false)}
-                    aria-label="Закрыть ежедневный бонус"
+                    style={{ flex: "0 0 auto" }}
                   >
-                    ×
+                    ✕
                   </button>
                 </div>
 
                 {dailyStatus === "loading" || dailyStatus === "idle" ? (
-                  <div className="daily-art-message">
-                    Загружаем ежедневный бонус...
-                  </div>
+                  <p>Загружаем ежедневный бонус...</p>
                 ) : dailyStatus === "error" ? (
-                  <div className="daily-art-message daily-art-error">
-                    <strong>Не удалось загрузить бонус</strong>
+                  <>
+                    <p>Не удалось загрузить бонус.</p>
                     <button
                       className="primary"
                       onClick={() => void loadDailyReward()}
                     >
                       ПОВТОРИТЬ
                     </button>
-                  </div>
+                  </>
                 ) : dailyInfo ? (
                   <>
-                    <div className="daily-art-summary">
-                      <article>
-                        <small>Следующая награда</small>
-                        <strong>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 8,
+                        width: "100%",
+                        marginTop: 8,
+                      }}
+                    >
+                      <div
+                        style={{
+                          padding: 12,
+                          borderRadius: 14,
+                          background: "rgba(255,255,255,.05)",
+                        }}
+                      >
+                        <small style={{ opacity: .68 }}>
+                          Следующая награда
+                        </small>
+                        <div
+                          style={{
+                            marginTop: 4,
+                            fontSize: 22,
+                            fontWeight: 900,
+                          }}
+                        >
                           +{formatNumber(dailyInfo.nextRewardCoins, 0)}
-                        </strong>
-                        <span>Coins</span>
-                      </article>
+                        </div>
+                        <small>Coins</small>
+                      </div>
 
-                      <article>
-                        <small>Текущая серия</small>
-                        <strong>{dailyInfo.streak}/7</strong>
-                        <span>
+                      <div
+                        style={{
+                          padding: 12,
+                          borderRadius: 14,
+                          background: "rgba(255,255,255,.05)",
+                        }}
+                      >
+                        <small style={{ opacity: .68 }}>
+                          Серия
+                        </small>
+                        <div
+                          style={{
+                            marginTop: 4,
+                            fontSize: 22,
+                            fontWeight: 900,
+                          }}
+                        >
+                          {dailyInfo.streak}/7
+                        </div>
+                        <small>
                           {dailyInfo.canClaim
                             ? "Можно забрать"
                             : formatDailyRemaining(dailyInfo.nextClaimAt)}
-                        </span>
-                      </article>
+                        </small>
+                      </div>
                     </div>
 
-                    <div className="daily-art-calendar">
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+                        gap: 5,
+                        marginTop: 12,
+                        width: "100%",
+                      }}
+                    >
                       {dailyInfo.rewards.map((reward, index) => {
                         const day = index + 1;
                         const completed =
@@ -6838,68 +6896,90 @@ export default function GameApp() {
                         const next = day === dailyInfo.nextDay;
 
                         return (
-                          <article
+                          <div
                             key={day}
-                            className={`daily-art-day ${
-                              completed ? "daily-art-day-complete" : ""
-                            } ${
-                              next ? "daily-art-day-next" : ""
-                            }`}
+                            style={{
+                              minWidth: 0,
+                              padding: "8px 3px",
+                              borderRadius: 11,
+                              textAlign: "center",
+                              border: next
+                                ? "1px solid rgba(167,243,72,.70)"
+                                : "1px solid rgba(255,255,255,.07)",
+                              background: next
+                                ? "rgba(167,243,72,.12)"
+                                : completed
+                                  ? "rgba(85,190,112,.12)"
+                                  : "rgba(255,255,255,.035)",
+                            }}
                           >
-                            <small>День {day}</small>
-
-                            <div className="daily-art-reward">
-                              {completed ? (
-                                <span className="daily-art-check">✓</span>
-                              ) : (
-                                <strong>
-                                  +{formatNumber(reward, 0)}
-                                </strong>
-                              )}
-                            </div>
-
-                            <span>
-                              {completed ? "Получено" : "Coins"}
-                            </span>
-                          </article>
+                            <small
+                              style={{
+                                display: "block",
+                                opacity: .64,
+                                fontSize: 9,
+                              }}
+                            >
+                              Д{day}
+                            </small>
+                            <strong
+                              style={{
+                                display: "block",
+                                marginTop: 3,
+                                fontSize: 10,
+                                overflow: "hidden",
+                              }}
+                            >
+                              {completed ? "✓" : reward}
+                            </strong>
+                          </div>
                         );
                       })}
                     </div>
 
-                    <div className="daily-art-rules">
-                      <strong>Как работает серия</strong>
-                      <span>
-                        Новый бонус доступен через 24 часа. Если пропустить
-                        более 48 часов, серия начинается с первого дня.
-                        Награды выдаются только в Coins.
-                      </span>
-                    </div>
+                    <p
+                      style={{
+                        margin: "12px 0 0",
+                        opacity: .74,
+                        fontSize: 12,
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      Награда выдаётся только в Coins. Новый бонус доступен
+                      через 24 часа. Если пропустить более 48 часов, серия
+                      начинается с первого дня.
+                    </p>
 
                     <button
-                      className="primary daily-art-claim"
+                      className="primary"
                       onClick={claimDailyReward}
                       disabled={
                         isClaimingDaily || !dailyInfo.canClaim
                       }
+                      style={{ marginTop: 12 }}
                     >
                       {isClaimingDaily
-                        ? "ПОЛУЧАЕМ..."
+                        ? "⏳ ПОЛУЧАЕМ..."
                         : dailyInfo.canClaim
-                          ? `ЗАБРАТЬ +${formatNumber(
+                          ? `🎁 ЗАБРАТЬ +${formatNumber(
                               dailyInfo.nextRewardCoins,
                               0,
                             )} COINS`
-                          : formatDailyRemaining(
+                          : `⏱ ${formatDailyRemaining(
                               dailyInfo.nextClaimAt,
-                            )}
+                            )}`}
                     </button>
 
-                    <div className="daily-art-total">
-                      <span>Получено бонусов</span>
-                      <b>{dailyInfo.totalClaims}</b>
-                      <span>Всего Coins</span>
-                      <b>{formatNumber(dailyInfo.totalCoins, 0)}</b>
-                    </div>
+                    <small
+                      style={{
+                        display: "block",
+                        marginTop: 9,
+                        opacity: .65,
+                      }}
+                    >
+                      Всего получено: {dailyInfo.totalClaims} бонусов ·{" "}
+                      {formatNumber(dailyInfo.totalCoins, 0)} Coins
+                    </small>
                   </>
                 ) : null}
               </div>
