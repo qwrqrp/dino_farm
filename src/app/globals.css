@@ -2961,3 +2961,276 @@
     font-size:16px !important;
   }
 }
+
+/* =========================================================
+   APPROVED GAME ART — STAGE 6D: MAIN MENU
+   Main menu visuals only. Existing actions/callbacks unchanged.
+   ========================================================= */
+
+.menu-art-screen{
+  position:relative;
+  isolation:isolate;
+  gap:11px !important;
+  padding:13px 10px 22px !important;
+  overflow:hidden;
+  border-radius:28px;
+  background:
+    linear-gradient(180deg,rgba(7,27,17,.08),rgba(4,19,12,.5)),
+    url("/assets/game/background/prehistoric-bg.webp")
+    center 45% / cover no-repeat;
+}
+
+.menu-art-screen::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 50% 4%,rgba(255,242,174,.15),transparent 30%),
+    linear-gradient(180deg,transparent 43%,rgba(4,18,11,.46));
+}
+
+.menu-art-heading{
+  position:relative;
+  min-height:78px;
+  padding:10px 28px 10px 21px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  background:
+    url("/assets/game/ui/panel.webp")
+    center / 110% 180% no-repeat;
+  filter:drop-shadow(0 6px 6px rgba(0,0,0,.22));
+}
+
+.menu-heading-art{
+  width:58px;
+  height:58px;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  filter:drop-shadow(0 4px 3px rgba(0,0,0,.24));
+}
+
+.menu-art-heading > div{
+  display:grid;
+  gap:1px;
+}
+
+.menu-art-heading .eyebrow{
+  color:#e7c27a !important;
+  font-size:8px !important;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:.14em;
+  text-shadow:0 1px 2px rgba(0,0,0,.32);
+}
+
+.menu-art-heading h2{
+  margin:0 !important;
+  color:#fff0bd !important;
+  font-size:22px !important;
+  line-height:1;
+  font-weight:1000;
+  text-shadow:
+    0 2px 0 rgba(71,33,16,.9),
+    0 3px 4px rgba(0,0,0,.25);
+}
+
+/* Two-column game menu */
+.menu-art-grid{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px !important;
+}
+
+.menu-art-grid > button{
+  position:relative;
+  isolation:isolate;
+  min-width:0;
+  min-height:92px;
+  padding:14px 10px 12px !important;
+  display:flex !important;
+  flex-direction:column;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:7px !important;
+  border:1px solid rgba(117,70,34,.5) !important;
+  border-radius:19px !important;
+  background:
+    radial-gradient(circle at 50% 25%,rgba(190,224,113,.12),transparent 40%),
+    linear-gradient(180deg,#805633,#4f321f 68%,#372316) !important;
+  box-shadow:
+    inset 0 2px 2px rgba(255,225,161,.13),
+    inset 0 -5px 8px rgba(27,12,6,.25),
+    0 5px 9px rgba(0,0,0,.20) !important;
+  color:#fff;
+  transform-origin:center;
+  transition:
+    transform .13s ease,
+    filter .13s ease,
+    box-shadow .13s ease;
+}
+
+.menu-art-grid > button::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  left:13%;
+  right:13%;
+  bottom:10%;
+  height:18%;
+  border-radius:50%;
+  background:rgba(19,12,7,.18);
+  filter:blur(3px);
+}
+
+.menu-art-grid > button:not(:disabled):active{
+  transform:translateY(2px) scale(.975);
+  filter:brightness(.94);
+}
+
+.menu-art-grid > button span{
+  display:block;
+  max-width:100%;
+  color:#fff0bf !important;
+  font-size:12px !important;
+  line-height:1.12;
+  font-weight:1000;
+  text-align:center;
+  text-shadow:
+    0 2px 0 rgba(66,31,16,.82),
+    0 2px 4px rgba(0,0,0,.28);
+}
+
+.menu-art-grid > button b{
+  display:block;
+  max-width:100%;
+  padding:5px 9px;
+  border-radius:999px;
+  background:rgba(48,28,16,.62);
+  border:1px solid rgba(255,216,134,.19);
+  color:#ead6a9 !important;
+  font-size:8px !important;
+  line-height:1.05;
+  font-weight:950;
+  text-align:center;
+  white-space:normal;
+  text-shadow:0 1px 2px rgba(0,0,0,.34);
+}
+
+/* Existing claimable state only — no new reward logic. */
+.menu-art-grid > button.menu-art-claimable{
+  border-color:rgba(194,255,91,.46) !important;
+  background:
+    radial-gradient(circle at 50% 25%,rgba(208,255,107,.23),transparent 43%),
+    linear-gradient(180deg,#7a6a31,#4c431e 68%,#332b14) !important;
+  box-shadow:
+    inset 0 2px 2px rgba(255,248,185,.14),
+    0 0 0 1px rgba(177,235,70,.18),
+    0 0 14px rgba(180,246,64,.17),
+    0 5px 9px rgba(0,0,0,.20) !important;
+}
+
+.menu-art-grid > button.menu-art-claimable b{
+  background:linear-gradient(180deg,#a8df3f,#619e23);
+  border-color:rgba(226,255,136,.4);
+  color:#183613 !important;
+  text-shadow:0 1px 0 rgba(255,255,255,.4);
+}
+
+.menu-art-grid > button.menu-art-disabled{
+  filter:saturate(.45) brightness(.72);
+}
+
+.menu-art-grid > button.menu-art-disabled b{
+  color:#d7c4a0 !important;
+}
+
+/* Opened tools below keep their existing markup/logic.
+   Give them visual breathing room under the new grid. */
+.menu-art-screen > .form-card,
+.menu-art-screen > .card{
+  margin-top:12px;
+}
+
+@media(max-width:430px){
+  .menu-art-screen{
+    padding:10px 7px 19px !important;
+    border-radius:24px;
+  }
+
+  .menu-art-heading{
+    min-height:72px;
+  }
+
+  .menu-heading-art{
+    width:52px;
+    height:52px;
+  }
+
+  .menu-art-heading h2{
+    font-size:20px !important;
+  }
+
+  .menu-art-grid{
+    gap:7px !important;
+  }
+
+  .menu-art-grid > button{
+    min-height:86px;
+    padding:12px 8px 11px !important;
+    border-radius:17px !important;
+  }
+
+  .menu-art-grid > button span{
+    font-size:11px !important;
+  }
+
+  .menu-art-grid > button b{
+    font-size:7.5px !important;
+  }
+}
+
+@media(max-width:370px){
+  .menu-art-heading{
+    min-height:66px;
+  }
+
+  .menu-heading-art{
+    width:46px;
+    height:46px;
+  }
+
+  .menu-art-heading h2{
+    font-size:18px !important;
+  }
+
+  .menu-art-grid{
+    gap:6px !important;
+  }
+
+  .menu-art-grid > button{
+    min-height:80px;
+    padding-left:6px !important;
+    padding-right:6px !important;
+  }
+
+  .menu-art-grid > button span{
+    font-size:10px !important;
+  }
+
+  .menu-art-grid > button b{
+    padding-left:7px;
+    padding-right:7px;
+    font-size:7px !important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .menu-art-grid > button{
+    transition:none !important;
+  }
+}
