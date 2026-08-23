@@ -113,6 +113,8 @@ type NowPaymentPayload = {
   pay_currency?: string;
   order_id?: string | number;
   purchase_id?: string | number | null;
+  parent_payment_id?: string | number | null;
+  payment_type?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -154,6 +156,111 @@ export function isNowPaymentsConfigured() {
   return Boolean(
     process.env.NOWPAYMENTS_API_KEY?.trim(),
   );
+}
+
+async function sendDepositTelegramNotification(
+  userId: string,
+  deposit: Deposit,
+) {
+  const token =
+    process.env.TELEGRAM_BOT_TOKEN?.trim();
+
+  if (!token) {
+    return false;
+  }
+
+  try {
+    const user =
+      await prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: {
+          telegramId: true,
+        },
+      });
+
+    if (!user?.telegramId) {
+      return false;
+    }
+
+    const amountUsd =
+      Number(deposit.usdAmount);
+
+    const lines = [
+      "✅ DINO EGG FARM",
+      "",
+      "Пополнение успешно зачислено.",
+      `Оплачено: $${amountUsd.toFixed(2)}`,
+      `Начислено: +${deposit.creditedCoins.toLocaleString(
+        "ru-RU",
+        {
+          maximumFractionDigits: 0,
+        },
+      )} Coins`,
+    ];
+
+    if (deposit.bonusCoins > 0) {
+      lines.push(
+        `🎁 Бонус: +${deposit.bonusCoins.toLocaleString(
+          "ru-RU",
+          {
+            maximumFractionDigits: 0,
+          },
+        )} Coins (${deposit.bonusPercent}%)`,
+      );
+    }
+
+    const response = await fetch(
+      `https://api.telegram.org/bot${token}/sendMessage`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
+          chat_id:
+            user.telegramId,
+          text: lines.join("\\n"),
+          disable_web_page_preview:
+            true,
+        }),
+        cache: "no-store",
+      },
+    );
+
+    const data =
+      (await response
+        .json()
+        .catch(() => ({}))) as {
+        ok?: boolean;
+        description?: string;
+      };
+
+    if (
+      !response.ok ||
+      data.ok !== true
+    ) {
+      console.error(
+        "Deposit Telegram notification failed:",
+        data.description ??
+          `HTTP ${response.status}`,
+      );
+
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    // Notification errors must never affect deposit crediting.
+    console.error(
+      "Deposit Telegram notification error:",
+      error,
+    );
+
+    return false;
+  }
 }
 
 async function nowPaymentsFetch(
@@ -391,6 +498,174 @@ export async function getProviderPayment(
   )) as NowPaymentPayload;
 }
 
+async function estimateToUsd(
+  amount: number,
+  currency: string,
+) {
+  if (
+    !Number.isFinite(amount) ||
+    amount <= 0 ||
+    !currency
+  ) {
+    return null;
+  }
+
+  const normalized =
+    currency.trim().toLowerCase();
+
+  if (
+    normalized === "usd" ||
+    normalized === "usdt" ||
+    normalized.startsWith("usdt") ||
+    normalized === "usdc" ||
+    normalized.startsWith("usdc")
+  ) {
+    // Stablecoins can safely be treated approximately as USD for
+    // payment-cover validation. The provider still controls the
+    // signed payment status and amount.
+    return amount;
+  }
+
+  try {
+    const params =
+      new URLSearchParams({
+        amount: String(amount),
+        currency_from: normalized,
+        currency_to: "usd",
+      });
+
+    const data =
+      (await nowPaymentsFetch(
+        `/estimate?${params.toString()}`,
+      )) as {
+        estimated_amount?: unknown;
+      };
+
+    const estimated =
+      Number(
+        data.estimated_amount,
+      );
+
+    return Number.isFinite(
+      estimated,
+    ) && estimated > 0
+      ? estimated
+      : null;
+  } catch (error) {
+    console.error(
+      "Failed to estimate wrong-asset payment to USD:",
+      error,
+    );
+    return null;
+  }
+}
+
+function isAlternateProviderPayment(
+  deposit: Deposit,
+  payload: NowPaymentPayload,
+) {
+  const payloadId =
+    payload.payment_id ===
+      undefined ||
+    payload.payment_id === null
+      ? ""
+      : String(
+          payload.payment_id,
+        ).trim();
+
+  return Boolean(
+    deposit.providerPaymentId &&
+      payloadId &&
+      deposit.providerPaymentId !==
+        payloadId,
+  );
+}
+
+function alternatePaymentBelongsToDeposit(
+  deposit: Deposit,
+  payload: NowPaymentPayload,
+) {
+  const orderId =
+    payload.order_id ===
+      undefined ||
+    payload.order_id === null
+      ? ""
+      : String(
+          payload.order_id,
+        ).trim();
+
+  const parentId =
+    payload.parent_payment_id ===
+      undefined ||
+    payload.parent_payment_id === null
+      ? ""
+      : String(
+          payload.parent_payment_id,
+        ).trim();
+
+  return Boolean(
+    orderId === deposit.id ||
+      (
+        deposit.providerPaymentId &&
+        parentId ===
+          deposit.providerPaymentId
+      ),
+  );
+}
+
+async function assertAlternatePaymentCoversOrder(
+  deposit: Deposit,
+  payload: NowPaymentPayload,
+) {
+  const paid =
+    Number(
+      payload.actually_paid ??
+        payload.pay_amount,
+    );
+
+  const currency =
+    typeof payload.pay_currency ===
+      "string"
+      ? payload.pay_currency
+      : "";
+
+  if (
+    !Number.isFinite(paid) ||
+    paid <= 0 ||
+    !currency
+  ) {
+    throw new Error(
+      "WRONG_ASSET_AMOUNT_UNKNOWN",
+    );
+  }
+
+  const paidUsd =
+    await estimateToUsd(
+      paid,
+      currency,
+    );
+
+  if (
+    paidUsd === null
+  ) {
+    throw new Error(
+      "WRONG_ASSET_USD_ESTIMATE_FAILED",
+    );
+  }
+
+  // Allow a small tolerance for provider rate movement.
+  // Do not provide Coins for materially underpaid wrong-asset deposits.
+  const requiredUsd =
+    Number(deposit.usdAmount) *
+    0.97;
+
+  if (paidUsd < requiredUsd) {
+    throw new Error(
+      "WRONG_ASSET_UNDERPAID",
+    );
+  }
+}
+
 export async function getMinimumUsdForMethod(
   method: DepositMethod,
 ) {
@@ -532,6 +807,10 @@ function decimalString(
 
 function providerUpdateData(
   payload: NowPaymentPayload,
+  options?: {
+    preserveOriginalPaymentId?: boolean;
+    preserveOriginalPayCurrency?: boolean;
+  },
 ) {
   const update: Prisma.DepositUpdateInput =
     {
@@ -542,7 +821,8 @@ function providerUpdateData(
     };
 
   if (
-    payload.payment_id !== undefined
+    payload.payment_id !== undefined &&
+    !options?.preserveOriginalPaymentId
   ) {
     update.providerPaymentId =
       String(payload.payment_id);
@@ -568,7 +848,8 @@ function providerUpdateData(
   if (
     typeof payload.pay_currency ===
       "string" &&
-    payload.pay_currency
+    payload.pay_currency &&
+    !options?.preserveOriginalPayCurrency
   ) {
     update.payCurrency =
       payload.pay_currency.toLowerCase();
@@ -596,22 +877,18 @@ function assertProviderMatchesDeposit(
   deposit: Deposit,
   payload: NowPaymentPayload,
 ) {
-  const payloadPaymentId =
-    payload.payment_id === undefined
-      ? ""
-      : String(
-          payload.payment_id,
-        ).trim();
+  const alternate =
+    isAlternateProviderPayment(
+      deposit,
+      payload,
+    );
 
-  // If both sides have a provider payment id, it MUST match.
-  // This is a stronger identity check than comparing currency labels,
-  // because NOWPayments may return different aliases for the same
-  // coin/network between create-payment, status and IPN responses.
   if (
-    deposit.providerPaymentId &&
-    payloadPaymentId &&
-    deposit.providerPaymentId !==
-      payloadPaymentId
+    alternate &&
+    !alternatePaymentBelongsToDeposit(
+      deposit,
+      payload,
+    )
   ) {
     throw new Error(
       "DEPOSIT_PAYMENT_ID_MISMATCH",
@@ -648,11 +925,6 @@ function assertProviderMatchesDeposit(
       "DEPOSIT_PRICE_CURRENCY_MISMATCH",
     );
   }
-
-  // Do NOT reject by payload.pay_currency string.
-  // NOWPayments can use different aliases for the same asset/network.
-  // The signed IPN + stored Payment ID + USD order amount are used
-  // as the authoritative checks.
 }
 
 async function findDepositForProviderPayload(
@@ -698,6 +970,7 @@ async function findDepositForProviderPayload(
 async function creditFinishedDeposit(
   depositId: string,
   payload: NowPaymentPayload,
+  preserveOriginalPayment = false,
 ) {
   const MAX_RETRIES = 3;
 
@@ -707,7 +980,8 @@ async function creditFinishedDeposit(
     attempt += 1
   ) {
     try {
-      return await prisma.$transaction(
+      const result =
+        await prisma.$transaction(
         async (tx) => {
           const deposit =
             await tx.deposit.findUnique({
@@ -728,7 +1002,17 @@ async function creditFinishedDeposit(
           );
 
           const update =
-            providerUpdateData(payload);
+            providerUpdateData(
+              payload,
+              preserveOriginalPayment
+                ? {
+                    preserveOriginalPaymentId:
+                      true,
+                    preserveOriginalPayCurrency:
+                      true,
+                  }
+                : undefined,
+            );
 
           if (deposit.creditedAt) {
             const balance =
@@ -839,6 +1123,15 @@ async function creditFinishedDeposit(
               .Serializable,
         },
       );
+
+      if (result.credited) {
+        await sendDepositTelegramNotification(
+          result.deposit.userId,
+          result.deposit,
+        );
+      }
+
+      return result;
     } catch (error) {
       const code =
         typeof error === "object" &&
@@ -872,6 +1165,9 @@ async function creditFinishedDeposit(
 export async function syncKnownDepositFromProvider(
   depositId: string,
   payload: NowPaymentPayload,
+  options?: {
+    allowAlternatePayment?: boolean;
+  },
 ) {
   const deposit =
     await prisma.deposit.findUnique({
@@ -886,28 +1182,33 @@ export async function syncKnownDepositFromProvider(
     );
   }
 
-  const payloadPaymentId =
-    payload.payment_id === undefined
-      ? ""
-      : String(
-          payload.payment_id,
-        ).trim();
+  const alternate =
+    isAlternateProviderPayment(
+      deposit,
+      payload,
+    );
 
   if (
-    deposit.providerPaymentId &&
-    payloadPaymentId &&
-    deposit.providerPaymentId !==
-      payloadPaymentId
+    alternate &&
+    !options?.allowAlternatePayment
   ) {
     throw new Error(
       "DEPOSIT_PAYMENT_ID_MISMATCH",
     );
   }
 
-  // This path is used only after our server itself fetched
-  // GET /payment/{providerPaymentId} using the stored payment id
-  // and the merchant API key. Payment ID is therefore the primary
-  // identity check. Price is still checked when NOWPayments returns it.
+  if (
+    alternate &&
+    !alternatePaymentBelongsToDeposit(
+      deposit,
+      payload,
+    )
+  ) {
+    throw new Error(
+      "DEPOSIT_PAYMENT_ID_MISMATCH",
+    );
+  }
+
   const providerPrice =
     payload.price_amount ===
       undefined
@@ -936,10 +1237,21 @@ export async function syncKnownDepositFromProvider(
       payload.payment_status,
     );
 
+  if (
+    alternate &&
+    status === "FINISHED"
+  ) {
+    await assertAlternatePaymentCoversOrder(
+      deposit,
+      payload,
+    );
+  }
+
   if (status === "FINISHED") {
     return creditFinishedDepositDirect(
       deposit.id,
       payload,
+      alternate,
     );
   }
 
@@ -949,7 +1261,17 @@ export async function syncKnownDepositFromProvider(
         id: deposit.id,
       },
       data:
-        providerUpdateData(payload),
+        providerUpdateData(
+          payload,
+          alternate
+            ? {
+                preserveOriginalPaymentId:
+                  true,
+                preserveOriginalPayCurrency:
+                  true,
+              }
+            : undefined,
+        ),
     });
 
   const balance =
@@ -973,6 +1295,7 @@ export async function syncKnownDepositFromProvider(
 async function creditFinishedDepositDirect(
   depositId: string,
   payload: NowPaymentPayload,
+  preserveOriginalPayment = false,
 ) {
   const MAX_RETRIES = 3;
 
@@ -982,7 +1305,8 @@ async function creditFinishedDepositDirect(
     attempt += 1
   ) {
     try {
-      return await prisma.$transaction(
+      const result =
+        await prisma.$transaction(
         async (tx) => {
           const deposit =
             await tx.deposit.findUnique({
@@ -997,19 +1321,18 @@ async function creditFinishedDepositDirect(
             );
           }
 
-          const payloadPaymentId =
-            payload.payment_id ===
-              undefined
-              ? ""
-              : String(
-                  payload.payment_id,
-                ).trim();
+          const alternate =
+            isAlternateProviderPayment(
+              deposit,
+              payload,
+            );
 
           if (
-            deposit.providerPaymentId &&
-            payloadPaymentId &&
-            deposit.providerPaymentId !==
-              payloadPaymentId
+            alternate &&
+            !alternatePaymentBelongsToDeposit(
+              deposit,
+              payload,
+            )
           ) {
             throw new Error(
               "DEPOSIT_PAYMENT_ID_MISMATCH",
@@ -1019,6 +1342,14 @@ async function creditFinishedDepositDirect(
           const update =
             providerUpdateData(
               payload,
+              preserveOriginalPayment
+                ? {
+                    preserveOriginalPaymentId:
+                      true,
+                    preserveOriginalPayCurrency:
+                      true,
+                  }
+                : undefined,
             );
 
           // Idempotency: if this exact deposit was already credited,
@@ -1139,6 +1470,15 @@ async function creditFinishedDepositDirect(
               .Serializable,
         },
       );
+
+      if (result.credited) {
+        await sendDepositTelegramNotification(
+          result.deposit.userId,
+          result.deposit,
+        );
+      }
+
+      return result;
     } catch (error) {
       const code =
         typeof error === "object" &&
@@ -1186,15 +1526,32 @@ export async function syncDepositFromProvider(
     payload,
   );
 
+  const alternate =
+    isAlternateProviderPayment(
+      deposit,
+      payload,
+    );
+
   const status =
     normalizeProviderStatus(
       payload.payment_status,
     );
 
+  if (
+    alternate &&
+    status === "FINISHED"
+  ) {
+    await assertAlternatePaymentCoversOrder(
+      deposit,
+      payload,
+    );
+  }
+
   if (status === "FINISHED") {
     return creditFinishedDeposit(
       deposit.id,
       payload,
+      alternate,
     );
   }
 
@@ -1204,7 +1561,17 @@ export async function syncDepositFromProvider(
         id: deposit.id,
       },
       data:
-        providerUpdateData(payload),
+        providerUpdateData(
+          payload,
+          alternate
+            ? {
+                preserveOriginalPaymentId:
+                  true,
+                preserveOriginalPayCurrency:
+                  true,
+              }
+            : undefined,
+        ),
     });
 
   const balance =
@@ -1224,6 +1591,7 @@ export async function syncDepositFromProvider(
       balance?.coins ?? 0,
   };
 }
+
 
 function sortObjectDeep(
   value: unknown,
