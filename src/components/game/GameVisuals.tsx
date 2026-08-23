@@ -256,33 +256,104 @@ export function DinoSprite({
 
 export function EggSprite({
   className = "",
+  variant = 0,
 }: {
   className?: string;
+  variant?: number;
 }) {
+  const variants = [
+    {
+      shellA: "#fff7d5",
+      shellB: "#e5cf88",
+      spotA: "#75b96b",
+      spotB: "#9472c7",
+    },
+    {
+      shellA: "#dff5ff",
+      shellB: "#9fc7dc",
+      spotA: "#5c8fbd",
+      spotB: "#7cc99a",
+    },
+    {
+      shellA: "#e6ffd6",
+      shellB: "#a8ce89",
+      spotA: "#8b70c7",
+      spotB: "#e29663",
+    },
+    {
+      shellA: "#f3e0ff",
+      shellB: "#b996d0",
+      spotA: "#6e9fb6",
+      spotB: "#d47a86",
+    },
+    {
+      shellA: "#ffe6c7",
+      shellB: "#d7aa72",
+      spotA: "#83af6c",
+      spotB: "#9c72bd",
+    },
+  ];
+
+  const current = variants[Math.abs(variant) % variants.length];
+  const gradientId = `eggFill-${Math.abs(variant) % variants.length}`;
+
   return (
     <svg
-      className={`egg-sprite ${className}`}
-      viewBox="0 0 70 90"
+      className={`egg-sprite egg-variant-${Math.abs(variant) % variants.length} ${className}`}
+      viewBox="0 0 76 96"
       aria-hidden="true"
       focusable="false"
     >
       <defs>
-        <linearGradient id="eggFill" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#fff7d1" />
-          <stop offset="65%" stopColor="#f0e0a2" />
-          <stop offset="100%" stopColor="#d7c27b" />
+        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={current.shellA} />
+          <stop offset="68%" stopColor={current.shellA} />
+          <stop offset="100%" stopColor={current.shellB} />
         </linearGradient>
       </defs>
-      <path
-        d="M35 5 C19 7 8 31 8 52 C8 73 19 85 35 85 C51 85 62 73 62 52 C62 31 51 7 35 5 Z"
-        fill="url(#eggFill)"
-        stroke="#fff8d9"
-        strokeWidth="2"
+
+      <ellipse
+        className="egg-shadow"
+        cx="38"
+        cy="88"
+        rx="20"
+        ry="5"
+        fill="rgba(0,0,0,.13)"
       />
-      <ellipse cx="25" cy="27" rx="7" ry="11" fill="rgba(255,255,255,.5)" />
-      <circle cx="43" cy="42" r="4" fill="#7fb86a" opacity=".65" />
-      <circle cx="26" cy="56" r="3" fill="#8d6cc7" opacity=".55" />
-      <circle cx="43" cy="65" r="2.6" fill="#d8875a" opacity=".6" />
+
+      <path
+        className="egg-shell"
+        d="M38 5 C20 7 8 33 8 57 C8 80 20 90 38 90 C56 90 68 80 68 57 C68 33 56 7 38 5 Z"
+        fill={`url(#${gradientId})`}
+        stroke="rgba(255,255,255,.72)"
+        strokeWidth="2.3"
+      />
+
+      <ellipse
+        className="egg-highlight"
+        cx="27"
+        cy="29"
+        rx="7.5"
+        ry="13"
+        fill="rgba(255,255,255,.48)"
+        transform="rotate(12 27 29)"
+      />
+
+      <g className="egg-pattern">
+        <circle cx="49" cy="41" r="4.6" fill={current.spotA} opacity=".68" />
+        <circle cx="27" cy="59" r="3.8" fill={current.spotB} opacity=".60" />
+        <circle cx="47" cy="69" r="3.1" fill={current.spotB} opacity=".52" />
+        <circle cx="34" cy="43" r="2.5" fill={current.spotA} opacity=".46" />
+        <circle cx="54" cy="58" r="2.2" fill={current.spotA} opacity=".42" />
+      </g>
+
+      <path
+        d="M19 73 C29 83 48 85 58 73"
+        fill="none"
+        stroke="rgba(117,83,43,.14)"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -294,65 +365,185 @@ export function NestSprite({
   fill?: number;
   className?: string;
 }) {
+  const safeFill = Math.max(0, Math.min(100, fill));
+
   const eggCount =
-    fill >= 90 ? 7 :
-    fill >= 60 ? 5 :
-    fill >= 30 ? 3 :
-    fill >= 10 ? 2 :
-    fill > 0 ? 1 : 0;
+    safeFill >= 90 ? 9 :
+    safeFill >= 60 ? 7 :
+    safeFill >= 30 ? 5 :
+    safeFill >= 10 ? 3 :
+    safeFill > 0 ? 1 : 0;
+
+  const stage =
+    safeFill >= 90 ? "full" :
+    safeFill >= 60 ? "high" :
+    safeFill >= 30 ? "half" :
+    safeFill >= 10 ? "low" :
+    "empty";
 
   const eggPositions = [
-    [58, 48, -10],
-    [86, 50, 8],
-    [72, 39, 2],
-    [48, 58, -5],
-    [96, 59, 10],
-    [64, 59, 4],
-    [82, 62, -7],
+    [68, 50, -10, 0],
+    [91, 50, 9, 1],
+    [80, 39, 2, 2],
+    [52, 61, -7, 3],
+    [105, 60, 10, 4],
+    [69, 62, 5, 1],
+    [89, 65, -8, 2],
+    [58, 45, 8, 4],
+    [101, 45, -4, 0],
   ] as const;
 
   return (
     <svg
-      className={`nest-sprite ${className}`}
-      viewBox="0 0 150 110"
+      className={`nest-sprite nest-stage-${stage} ${className}`}
+      viewBox="0 0 160 118"
       aria-hidden="true"
       focusable="false"
     >
-      <ellipse cx="75" cy="91" rx="57" ry="13" fill="rgba(0,0,0,.18)" />
-      <path
-        d="M21 64 C30 43 52 33 75 33 C100 33 122 44 130 65 C121 89 104 98 75 99 C47 98 29 88 21 64 Z"
-        fill="#70482c"
+      <ellipse
+        className="nest-ground-shadow"
+        cx="80"
+        cy="101"
+        rx="62"
+        ry="12"
+        fill="rgba(0,0,0,.18)"
       />
-      <path
-        d="M29 65 C42 52 57 48 75 48 C94 48 109 53 121 66 C110 80 95 87 75 87 C55 87 40 80 29 65 Z"
-        fill="#b77a43"
-      />
-      <path d="M27 62 C45 71 62 75 124 61" stroke="#5a351f" strokeWidth="5" fill="none" strokeLinecap="round" />
-      <path d="M34 51 C58 63 87 66 118 52" stroke="#8d5a35" strokeWidth="4" fill="none" strokeLinecap="round" />
-      <path d="M36 78 C60 67 93 67 115 79" stroke="#5c3822" strokeWidth="5" fill="none" strokeLinecap="round" />
-      <path d="M26 58 L13 48" stroke="#6b4227" strokeWidth="5" strokeLinecap="round" />
-      <path d="M126 59 L139 48" stroke="#6b4227" strokeWidth="5" strokeLinecap="round" />
-      <path d="M38 42 L31 28" stroke="#6b4227" strokeWidth="4" strokeLinecap="round" />
-      <path d="M112 43 L120 29" stroke="#6b4227" strokeWidth="4" strokeLinecap="round" />
-      <path d="M28 55 C20 43 12 41 5 47 C15 49 19 57 21 66" fill="#5fb95a" />
-      <path d="M121 55 C132 42 141 42 147 50 C136 51 131 59 128 68" fill="#4fa74d" />
-      <path d="M47 42 C42 30 45 24 54 20 C52 30 56 36 62 42" fill="#75c85e" />
 
-      {eggPositions.slice(0, eggCount).map(([x, y, rotate], index) => (
-        <g
-          key={index}
-          transform={`translate(${x} ${y}) rotate(${rotate}) scale(.38) translate(-35 -45)`}
-        >
-          <EggSprite />
-        </g>
-      ))}
+      <g className="nest-back-leaves">
+        <path
+          d="M26 65 C17 48 6 44 1 51 C13 54 19 63 22 75 Z"
+          fill="#4eaa4e"
+        />
+        <path
+          d="M132 66 C143 47 154 47 159 56 C147 58 140 67 136 77 Z"
+          fill="#438f45"
+        />
+        <path
+          d="M49 48 C42 32 47 23 58 18 C55 31 60 39 68 46 Z"
+          fill="#70c55c"
+        />
+        <path
+          d="M111 47 C118 29 127 25 137 28 C128 35 126 43 126 51 Z"
+          fill="#5bb552"
+        />
+      </g>
 
-      <path
-        d="M26 70 C44 84 60 90 75 90 C94 90 111 82 126 68"
-        fill="none"
-        stroke="rgba(255,207,129,.22)"
-        strokeWidth="2"
-      />
+      <g className="nest-bowl">
+        <path
+          d="M19 70 C27 45 52 34 80 34 C109 34 133 47 141 71 C132 98 109 107 80 107 C50 107 28 98 19 70 Z"
+          fill="#6a4329"
+        />
+
+        <path
+          d="M28 69 C40 53 58 47 80 47 C103 47 120 54 132 70 C121 86 104 94 80 94 C56 94 39 86 28 69 Z"
+          fill="#b97b42"
+        />
+
+        <ellipse
+          cx="80"
+          cy="67"
+          rx="45"
+          ry="23"
+          fill="#d7a55b"
+          opacity=".35"
+        />
+
+        <path
+          d="M25 64 C48 75 80 78 136 62"
+          stroke="#58351f"
+          strokeWidth="5.5"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path
+          d="M31 51 C57 65 91 68 129 52"
+          stroke="#8d5933"
+          strokeWidth="4.2"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path
+          d="M31 82 C59 70 96 70 127 82"
+          stroke="#56331f"
+          strokeWidth="5.3"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path
+          d="M22 69 L8 57"
+          stroke="#654027"
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M138 68 L153 56"
+          stroke="#654027"
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M39 44 L31 28"
+          stroke="#67412a"
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+        <path
+          d="M120 45 L129 29"
+          stroke="#67412a"
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+
+        <path
+          d="M31 74 C49 91 66 97 80 97 C100 97 118 88 134 72"
+          fill="none"
+          stroke="rgba(255,218,148,.24)"
+          strokeWidth="2.3"
+          strokeLinecap="round"
+        />
+      </g>
+
+      <g className="nest-eggs">
+        {eggPositions.slice(0, eggCount).map(([x, y, rotate, variant], index) => (
+          <g
+            key={index}
+            className={`nest-egg nest-egg-${index + 1}`}
+            transform={`translate(${x} ${y}) rotate(${rotate}) scale(.36) translate(-38 -48)`}
+          >
+            <EggSprite variant={variant} />
+          </g>
+        ))}
+      </g>
+
+      <g className="nest-front-grass">
+        <path
+          d="M34 86 C29 76 28 68 31 60 C36 70 38 78 38 88"
+          stroke="#5da94b"
+          strokeWidth="3"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path
+          d="M43 91 C41 78 45 69 52 63 C49 75 50 84 50 92"
+          stroke="#73bd55"
+          strokeWidth="3"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path
+          d="M119 91 C117 78 121 68 128 62 C126 75 126 84 126 92"
+          stroke="#69b551"
+          strokeWidth="3"
+          fill="none"
+          strokeLinecap="round"
+        />
+      </g>
+
+      <g className="nest-sparkles">
+        <circle cx="41" cy="55" r="1.6" fill="#fff4b1" />
+        <circle cx="122" cy="55" r="1.3" fill="#efffb7" />
+        <circle cx="111" cy="79" r="1.2" fill="#fff2a9" />
+      </g>
     </svg>
   );
 }
