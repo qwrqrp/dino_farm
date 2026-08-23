@@ -1405,3 +1405,193 @@
     height:43px !important;
   }
 }
+
+/* =========================================================
+   APPROVED GAME ART — STAGE 5D: TOP HUD
+   Uses existing real 2D panel + dinosaur asset.
+   Profile/balance data and Telegram logic are unchanged.
+   ========================================================= */
+
+.hud.glass{
+  height:76px !important;
+  padding:9px 13px !important;
+  gap:10px !important;
+  border:0 !important;
+  border-radius:22px !important;
+
+  background:
+    url("/assets/game/ui/panel.webp")
+    center / 112% 165%
+    no-repeat !important;
+
+  box-shadow:
+    0 8px 18px rgba(0,0,0,.24),
+    inset 0 1px 0 rgba(255,235,176,.14) !important;
+
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  overflow:hidden;
+}
+
+.hud .avatar{
+  flex:0 0 55px;
+  width:55px !important;
+  height:55px !important;
+  border-radius:17px !important;
+  padding:2px;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 34%,rgba(220,255,129,.92),rgba(105,185,54,.88) 63%,rgba(38,102,42,.95));
+  border:2px solid rgba(255,224,132,.72);
+  box-shadow:
+    inset 0 2px 3px rgba(255,255,255,.34),
+    0 3px 5px rgba(0,0,0,.28);
+}
+
+.hud .avatar-dino-art{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  filter:
+    drop-shadow(0 3px 3px rgba(0,0,0,.22))
+    saturate(1.05);
+}
+
+.hud .profile{
+  flex:1 1 auto;
+  min-width:0;
+  gap:2px;
+}
+
+.hud .profile strong{
+  max-width:145px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#fff0c2 !important;
+  font-size:14px !important;
+  line-height:1.05;
+  font-weight:950;
+  text-shadow:
+    0 2px 0 rgba(65,31,16,.88),
+    0 2px 4px rgba(0,0,0,.28);
+}
+
+.hud .profile span{
+  max-width:150px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#ead7aa !important;
+  font-size:10px !important;
+  line-height:1.1;
+  font-weight:750;
+  text-shadow:0 1px 2px rgba(0,0,0,.30);
+}
+
+.hud .balances{
+  flex:0 0 auto;
+  min-width:90px;
+  margin-left:auto !important;
+  display:grid !important;
+  gap:3px !important;
+  text-align:right;
+  font-size:12px !important;
+  font-weight:950 !important;
+  color:#fff2bd !important;
+}
+
+.hud .balances > span{
+  min-height:23px;
+  padding:3px 8px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:4px;
+  border-radius:999px;
+  background:rgba(64,31,16,.66);
+  border:1px solid rgba(255,211,119,.22);
+  box-shadow:
+    inset 0 1px 2px rgba(0,0,0,.28),
+    0 1px 0 rgba(255,255,255,.05);
+  text-shadow:
+    0 2px 0 rgba(71,34,16,.78),
+    0 2px 4px rgba(0,0,0,.26);
+}
+
+/* Keep sticky HUD above game artwork but below Telegram chrome. */
+.hud{
+  z-index:14 !important;
+}
+
+@media(max-width:430px){
+  .hud.glass{
+    height:72px !important;
+    padding:8px 10px !important;
+    gap:8px !important;
+    border-radius:20px !important;
+  }
+
+  .hud .avatar{
+    flex-basis:51px;
+    width:51px !important;
+    height:51px !important;
+    border-radius:16px !important;
+  }
+
+  .hud .profile strong{
+    max-width:122px;
+    font-size:13px !important;
+  }
+
+  .hud .profile span{
+    max-width:126px;
+    font-size:9px !important;
+  }
+
+  .hud .balances{
+    min-width:84px;
+    font-size:11px !important;
+  }
+
+  .hud .balances > span{
+    min-height:21px;
+    padding:2px 7px;
+  }
+}
+
+@media(max-width:370px){
+  .hud.glass{
+    height:68px !important;
+    padding-left:8px !important;
+    padding-right:8px !important;
+    gap:6px !important;
+  }
+
+  .hud .avatar{
+    flex-basis:46px;
+    width:46px !important;
+    height:46px !important;
+    border-radius:14px !important;
+  }
+
+  .hud .profile strong{
+    max-width:104px;
+    font-size:12px !important;
+  }
+
+  .hud .profile span{
+    max-width:108px;
+    font-size:8px !important;
+  }
+
+  .hud .balances{
+    min-width:76px;
+    font-size:10px !important;
+  }
+
+  .hud .balances > span{
+    padding-left:5px;
+    padding-right:5px;
+  }
+}
