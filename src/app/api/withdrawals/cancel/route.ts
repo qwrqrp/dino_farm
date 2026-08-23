@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getPlayerContext } from "@/lib/player";
+import {
+  formatTelegramDna,
+  formatTelegramUsdt,
+  sendTelegramToUser,
+} from "@/lib/telegram-notifications";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -209,6 +214,28 @@ export async function POST(
               .Serializable,
         },
       );
+
+    if (!result.alreadyCanceled) {
+      await sendTelegramToUser(
+        player.userId,
+        [
+          "↩️ DINO EGG FARM",
+          "",
+          "Заявка на вывод отменена.",
+          `Возвращено: ${formatTelegramDna(
+            result.withdrawal.dnaAmount,
+          )} DNA`,
+          `Отменённая выплата: ${formatTelegramUsdt(
+            Number(
+              result.withdrawal.usdtAmount.toString(),
+            ),
+          )} USDT`,
+          "",
+          "DNA уже возвращена на игровой баланс.",
+          "USDT по этой заявке не отправлялись.",
+        ].join("\n"),
+      );
+    }
 
     return NextResponse.json(
       {
