@@ -128,6 +128,16 @@ export async function POST(
             );
           }
 
+          if (
+            withdrawal.payoutLockedAt ||
+            withdrawal.providerBatchId ||
+            withdrawal.providerPayoutId
+          ) {
+            throw new Error(
+              "PAYOUT_ALREADY_STARTED",
+            );
+          }
+
           const changed =
             await tx.withdrawal.updateMany(
               {
@@ -281,6 +291,22 @@ export async function POST(
             "Заявка не найдена.",
         },
         { status: 404 },
+      );
+    }
+
+    if (
+      message ===
+      "PAYOUT_ALREADY_STARTED"
+    ) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "PAYOUT_ALREADY_STARTED",
+          message:
+            "Выплата уже передана в обработку. Отменить эту заявку больше нельзя.",
+        },
+        { status: 409 },
       );
     }
 
