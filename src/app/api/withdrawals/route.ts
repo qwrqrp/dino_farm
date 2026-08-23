@@ -96,9 +96,16 @@ export async function GET() {
       {
         ok: true,
         config: {
-          currency: withdrawalConfig.currency,
-          usdtPerDna: withdrawalConfig.usdtPerDna,
-          minDna: withdrawalConfig.minDna,
+          currency:
+            withdrawalConfig.currency,
+          usdtPerDna:
+            withdrawalConfig.usdtPerDna,
+          minDna:
+            withdrawalConfig.minDna,
+          minUsdt:
+            withdrawalConfig.minUsdt,
+          networkFeePaidBy:
+            withdrawalConfig.networkFeePaidBy,
         },
         balance: {
           dna: balance.dna,
@@ -175,7 +182,7 @@ export async function POST(request: Request) {
         {
           ok: false,
           error: "MIN_WITHDRAWAL",
-          message: `Минимальная сумма вывода — ${withdrawalConfig.minDna} DNA.`,
+          message: `Минимальная сумма вывода — ${withdrawalConfig.minDna.toLocaleString("ru-RU")} DNA (${withdrawalConfig.minUsdt.toFixed(2)} USDT).`,
         },
         { status: 400 },
       );
