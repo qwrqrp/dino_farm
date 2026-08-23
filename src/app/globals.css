@@ -1083,3 +1083,24 @@
     transition:none !important;
   }
 }
+
+/* =========================================================
+   HOTFIX — LOWER WOODEN INFO PANEL
+   Visual positioning only.
+   ========================================================= */
+
+.nest-info-art{
+  transform:translateY(18px);
+}
+
+@media(max-width:430px){
+  .nest-info-art{
+    transform:translateY(20px);
+  }
+}
+
+@media(max-width:370px){
+  .nest-info-art{
+    transform:translateY(18px);
+  }
+}
