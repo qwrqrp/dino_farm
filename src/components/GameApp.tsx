@@ -3847,19 +3847,13 @@ export default function GameApp() {
         )}
 
         {tab === "shop" && (
-          <div className="screen">
-            <span className="eyebrow">DINO SHOP</span>
-            <h2>Магазин</h2>
+          <div className="screen shop-art-screen">
+            <div className="shop-art-heading">
+              <span className="eyebrow">DINO SHOP</span>
+              <h2>Магазин</h2>
+            </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  "repeat(2, minmax(0, 1fr))",
-                gap: 8,
-                marginBottom: 14,
-              }}
-            >
+            <div className="shop-art-switch">
               <button
                 className={
                   shopSection === "dinos"
@@ -3870,7 +3864,14 @@ export default function GameApp() {
                   setShopSection("dinos")
                 }
               >
-                🦖 ДИНОЗАВРЫ
+                <img
+                  src="/assets/game/dinosaurs/trex.webp"
+                  alt=""
+                  className="shop-switch-dino"
+                  draggable={false}
+                  aria-hidden="true"
+                />
+                <span>ДИНОЗАВРЫ</span>
               </button>
 
               <button
@@ -3885,20 +3886,14 @@ export default function GameApp() {
                   )
                 }
               >
-                💳 ПОПОЛНИТЬ
+                <span className="shop-card-symbol" aria-hidden="true">◆</span>
+                <span>ПОПОЛНИТЬ</span>
               </button>
             </div>
 
             {shopSection === "dinos" ? (
               <>
-                <h2
-                  style={{
-                    fontSize: 20,
-                    marginTop: 0,
-                  }}
-                >
-                  Магазин динозавров
-                </h2>
+                <h2 className="shop-dino-title">Магазин динозавров</h2>
 
                 <p className="hint">
                   Lv.1 доступен сразу. Lv.2–Lv.16
@@ -3908,10 +3903,9 @@ export default function GameApp() {
                   merge.
                 </p>
 
-                <div className="card">
+                <div className="card shop-unlock-card">
                   <strong>
-                    🔓 Открыто до Lv.
-                    {dinoUnlockedLevel}
+                    Открыто до Lv.{dinoUnlockedLevel}
                   </strong>
                   <p>
                     Прямая покупка не открывает
@@ -3947,7 +3941,7 @@ export default function GameApp() {
                     </button>
                   </div>
                 ) : (
-                  <div className="menu-list">
+                  <div className="menu-list shop-dino-list">
                     {dinoCatalog.map(
                       (item) => (
                         <button
@@ -3975,32 +3969,48 @@ export default function GameApp() {
                                 }
                           }
                         >
-                          <span>
-                            <strong>
-                              {item.unlocked
-                                ? "🦖"
-                                : "🔒"}{" "}
-                              {item.title}
-                            </strong>
-                            <small>
-                              {item.unlocked
-                                ? `${formatNumber(
-                                    item.dailyCoins,
-                                    2,
-                                  )} Coins + ${formatNumber(
-                                    item.dailyDna,
-                                    2,
-                                  )} DNA / день`
-                                : item.unlockRequirement}
-                            </small>
+                          <span className="shop-dino-card-main">
+                            <span className="shop-dino-portrait">
+                              <img
+                                src={
+                                  item.level % 3 === 1
+                                    ? "/assets/game/dinosaurs/trex.webp"
+                                    : item.level % 3 === 2
+                                      ? "/assets/game/dinosaurs/triceratops.webp"
+                                      : "/assets/game/dinosaurs/stegosaurus.webp"
+                                }
+                                alt=""
+                                className="shop-dino-card-art"
+                                draggable={false}
+                                aria-hidden="true"
+                              />
+                              {!item.unlocked ? (
+                                <span className="shop-lock" aria-hidden="true">◆</span>
+                              ) : null}
+                            </span>
+
+                            <span className="shop-dino-card-copy">
+                              <strong>{item.title}</strong>
+                              <small>
+                                {item.unlocked
+                                  ? `${formatNumber(
+                                      item.dailyCoins,
+                                      2,
+                                    )} Coins + ${formatNumber(
+                                      item.dailyDna,
+                                      2,
+                                    )} DNA / день`
+                                  : item.unlockRequirement}
+                              </small>
+                            </span>
                           </span>
 
                           <b>
                             {item.unlocked
-                              ? `🪙 ${formatNumber(
+                              ? formatNumber(
                                   item.priceCoins,
                                   0,
-                                )}`
+                                )
                               : "ЗАКРЫТО"}
                           </b>
                         </button>
@@ -4009,30 +4019,14 @@ export default function GameApp() {
                   </div>
                 )}
 
-                <div className="card" style={{ display: "block", width: "100%", maxWidth: "100%", boxSizing: "border-box" }}>
-                  <strong>
-                    Ваш баланс
-                  </strong>
+                <div className="card shop-balance-card">
+                  <strong>Ваш баланс</strong>
                   <p>
-                    🪙{" "}
-                    {formatNumber(
-                      state.coins,
-                      2,
-                    )}{" "}
-                    Coins · 🧬{" "}
-                    {formatNumber(
-                      state.dna,
-                      2,
-                    )}{" "}
-                    DNA
+                    {formatNumber(state.coins, 2)} Coins ·{" "}
+                    {formatNumber(state.dna, 2)} DNA
                   </p>
                   <p>
-                    🪺 Вместимость:{" "}
-                    {formatNumber(
-                      state.capacity,
-                      0,
-                    )}{" "}
-                    яиц
+                    Вместимость: {formatNumber(state.capacity, 0)} яиц
                   </p>
                 </div>
               </>
