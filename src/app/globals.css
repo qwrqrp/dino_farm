@@ -390,3 +390,24 @@
     transform:translateY(66px) !important;
   }
 }
+
+/* =========================================================
+   HOTFIX — RAISE EGGS INSIDE NEST
+   Visual positioning only. No gameplay changes.
+   ========================================================= */
+
+.nest-art-eggs{
+  top:20px !important;
+}
+
+@media(max-width:430px){
+  .nest-art-eggs{
+    top:19px !important;
+  }
+}
+
+@media(max-width:370px){
+  .nest-art-eggs{
+    top:17px !important;
+  }
+}
