@@ -12,7 +12,7 @@ export async function sendTelegramToUser(
   if (!token || !text.trim()) {
     return false;
   }
-
+  
   try {
     const user =
       await prisma.user.findUnique({
