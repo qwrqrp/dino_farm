@@ -508,61 +508,272 @@ export function PrehistoricFarmScene({
 
   return (
     <div
-      className={`prehistoric-scene ${
+      className={`prehistoric-scene premium-scene ${
         collecting ? "scene-collecting" : ""
       }`}
       aria-hidden="true"
     >
-      <div className="scene-sky">
-        <span className="scene-cloud cloud-a" />
-        <span className="scene-cloud cloud-b" />
-        <span className="scene-cloud cloud-c" />
-      </div>
+      <svg
+        className="premium-scene-bg"
+        viewBox="0 0 430 440"
+        preserveAspectRatio="xMidYMid slice"
+        focusable="false"
+      >
+        <defs>
+          <linearGradient id="psSky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#67c8ef" />
+            <stop offset="55%" stopColor="#a3e1df" />
+            <stop offset="100%" stopColor="#d8edb0" />
+          </linearGradient>
 
-      <div className="scene-mountains">
-        <span className="mountain mountain-a" />
-        <span className="mountain mountain-b" />
-        <span className="volcano">
-          <span className="volcano-smoke smoke-a" />
-          <span className="volcano-smoke smoke-b" />
-        </span>
-      </div>
+          <linearGradient id="psHillBack" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#5aa75d" />
+            <stop offset="100%" stopColor="#367943" />
+          </linearGradient>
 
-      <div className="scene-trees scene-trees-back">
-        <span className="tree tree-a"><i /><b /></span>
-        <span className="tree tree-b"><i /><b /></span>
-        <span className="tree tree-c"><i /><b /></span>
-      </div>
+          <linearGradient id="psHillFront" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#8dcc59" />
+            <stop offset="100%" stopColor="#4a9142" />
+          </linearGradient>
 
-      <div className="scene-hills" />
+          <linearGradient id="psTreeTrunk" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#6a3f27" />
+            <stop offset="48%" stopColor="#a66d3e" />
+            <stop offset="100%" stopColor="#5a3524" />
+          </linearGradient>
 
-      <div className="scene-dino dino-left">
+          <linearGradient id="psRock" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#9ca883" />
+            <stop offset="100%" stopColor="#53664f" />
+          </linearGradient>
+
+          <radialGradient id="psSun">
+            <stop offset="0%" stopColor="#fffbd0" stopOpacity=".92" />
+            <stop offset="35%" stopColor="#ffe878" stopOpacity=".55" />
+            <stop offset="100%" stopColor="#ffe878" stopOpacity="0" />
+          </radialGradient>
+
+          <filter id="psSoftShadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow
+              dx="0"
+              dy="5"
+              stdDeviation="4"
+              floodColor="#1e4a2d"
+              floodOpacity=".22"
+            />
+          </filter>
+        </defs>
+
+        {/* sky */}
+        <rect width="430" height="440" fill="url(#psSky)" />
+        <circle cx="365" cy="58" r="72" fill="url(#psSun)" />
+
+        {/* soft cloud groups */}
+        <g className="premium-cloud premium-cloud-a" fill="#fff" opacity=".76">
+          <ellipse cx="72" cy="63" rx="37" ry="15" />
+          <circle cx="54" cy="55" r="17" />
+          <circle cx="80" cy="49" r="22" />
+          <circle cx="101" cy="60" r="14" />
+        </g>
+
+        <g className="premium-cloud premium-cloud-b" fill="#fff" opacity=".58">
+          <ellipse cx="316" cy="92" rx="31" ry="12" />
+          <circle cx="301" cy="86" r="14" />
+          <circle cx="323" cy="80" r="18" />
+          <circle cx="338" cy="91" r="11" />
+        </g>
+
+        {/* distant mountain range */}
+        <path
+          d="M0 190 L57 124 L91 163 L139 105 L190 172 L232 118 L280 169 L329 100 L386 167 L430 132 L430 242 L0 242 Z"
+          fill="#6ca18b"
+          opacity=".43"
+        />
+        <path
+          d="M84 155 L139 105 L168 144 L140 133 L121 147 Z"
+          fill="#e9f3d3"
+          opacity=".42"
+        />
+        <path
+          d="M295 143 L329 100 L351 135 L330 126 L316 141 Z"
+          fill="#e9f3d3"
+          opacity=".38"
+        />
+
+        {/* volcano */}
+        <g className="premium-volcano">
+          <path
+            d="M179 209 L224 113 L275 209 Z"
+            fill="#62835e"
+            opacity=".73"
+          />
+          <path
+            d="M217 128 L224 113 L233 130 L228 128 L224 132 Z"
+            fill="#d07149"
+          />
+          <g className="premium-smoke" fill="#eef4e8" opacity=".62">
+            <circle cx="225" cy="101" r="10" />
+            <circle cx="232" cy="88" r="13" />
+            <circle cx="226" cy="73" r="9" />
+          </g>
+        </g>
+
+        {/* rear forest/hills */}
+        <path
+          d="M0 199 C52 164 105 179 154 197 C204 166 253 174 302 198 C350 170 392 174 430 194 L430 298 L0 298 Z"
+          fill="url(#psHillBack)"
+        />
+        <path
+          d="M0 249 C58 211 114 221 168 245 C217 211 281 211 328 243 C368 218 401 220 430 239 L430 337 L0 337 Z"
+          fill="url(#psHillFront)"
+        />
+
+        {/* path in the clearing */}
+        <path
+          d="M198 224 C223 237 231 255 218 275 C199 302 189 331 209 440 L303 440 C269 337 275 302 297 276 C319 249 294 229 260 218 Z"
+          fill="#c7c77a"
+          opacity=".32"
+        />
+
+        {/* left hero tree */}
+        <g filter="url(#psSoftShadow)">
+          <path
+            d="M32 37 C29 101 27 170 31 253"
+            stroke="url(#psTreeTrunk)"
+            strokeWidth="25"
+            strokeLinecap="round"
+          />
+          <path
+            d="M41 99 C83 76 90 38 79 9"
+            stroke="#79502f"
+            strokeWidth="12"
+            fill="none"
+            strokeLinecap="round"
+          />
+          <g fill="#2f7c43">
+            <circle cx="21" cy="24" r="50" />
+            <circle cx="60" cy="25" r="43" />
+            <circle cx="89" cy="45" r="35" />
+            <circle cx="20" cy="72" r="40" />
+          </g>
+          <g fill="#4d9850" opacity=".75">
+            <circle cx="41" cy="9" r="25" />
+            <circle cx="73" cy="33" r="22" />
+          </g>
+        </g>
+
+        {/* right hero tree */}
+        <g filter="url(#psSoftShadow)">
+          <path
+            d="M399 65 C397 125 402 184 399 254"
+            stroke="url(#psTreeTrunk)"
+            strokeWidth="24"
+            strokeLinecap="round"
+          />
+          <path
+            d="M389 115 C351 82 348 48 357 19"
+            stroke="#79502f"
+            strokeWidth="11"
+            fill="none"
+            strokeLinecap="round"
+          />
+          <g fill="#2d7840">
+            <circle cx="411" cy="43" r="46" />
+            <circle cx="376" cy="35" r="40" />
+            <circle cx="346" cy="60" r="33" />
+            <circle cx="408" cy="87" r="38" />
+          </g>
+          <g fill="#4d9850" opacity=".72">
+            <circle cx="390" cy="25" r="23" />
+            <circle cx="357" cy="55" r="19" />
+          </g>
+        </g>
+
+        {/* mid trees */}
+        <g opacity=".82">
+          <path d="M120 151 L120 236" stroke="#7d5434" strokeWidth="11" />
+          <circle cx="120" cy="142" r="34" fill="#377f43" />
+          <circle cx="101" cy="149" r="23" fill="#49944c" />
+          <circle cx="137" cy="149" r="25" fill="#3c8848" />
+
+          <path d="M323 151 L323 232" stroke="#765033" strokeWidth="10" />
+          <circle cx="323" cy="141" r="31" fill="#377f43" />
+          <circle cx="306" cy="149" r="22" fill="#4a944d" />
+          <circle cx="340" cy="149" r="23" fill="#3c8848" />
+        </g>
+
+        {/* bushes */}
+        <g fill="#2b763c">
+          <circle cx="53" cy="224" r="26" />
+          <circle cx="77" cy="228" r="19" />
+          <circle cx="352" cy="223" r="24" />
+          <circle cx="378" cy="228" r="21" />
+        </g>
+        <g fill="#5ca54f">
+          <circle cx="67" cy="218" r="12" />
+          <circle cx="365" cy="217" r="11" />
+        </g>
+
+        {/* flowers */}
+        <g fill="#fff7d7" opacity=".9">
+          <circle cx="89" cy="248" r="3" />
+          <circle cx="100" cy="236" r="2.5" />
+          <circle cx="335" cy="245" r="3" />
+          <circle cx="348" cy="255" r="2.5" />
+          <circle cx="175" cy="263" r="2.5" />
+        </g>
+        <g fill="#e98b9a" opacity=".85">
+          <circle cx="93" cy="247" r="2" />
+          <circle cx="339" cy="244" r="2" />
+        </g>
+
+        {/* foreground rocks */}
+        <g fill="url(#psRock)">
+          <path d="M25 359 Q42 328 64 355 L70 375 L17 375 Z" />
+          <path d="M356 359 Q377 327 401 354 L407 376 L348 376 Z" />
+        </g>
+
+        {/* decorative foreground leaves */}
+        <g fill="#1f6d3b">
+          <path d="M0 440 L0 362 C26 373 33 401 36 440 Z" />
+          <path d="M9 440 C17 397 39 376 67 365 C54 393 49 416 48 440 Z" />
+          <path d="M430 440 L430 359 C405 369 398 400 395 440 Z" />
+          <path d="M422 440 C412 397 390 376 363 365 C376 393 381 417 381 440 Z" />
+        </g>
+
+        {/* pterodactyl silhouette */}
+        <path
+          className="premium-ptero"
+          d="M269 57 C278 51 286 52 294 58 C303 51 311 51 319 56 C310 56 303 60 294 66 C287 61 278 58 269 57 Z"
+          fill="#3d6e62"
+          opacity=".5"
+        />
+      </svg>
+
+      {/* Characters are existing visual sprites only; they do not exist in state */}
+      <div className="premium-dino premium-dino-left">
         <DinoSprite level={2} />
       </div>
 
-      <div className="scene-dino dino-right">
+      <div className="premium-dino premium-dino-center">
+        <DinoSprite level={5} />
+      </div>
+
+      <div className="premium-dino premium-dino-right">
         <DinoSprite level={4} />
       </div>
 
-      <div className="scene-dino dino-far">
-        <DinoSprite level={1} />
-      </div>
-
-      <div className="scene-nest-wrap">
-        <div className="scene-nest-glow" />
+      <div className="premium-nest-stage">
+        <div className="premium-nest-backlight" />
         <NestSprite fill={safeFill} />
       </div>
 
-      <div className="scene-egg-drop">
+      <div className="premium-egg-drop">
         <EggSprite variant={2} />
       </div>
 
-      <div className="scene-foreground">
-        <span className="fern fern-left" />
-        <span className="fern fern-right" />
-        <span className="rock rock-left" />
-        <span className="rock rock-right" />
-      </div>
+      <div className="premium-leaf leaf-one" />
+      <div className="premium-leaf leaf-two" />
     </div>
   );
 }
