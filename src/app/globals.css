@@ -1,1 +1,459 @@
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#07130f;color:#f7fff9;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input{font:inherit}button{cursor:pointer}.app-shell{min-height:100dvh;max-width:480px;margin:0 auto;padding:env(safe-area-inset-top) 14px calc(92px + env(safe-area-inset-bottom));background:radial-gradient(circle at 50% -10%,#285d3d 0,#102b20 25%,#07130f 58%);position:relative;overflow:hidden}.glass{background:rgba(13,35,27,.8);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1);box-shadow:0 16px 50px rgba(0,0,0,.25)}.hud{height:68px;border-radius:22px;padding:10px 12px;display:flex;align-items:center;gap:10px;position:sticky;top:calc(8px + env(safe-area-inset-top));z-index:10}.avatar{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;font-size:25px;background:linear-gradient(135deg,#bef36b,#43b75b)}.profile{display:flex;flex-direction:column;min-width:0}.profile strong{font-size:14px}.profile span{font-size:11px;color:#a5c4b1}.balances{margin-left:auto;display:grid;gap:4px;text-align:right;font-size:12px;font-weight:800;color:#eafad7}.content{padding:18px 0}.screen{display:grid;gap:14px;animation:fade .24s ease}.screen h1,.screen h2,.screen h3{margin:0}.eyebrow{font-size:11px;letter-spacing:.16em;color:#9cdb78;font-weight:900}.hero-card{position:relative;overflow:hidden;min-height:395px;border-radius:30px;padding:26px 20px 20px;text-align:center;background:linear-gradient(180deg,#3b8a57 0,#1e5e3b 48%,#603f26 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 20px 45px rgba(0,0,0,.28)}.hero-card:after{content:"";position:absolute;inset:auto -15% -90px;height:180px;border-radius:50%;background:#2c2016;opacity:.7}.sun{position:absolute;right:22px;top:22px;font-size:40px;filter:drop-shadow(0 0 18px #ffe676)}.jungle{font-size:38px;letter-spacing:-12px;margin-top:26px;opacity:.85}.nest-visual{font-size:110px;line-height:1;position:relative;z-index:1;margin:14px 0 8px;filter:drop-shadow(0 18px 15px rgba(0,0,0,.25))}.nest-visual .egg{font-size:44px;position:absolute;left:50%;top:40%;transform:translate(-50%,-50%)}.hero-card h1{position:relative;z-index:2;font-size:26px}.hero-card p,.rate,.hero-card button,.progress{position:relative;z-index:2}.hero-card p{margin:6px 0;color:#e7f4e9}.progress{height:10px;border-radius:999px;background:rgba(0,0,0,.25);overflow:hidden;margin:14px 0 8px}.progress div{height:100%;border-radius:inherit;background:linear-gradient(90deg,#c7f36b,#fff07a)}.rate{display:inline-flex;padding:8px 12px;border-radius:999px;background:rgba(3,20,12,.5);font-size:12px;margin-bottom:14px}.primary{width:100%;border:0;border-radius:17px;padding:15px 16px;background:linear-gradient(180deg,#d6ff72,#8ed536);color:#173314;font-weight:950;box-shadow:0 7px 0 #568d20,0 12px 22px rgba(0,0,0,.24)}.primary:active{transform:translateY(3px);box-shadow:0 4px 0 #568d20}.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.stat-card,.card{border-radius:20px;background:#10281e;border:1px solid rgba(255,255,255,.08);padding:14px;display:flex;flex-direction:column;gap:4px}.stat-card span{font-size:10px;color:#a1b9aa}.stat-card strong{font-size:17px;color:#eaffae}.stat-card small{font-size:9px;color:#728d7c}.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.section-head h2{margin-top:2px}.coin-button{border:1px solid #a8e65f;background:#21462f;color:#efffdc;border-radius:14px;padding:10px 12px;font-weight:850}.hint{margin:0;color:#9bb3a5;font-size:13px}.board{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px;border-radius:26px;background:linear-gradient(180deg,#37563b,#1a3525);border:1px solid rgba(255,255,255,.1)}.slot{aspect-ratio:1;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:rgba(7,25,16,.48);color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:.16s}.slot.selected{outline:3px solid #dbff70;transform:scale(.95);background:#31573a}.slot .dino{font-size:31px}.slot b{font-size:10px;background:#0a1e13;border-radius:999px;padding:2px 6px}.plus{font-size:24px;color:#607b69}.card{flex-direction:row;justify-content:space-between;align-items:center}.form-card{display:grid;gap:12px}.form-card label{font-size:12px;color:#aac0b1}.form-card input{width:100%;border:1px solid #315c43;background:#071a11;color:white;border-radius:16px;padding:14px;font-weight:800;outline:none}.quote{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);color:#b6c9bc}.quote strong{color:white}.quote.bonus strong{color:#bdf362}.quote.total{font-size:18px;border:0}.form-card small{color:#718d7b}.invite-card{text-align:center;padding:24px 16px;border-radius:28px;background:linear-gradient(180deg,#17442d,#0f291d);border:1px solid rgba(255,255,255,.08)}.invite-art{font-size:76px}.invite-card p{color:#a8bdaf;font-size:13px;line-height:1.5}.invite-card code{color:#dfff97}.menu-list{display:grid;gap:9px}.menu-list button{border:1px solid rgba(255,255,255,.08);background:#10281e;color:#effaf2;border-radius:18px;padding:16px;text-align:left;display:flex;justify-content:space-between}.menu-list b{color:#b9ed76}.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:92px;width:min(calc(100% - 40px),440px);z-index:20;background:#e8ffd5;color:#173316;padding:10px 14px;border-radius:14px;text-align:center;font-size:11px;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.35)}.bottom-nav{position:fixed;bottom:calc(10px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(calc(100% - 24px),456px);height:70px;border-radius:24px;padding:7px;display:grid;grid-template-columns:repeat(5,1fr);z-index:15}.bottom-nav button{border:0;background:transparent;color:#769184;border-radius:17px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}.bottom-nav button span{font-size:20px}.bottom-nav small{font-size:9px}.bottom-nav button.active{background:#244b35;color:#eaffbf}.bottom-nav button.active span{transform:translateY(-1px)}@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}@media(max-width:370px){.app-shell{padding-left:10px;padding-right:10px}.slot .dino{font-size:26px}.balances{font-size:10px}.profile strong{font-size:12px}}
+
+/* =========================================================
+   DINO FARM — SAFE ANIMATION LAYER
+   Visual effects only. No game logic is changed.
+   ========================================================= */
+
+/* Decorative ambient light behind the UI */
+.app-shell::before,
+.app-shell::after{
+  content:"";
+  position:absolute;
+  pointer-events:none;
+  border-radius:50%;
+  z-index:0;
+  opacity:.32;
+  filter:blur(2px);
+}
+.app-shell::before{
+  width:330px;
+  height:330px;
+  top:110px;
+  left:-210px;
+  background:radial-gradient(circle,rgba(140,255,133,.22),rgba(83,205,117,.07) 45%,transparent 70%);
+  animation:ambientGlowA 12s ease-in-out infinite alternate;
+}
+.app-shell::after{
+  width:300px;
+  height:300px;
+  top:48%;
+  right:-210px;
+  background:radial-gradient(circle,rgba(96,218,255,.16),rgba(111,255,172,.05) 46%,transparent 72%);
+  animation:ambientGlowB 15s ease-in-out infinite alternate;
+}
+.content{
+  position:relative;
+  z-index:1;
+}
+
+/* Header */
+.hud{
+  overflow:hidden;
+  animation:hudEnter .5s cubic-bezier(.2,.8,.2,1) both;
+}
+.hud::after{
+  content:"";
+  position:absolute;
+  inset:-60% auto -60% -40%;
+  width:38%;
+  pointer-events:none;
+  transform:rotate(18deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
+  animation:glassSweep 9s ease-in-out infinite;
+}
+.avatar{
+  transform-origin:50% 70%;
+  animation:avatarIdle 3.8s ease-in-out infinite;
+}
+.balances span{
+  transition:transform .2s ease,filter .2s ease;
+}
+
+/* Screen change */
+.screen{
+  animation:screenEnter .38s cubic-bezier(.2,.75,.2,1) both;
+}
+.screen > *{
+  animation:contentRise .42s cubic-bezier(.2,.75,.2,1) both;
+}
+.screen > *:nth-child(2){animation-delay:.025s}
+.screen > *:nth-child(3){animation-delay:.05s}
+.screen > *:nth-child(4){animation-delay:.075s}
+.screen > *:nth-child(5){animation-delay:.1s}
+
+/* Nest scene */
+.hero-card{
+  isolation:isolate;
+  transform:translateZ(0);
+}
+.hero-card::before{
+  content:"";
+  position:absolute;
+  z-index:0;
+  inset:-35% -60%;
+  pointer-events:none;
+  background:linear-gradient(
+    115deg,
+    transparent 38%,
+    rgba(255,255,255,.07) 48%,
+    rgba(225,255,187,.12) 50%,
+    rgba(255,255,255,.05) 53%,
+    transparent 63%
+  );
+  transform:translateX(-36%) rotate(3deg);
+  animation:heroLight 9s ease-in-out infinite;
+}
+.sun{
+  transform-origin:center;
+  animation:sunFloat 5.5s ease-in-out infinite;
+}
+.jungle{
+  transform-origin:50% 100%;
+  animation:jungleSway 5.8s ease-in-out infinite;
+}
+.nest-visual{
+  will-change:transform;
+  animation:nestFloat 4s ease-in-out infinite;
+}
+.nest-visual .egg{
+  will-change:transform;
+  animation:eggIdle 2.7s ease-in-out infinite;
+}
+.hero-card h1{
+  text-shadow:0 2px 12px rgba(0,0,0,.18);
+}
+
+/* Animated progress shine */
+.progress div{
+  position:relative;
+  overflow:hidden;
+  transition:width .45s cubic-bezier(.2,.8,.2,1);
+}
+.progress div::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  width:40%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);
+  transform:translateX(-160%) skewX(-18deg);
+  animation:progressShine 3.3s ease-in-out infinite;
+}
+.rate{
+  animation:rateFloat 3.4s ease-in-out infinite;
+}
+
+/* Cards */
+.stat-card,
+.card,
+.invite-card,
+.form-card{
+  transform:translateZ(0);
+  transition:
+    transform .22s ease,
+    border-color .22s ease,
+    box-shadow .22s ease,
+    background-color .22s ease;
+}
+.stat-card{
+  animation:cardPop .45s cubic-bezier(.2,.8,.2,1) both;
+}
+.stats-grid .stat-card:nth-child(1){animation-delay:.06s}
+.stats-grid .stat-card:nth-child(2){animation-delay:.11s}
+.stats-grid .stat-card:nth-child(3){animation-delay:.16s}
+
+/* Buttons: feedback without touching click handlers */
+button{
+  -webkit-tap-highlight-color:transparent;
+  transition:
+    transform .16s ease,
+    filter .16s ease,
+    background-color .18s ease,
+    border-color .18s ease,
+    opacity .18s ease;
+}
+button:disabled{
+  cursor:default;
+}
+button:not(:disabled):active{
+  filter:brightness(.97);
+}
+.primary:not(:disabled){
+  overflow:hidden;
+  position:relative;
+}
+.primary:not(:disabled)::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.3) 48%,transparent 61%);
+  transform:translateX(-130%);
+  animation:primaryShine 4.8s ease-in-out infinite;
+}
+.coin-button:not(:disabled):active,
+.menu-list button:not(:disabled):active{
+  transform:scale(.975);
+}
+
+/* Merge board */
+.board{
+  position:relative;
+  overflow:hidden;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.025),
+    0 18px 35px rgba(0,0,0,.16);
+}
+.board::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:.13;
+  background:
+    radial-gradient(circle at 18% 15%,rgba(211,255,153,.38) 0 1px,transparent 2px),
+    radial-gradient(circle at 70% 72%,rgba(211,255,153,.3) 0 1px,transparent 2px);
+  background-size:45px 45px,63px 63px;
+  animation:boardDust 16s linear infinite;
+}
+.slot{
+  position:relative;
+  z-index:1;
+  overflow:hidden;
+  transform:translateZ(0);
+}
+.slot:not(:disabled):active{
+  transform:scale(.93);
+}
+.slot.selected{
+  animation:selectedSlot 1.3s ease-in-out infinite;
+}
+.slot .dino{
+  display:block;
+  transform-origin:50% 82%;
+  will-change:transform;
+  animation:dinoBreathe 2.8s ease-in-out infinite;
+}
+.slot:nth-child(3n+2) .dino{animation-delay:-.75s}
+.slot:nth-child(4n) .dino{animation-delay:-1.35s}
+.slot.selected .dino{
+  animation:dinoSelected .85s ease-in-out infinite alternate;
+}
+.plus{
+  transition:transform .18s ease,color .18s ease;
+}
+.slot:not(:disabled):active .plus{
+  transform:scale(1.18) rotate(90deg);
+}
+
+/* Friends */
+.invite-art{
+  display:inline-block;
+  transform-origin:50% 85%;
+  animation:friendsFloat 3.7s ease-in-out infinite;
+}
+
+/* Menu */
+.menu-list button{
+  position:relative;
+  overflow:hidden;
+}
+.menu-list button::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:15%;
+  bottom:15%;
+  width:3px;
+  border-radius:999px;
+  background:#b9ed76;
+  opacity:0;
+  transform:scaleY(.3);
+  transition:opacity .18s ease,transform .18s ease;
+}
+.menu-list button:not(:disabled):active::before{
+  opacity:.8;
+  transform:scaleY(1);
+}
+
+/* Inputs */
+.form-card input{
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease,
+    background-color .2s ease;
+}
+.form-card input:focus{
+  border-color:#8ed65e;
+  box-shadow:0 0 0 3px rgba(142,214,94,.12);
+  background:#092017;
+}
+
+/* Toast */
+.toast{
+  animation:toastIn .35s cubic-bezier(.18,.89,.32,1.28) both;
+}
+
+/* Bottom navigation */
+.bottom-nav{
+  overflow:hidden;
+}
+.bottom-nav::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(120deg,transparent 25%,rgba(255,255,255,.035) 50%,transparent 75%);
+  transform:translateX(-100%);
+  animation:navGlow 10s ease-in-out infinite;
+}
+.bottom-nav button{
+  position:relative;
+  z-index:1;
+}
+.bottom-nav button span{
+  display:block;
+  transform-origin:50% 80%;
+  transition:transform .22s cubic-bezier(.2,.8,.2,1),filter .22s ease;
+}
+.bottom-nav button.active span{
+  animation:navIconPop .32s cubic-bezier(.2,.9,.25,1.35) both;
+  filter:drop-shadow(0 4px 7px rgba(191,255,118,.18));
+}
+
+/* Keyboard / mouse niceties */
+@media (hover:hover){
+  .stat-card:hover,
+  .card:hover,
+  .invite-card:hover{
+    transform:translateY(-2px);
+    border-color:rgba(196,246,116,.16);
+    box-shadow:0 12px 28px rgba(0,0,0,.15);
+  }
+  .coin-button:not(:disabled):hover{
+    transform:translateY(-1px);
+    filter:brightness(1.06);
+  }
+  .slot:not(:disabled):hover{
+    border-color:rgba(219,255,112,.28);
+    background:rgba(15,48,29,.72);
+  }
+  .menu-list button:not(:disabled):hover{
+    transform:translateX(2px);
+    border-color:rgba(185,237,118,.16);
+  }
+}
+
+/* Animation definitions */
+@keyframes ambientGlowA{
+  0%{transform:translate3d(0,0,0) scale(.92)}
+  100%{transform:translate3d(85px,90px,0) scale(1.14)}
+}
+@keyframes ambientGlowB{
+  0%{transform:translate3d(0,0,0) scale(1)}
+  100%{transform:translate3d(-75px,-105px,0) scale(1.18)}
+}
+@keyframes hudEnter{
+  from{opacity:0;transform:translateY(-12px) scale(.985)}
+  to{opacity:1;transform:none}
+}
+@keyframes glassSweep{
+  0%,72%{transform:translateX(-180%) rotate(18deg)}
+  90%,100%{transform:translateX(520%) rotate(18deg)}
+}
+@keyframes avatarIdle{
+  0%,100%{transform:translateY(0) rotate(0)}
+  48%{transform:translateY(-2px) rotate(-2deg)}
+  56%{transform:translateY(-2px) rotate(2deg)}
+}
+@keyframes screenEnter{
+  from{opacity:0;transform:translateY(10px) scale(.993)}
+  to{opacity:1;transform:none}
+}
+@keyframes contentRise{
+  from{opacity:.25;transform:translateY(7px)}
+  to{opacity:1;transform:none}
+}
+@keyframes heroLight{
+  0%,58%{transform:translateX(-52%) rotate(3deg)}
+  78%,100%{transform:translateX(48%) rotate(3deg)}
+}
+@keyframes sunFloat{
+  0%,100%{transform:translateY(0) rotate(-3deg) scale(1)}
+  50%{transform:translateY(5px) rotate(5deg) scale(1.045)}
+}
+@keyframes jungleSway{
+  0%,100%{transform:translateX(-1px) rotate(-.5deg)}
+  50%{transform:translateX(2px) rotate(.7deg)}
+}
+@keyframes nestFloat{
+  0%,100%{transform:translateY(0) rotate(-.3deg)}
+  50%{transform:translateY(-5px) rotate(.45deg)}
+}
+@keyframes eggIdle{
+  0%,100%{transform:translate(-50%,-50%) rotate(-2deg) scale(1)}
+  45%{transform:translate(-50%,-56%) rotate(2deg) scale(1.035)}
+  55%{transform:translate(-50%,-57%) rotate(-1deg) scale(1.045)}
+}
+@keyframes progressShine{
+  0%,52%{transform:translateX(-170%) skewX(-18deg)}
+  78%,100%{transform:translateX(350%) skewX(-18deg)}
+}
+@keyframes rateFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-2px)}
+}
+@keyframes cardPop{
+  from{opacity:0;transform:translateY(9px) scale(.975)}
+  to{opacity:1;transform:none}
+}
+@keyframes primaryShine{
+  0%,60%{transform:translateX(-135%)}
+  82%,100%{transform:translateX(135%)}
+}
+@keyframes boardDust{
+  from{background-position:0 0,0 0}
+  to{background-position:45px 45px,-63px 63px}
+}
+@keyframes selectedSlot{
+  0%,100%{box-shadow:0 0 0 0 rgba(219,255,112,.05)}
+  50%{box-shadow:0 0 0 5px rgba(219,255,112,.13)}
+}
+@keyframes dinoBreathe{
+  0%,100%{transform:translateY(0) scale(1) rotate(-1deg)}
+  50%{transform:translateY(-2px) scale(1.035) rotate(1deg)}
+}
+@keyframes dinoSelected{
+  from{transform:translateY(0) scale(1.02) rotate(-2deg)}
+  to{transform:translateY(-4px) scale(1.08) rotate(2deg)}
+}
+@keyframes friendsFloat{
+  0%,100%{transform:translateY(0) rotate(-1deg)}
+  50%{transform:translateY(-5px) rotate(1.5deg)}
+}
+@keyframes toastIn{
+  from{opacity:0;transform:translateX(-50%) translateY(14px) scale(.96)}
+  to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+}
+@keyframes navGlow{
+  0%,70%{transform:translateX(-110%)}
+  88%,100%{transform:translateX(110%)}
+}
+@keyframes navIconPop{
+  0%{transform:translateY(1px) scale(.82)}
+  70%{transform:translateY(-3px) scale(1.12)}
+  100%{transform:translateY(-1px) scale(1)}
+}
+
+/* Respect OS accessibility and protect low-power devices */
+@media (prefers-reduced-motion:reduce){
+  *,
+  *::before,
+  *::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    scroll-behavior:auto !important;
+    transition-duration:.001ms !important;
+  }
+}
+
+/* Keep motion a little lighter on small screens */
+@media(max-width:370px){
+  .app-shell::before,
+  .app-shell::after{
+    opacity:.22;
+  }
+  .hero-card::before{
+    opacity:.72;
+  }
+}
