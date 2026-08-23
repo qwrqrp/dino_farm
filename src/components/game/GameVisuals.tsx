@@ -496,6 +496,77 @@ export function NestSprite({
   );
 }
 
+
+export function PrehistoricFarmScene({
+  fill = 0,
+  collecting = false,
+}: {
+  fill?: number;
+  collecting?: boolean;
+}) {
+  const safeFill = Math.max(0, Math.min(100, fill));
+
+  return (
+    <div
+      className={`prehistoric-scene ${
+        collecting ? "scene-collecting" : ""
+      }`}
+      aria-hidden="true"
+    >
+      <div className="scene-sky">
+        <span className="scene-cloud cloud-a" />
+        <span className="scene-cloud cloud-b" />
+        <span className="scene-cloud cloud-c" />
+      </div>
+
+      <div className="scene-mountains">
+        <span className="mountain mountain-a" />
+        <span className="mountain mountain-b" />
+        <span className="volcano">
+          <span className="volcano-smoke smoke-a" />
+          <span className="volcano-smoke smoke-b" />
+        </span>
+      </div>
+
+      <div className="scene-trees scene-trees-back">
+        <span className="tree tree-a"><i /><b /></span>
+        <span className="tree tree-b"><i /><b /></span>
+        <span className="tree tree-c"><i /><b /></span>
+      </div>
+
+      <div className="scene-hills" />
+
+      <div className="scene-dino dino-left">
+        <DinoSprite level={2} />
+      </div>
+
+      <div className="scene-dino dino-right">
+        <DinoSprite level={4} />
+      </div>
+
+      <div className="scene-dino dino-far">
+        <DinoSprite level={1} />
+      </div>
+
+      <div className="scene-nest-wrap">
+        <div className="scene-nest-glow" />
+        <NestSprite fill={safeFill} />
+      </div>
+
+      <div className="scene-egg-drop">
+        <EggSprite variant={2} />
+      </div>
+
+      <div className="scene-foreground">
+        <span className="fern fern-left" />
+        <span className="fern fern-right" />
+        <span className="rock rock-left" />
+        <span className="rock rock-right" />
+      </div>
+    </div>
+  );
+}
+
 export function SunSprite() {
   return (
     <svg className="sun-sprite" viewBox="0 0 90 90" aria-hidden="true">
