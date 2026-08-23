@@ -254,6 +254,92 @@ export function DinoSprite({
   );
 }
 
+type EggGlyphProps = {
+  variant?: number;
+};
+
+function EggGlyph({ variant = 0 }: EggGlyphProps) {
+  const variants = [
+    {
+      shell: "#fff2bf",
+      shade: "#dfc77d",
+      spotA: "#79b96b",
+      spotB: "#9675c4",
+    },
+    {
+      shell: "#dff3ff",
+      shade: "#9dbfd1",
+      spotA: "#5e91bb",
+      spotB: "#75be93",
+    },
+    {
+      shell: "#e4f7c9",
+      shade: "#9fc27d",
+      spotA: "#886fc0",
+      spotB: "#dc9060",
+    },
+    {
+      shell: "#eadcf7",
+      shade: "#b397c8",
+      spotA: "#6796ad",
+      spotB: "#ca7281",
+    },
+    {
+      shell: "#f8dfbd",
+      shade: "#d0a16b",
+      spotA: "#75a864",
+      spotB: "#916bb3",
+    },
+  ];
+
+  const current =
+    variants[Math.abs(variant) % variants.length];
+
+  return (
+    <g className="egg-glyph">
+      <ellipse
+        className="egg-shadow"
+        cx="38"
+        cy="88"
+        rx="18"
+        ry="4.5"
+        fill="rgba(0,0,0,.12)"
+      />
+
+      <path
+        className="egg-shell"
+        d="M38 6 C21 8 10 33 10 56 C10 78 21 88 38 88 C55 88 66 78 66 56 C66 33 55 8 38 6 Z"
+        fill={current.shell}
+        stroke="rgba(255,255,255,.78)"
+        strokeWidth="2.1"
+      />
+
+      <path
+        d="M50 16 C60 30 64 45 64 57 C64 75 55 84 43 87 C52 79 56 68 56 54 C56 37 52 24 50 16 Z"
+        fill={current.shade}
+        opacity=".22"
+      />
+
+      <ellipse
+        className="egg-highlight"
+        cx="27"
+        cy="29"
+        rx="7"
+        ry="12"
+        fill="rgba(255,255,255,.48)"
+        transform="rotate(12 27 29)"
+      />
+
+      <g className="egg-pattern">
+        <circle cx="49" cy="41" r="4.4" fill={current.spotA} opacity=".66" />
+        <circle cx="28" cy="58" r="3.6" fill={current.spotB} opacity=".60" />
+        <circle cx="47" cy="69" r="3" fill={current.spotB} opacity=".52" />
+        <circle cx="34" cy="43" r="2.4" fill={current.spotA} opacity=".44" />
+      </g>
+    </g>
+  );
+}
+
 export function EggSprite({
   className = "",
   variant = 0,
@@ -261,99 +347,14 @@ export function EggSprite({
   className?: string;
   variant?: number;
 }) {
-  const variants = [
-    {
-      shellA: "#fff7d5",
-      shellB: "#e5cf88",
-      spotA: "#75b96b",
-      spotB: "#9472c7",
-    },
-    {
-      shellA: "#dff5ff",
-      shellB: "#9fc7dc",
-      spotA: "#5c8fbd",
-      spotB: "#7cc99a",
-    },
-    {
-      shellA: "#e6ffd6",
-      shellB: "#a8ce89",
-      spotA: "#8b70c7",
-      spotB: "#e29663",
-    },
-    {
-      shellA: "#f3e0ff",
-      shellB: "#b996d0",
-      spotA: "#6e9fb6",
-      spotB: "#d47a86",
-    },
-    {
-      shellA: "#ffe6c7",
-      shellB: "#d7aa72",
-      spotA: "#83af6c",
-      spotB: "#9c72bd",
-    },
-  ];
-
-  const current = variants[Math.abs(variant) % variants.length];
-  const gradientId = `eggFill-${Math.abs(variant) % variants.length}`;
-
   return (
     <svg
-      className={`egg-sprite egg-variant-${Math.abs(variant) % variants.length} ${className}`}
+      className={`egg-sprite ${className}`}
       viewBox="0 0 76 96"
       aria-hidden="true"
       focusable="false"
     >
-      <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor={current.shellA} />
-          <stop offset="68%" stopColor={current.shellA} />
-          <stop offset="100%" stopColor={current.shellB} />
-        </linearGradient>
-      </defs>
-
-      <ellipse
-        className="egg-shadow"
-        cx="38"
-        cy="88"
-        rx="20"
-        ry="5"
-        fill="rgba(0,0,0,.13)"
-      />
-
-      <path
-        className="egg-shell"
-        d="M38 5 C20 7 8 33 8 57 C8 80 20 90 38 90 C56 90 68 80 68 57 C68 33 56 7 38 5 Z"
-        fill={`url(#${gradientId})`}
-        stroke="rgba(255,255,255,.72)"
-        strokeWidth="2.3"
-      />
-
-      <ellipse
-        className="egg-highlight"
-        cx="27"
-        cy="29"
-        rx="7.5"
-        ry="13"
-        fill="rgba(255,255,255,.48)"
-        transform="rotate(12 27 29)"
-      />
-
-      <g className="egg-pattern">
-        <circle cx="49" cy="41" r="4.6" fill={current.spotA} opacity=".68" />
-        <circle cx="27" cy="59" r="3.8" fill={current.spotB} opacity=".60" />
-        <circle cx="47" cy="69" r="3.1" fill={current.spotB} opacity=".52" />
-        <circle cx="34" cy="43" r="2.5" fill={current.spotA} opacity=".46" />
-        <circle cx="54" cy="58" r="2.2" fill={current.spotA} opacity=".42" />
-      </g>
-
-      <path
-        d="M19 73 C29 83 48 85 58 73"
-        fill="none"
-        stroke="rgba(117,83,43,.14)"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <EggGlyph variant={variant} />
     </svg>
   );
 }
@@ -368,10 +369,10 @@ export function NestSprite({
   const safeFill = Math.max(0, Math.min(100, fill));
 
   const eggCount =
-    safeFill >= 90 ? 9 :
-    safeFill >= 60 ? 7 :
-    safeFill >= 30 ? 5 :
-    safeFill >= 10 ? 3 :
+    safeFill >= 90 ? 8 :
+    safeFill >= 60 ? 6 :
+    safeFill >= 30 ? 4 :
+    safeFill >= 10 ? 2 :
     safeFill > 0 ? 1 : 0;
 
   const stage =
@@ -381,16 +382,21 @@ export function NestSprite({
     safeFill >= 10 ? "low" :
     "empty";
 
+  /*
+    IMPORTANT:
+    These are all drawn inside ONE parent SVG.
+    We deliberately do not nest <svg> elements here.
+    That avoids the desktop/mobile WebView scaling bug.
+  */
   const eggPositions = [
-    [68, 50, -10, 0],
-    [91, 50, 9, 1],
-    [80, 39, 2, 2],
-    [52, 61, -7, 3],
-    [105, 60, 10, 4],
-    [69, 62, 5, 1],
-    [89, 65, -8, 2],
-    [58, 45, 8, 4],
-    [101, 45, -4, 0],
+    [80, 63, -2, 0, .34],
+    [61, 65, -8, 1, .31],
+    [100, 64, 9, 2, .31],
+    [73, 52, 3, 3, .30],
+    [92, 52, -5, 4, .30],
+    [51, 57, 8, 2, .28],
+    [111, 57, -7, 1, .28],
+    [82, 44, 1, 0, .28],
   ] as const;
 
   return (
@@ -403,146 +409,88 @@ export function NestSprite({
       <ellipse
         className="nest-ground-shadow"
         cx="80"
-        cy="101"
-        rx="62"
-        ry="12"
-        fill="rgba(0,0,0,.18)"
+        cy="103"
+        rx="57"
+        ry="9"
+        fill="rgba(0,0,0,.16)"
       />
 
       <g className="nest-back-leaves">
-        <path
-          d="M26 65 C17 48 6 44 1 51 C13 54 19 63 22 75 Z"
-          fill="#4eaa4e"
-        />
-        <path
-          d="M132 66 C143 47 154 47 159 56 C147 58 140 67 136 77 Z"
-          fill="#438f45"
-        />
-        <path
-          d="M49 48 C42 32 47 23 58 18 C55 31 60 39 68 46 Z"
-          fill="#70c55c"
-        />
-        <path
-          d="M111 47 C118 29 127 25 137 28 C128 35 126 43 126 51 Z"
-          fill="#5bb552"
-        />
+        <path d="M24 70 C15 51 6 47 2 54 C13 57 18 65 22 76 Z" fill="#4d9c49" />
+        <path d="M136 69 C145 51 154 50 159 58 C148 60 142 68 138 78 Z" fill="#438b43" />
+        <path d="M49 51 C43 35 48 27 58 22 C56 34 61 42 68 49 Z" fill="#69b653" />
+        <path d="M111 50 C118 33 127 28 136 31 C128 38 126 46 126 53 Z" fill="#59a94e" />
       </g>
 
       <g className="nest-bowl">
         <path
-          d="M19 70 C27 45 52 34 80 34 C109 34 133 47 141 71 C132 98 109 107 80 107 C50 107 28 98 19 70 Z"
-          fill="#6a4329"
+          d="M20 72 C30 48 52 38 80 38 C108 38 130 49 140 72 C132 95 111 104 80 104 C49 104 28 95 20 72 Z"
+          fill="#684127"
         />
 
         <path
-          d="M28 69 C40 53 58 47 80 47 C103 47 120 54 132 70 C121 86 104 94 80 94 C56 94 39 86 28 69 Z"
-          fill="#b97b42"
+          d="M29 70 C42 55 59 50 80 50 C102 50 119 56 131 70 C120 84 103 91 80 91 C57 91 40 84 29 70 Z"
+          fill="#b87840"
         />
 
         <ellipse
           cx="80"
-          cy="67"
-          rx="45"
-          ry="23"
-          fill="#d7a55b"
-          opacity=".35"
+          cy="68"
+          rx="42"
+          ry="20"
+          fill="#d8a45b"
+          opacity=".38"
         />
 
-        <path
-          d="M25 64 C48 75 80 78 136 62"
-          stroke="#58351f"
-          strokeWidth="5.5"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <path
-          d="M31 51 C57 65 91 68 129 52"
-          stroke="#8d5933"
-          strokeWidth="4.2"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <path
-          d="M31 82 C59 70 96 70 127 82"
-          stroke="#56331f"
-          strokeWidth="5.3"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <path
-          d="M22 69 L8 57"
-          stroke="#654027"
-          strokeWidth="5"
-          strokeLinecap="round"
-        />
-        <path
-          d="M138 68 L153 56"
-          stroke="#654027"
-          strokeWidth="5"
-          strokeLinecap="round"
-        />
-        <path
-          d="M39 44 L31 28"
-          stroke="#67412a"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-        <path
-          d="M120 45 L129 29"
-          stroke="#67412a"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-
-        <path
-          d="M31 74 C49 91 66 97 80 97 C100 97 118 88 134 72"
-          fill="none"
-          stroke="rgba(255,218,148,.24)"
-          strokeWidth="2.3"
-          strokeLinecap="round"
-        />
+        <path d="M27 63 C48 73 79 77 134 62" stroke="#59351f" strokeWidth="5.2" fill="none" strokeLinecap="round" />
+        <path d="M34 53 C58 65 91 67 126 53" stroke="#8a5732" strokeWidth="4" fill="none" strokeLinecap="round" />
+        <path d="M31 81 C58 70 98 70 128 81" stroke="#55321e" strokeWidth="5.2" fill="none" strokeLinecap="round" />
+        <path d="M23 69 L9 58" stroke="#634027" strokeWidth="4.6" strokeLinecap="round" />
+        <path d="M137 68 L152 57" stroke="#634027" strokeWidth="4.6" strokeLinecap="round" />
       </g>
 
       <g className="nest-eggs">
-        {eggPositions.slice(0, eggCount).map(([x, y, rotate, variant], index) => (
-          <g
-            key={index}
-            className={`nest-egg nest-egg-${index + 1}`}
-            transform={`translate(${x} ${y}) rotate(${rotate}) scale(.36) translate(-38 -48)`}
-          >
-            <EggSprite variant={variant} />
-          </g>
-        ))}
+        {eggPositions
+          .slice(0, eggCount)
+          .map(([x, y, rotate, variant, scale], index) => (
+            <g
+              key={index}
+              className={`nest-egg nest-egg-${index + 1}`}
+              transform={`translate(${x} ${y}) rotate(${rotate}) scale(${scale}) translate(-38 -48)`}
+            >
+              <EggGlyph variant={variant} />
+            </g>
+          ))}
+      </g>
+
+      <g className="nest-front-rim">
+        <path
+          d="M24 72 C39 91 59 99 80 99 C103 99 123 89 137 70"
+          fill="none"
+          stroke="#764728"
+          strokeWidth="8"
+          strokeLinecap="round"
+        />
+        <path
+          d="M31 76 C48 89 63 94 80 94 C99 94 115 87 129 75"
+          fill="none"
+          stroke="#a96d3b"
+          strokeWidth="3.2"
+          strokeLinecap="round"
+          opacity=".8"
+        />
       </g>
 
       <g className="nest-front-grass">
-        <path
-          d="M34 86 C29 76 28 68 31 60 C36 70 38 78 38 88"
-          stroke="#5da94b"
-          strokeWidth="3"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <path
-          d="M43 91 C41 78 45 69 52 63 C49 75 50 84 50 92"
-          stroke="#73bd55"
-          strokeWidth="3"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <path
-          d="M119 91 C117 78 121 68 128 62 C126 75 126 84 126 92"
-          stroke="#69b551"
-          strokeWidth="3"
-          fill="none"
-          strokeLinecap="round"
-        />
+        <path d="M36 87 C31 77 31 69 34 61 C39 71 41 79 40 89" stroke="#58a54a" strokeWidth="3" fill="none" strokeLinecap="round" />
+        <path d="M45 92 C43 79 47 70 53 65 C51 77 52 85 52 93" stroke="#70b756" strokeWidth="3" fill="none" strokeLinecap="round" />
+        <path d="M119 92 C117 79 121 70 128 64 C126 77 126 85 126 93" stroke="#65ae50" strokeWidth="3" fill="none" strokeLinecap="round" />
       </g>
 
       <g className="nest-sparkles">
-        <circle cx="41" cy="55" r="1.6" fill="#fff4b1" />
-        <circle cx="122" cy="55" r="1.3" fill="#efffb7" />
-        <circle cx="111" cy="79" r="1.2" fill="#fff2a9" />
+        <circle cx="42" cy="57" r="1.4" fill="#fff3b0" />
+        <circle cx="120" cy="56" r="1.2" fill="#edffb5" />
+        <circle cx="110" cy="80" r="1.1" fill="#fff0a5" />
       </g>
     </svg>
   );
