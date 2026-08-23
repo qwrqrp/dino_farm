@@ -1570,3 +1570,155 @@ button:not(:disabled):active{
     animation:none !important;
   }
 }
+
+
+/* =========================================================
+   DINO FARM — CODE-ONLY DINO CHARACTER POLISH / STEP 6
+   Pure SVG/CSS animation. GameApp is unchanged.
+   ========================================================= */
+
+/* Each SVG contains separate visual parts so idle motion feels organic. */
+.dino-sprite .dino-tail{
+  transform-box:fill-box;
+  transform-origin:90% 55%;
+  animation:dinoTailIdle 3.2s ease-in-out infinite;
+}
+
+.dino-sprite .dino-neck-head{
+  transform-box:fill-box;
+  transform-origin:30% 75%;
+  animation:dinoHeadIdle 4.1s ease-in-out infinite;
+}
+
+.dino-sprite .dino-body{
+  transform-box:fill-box;
+  transform-origin:center bottom;
+  animation:dinoBodyBreathe 3.4s ease-in-out infinite;
+}
+
+.dino-sprite .dino-arms{
+  transform-box:fill-box;
+  transform-origin:40% 20%;
+  animation:dinoArmsIdle 3.8s ease-in-out infinite;
+}
+
+.dino-sprite .dino-eyelid{
+  transform-box:fill-box;
+  transform-origin:center top;
+  opacity:0;
+  animation:dinoBlink 5.4s linear infinite;
+}
+
+/* Desynchronise individual levels without any JS timers. */
+.dino-phase-1 *{animation-delay:-.2s}
+.dino-phase-2 *{animation-delay:-.75s}
+.dino-phase-3 *{animation-delay:-1.35s}
+.dino-phase-4 *{animation-delay:-1.9s}
+.dino-phase-5 *{animation-delay:-2.45s}
+.dino-phase-6 *{animation-delay:-3s}
+.dino-phase-7 *{animation-delay:-3.55s}
+
+/* Slight visual personality differences only. */
+.dino-type-0 .dino-tail{animation-duration:2.9s}
+.dino-type-1 .dino-neck-head{animation-duration:3.5s}
+.dino-type-2 .dino-tail{animation-duration:4s}
+.dino-type-3 .dino-neck-head{animation-duration:5.1s}
+.dino-type-4 .dino-body{animation-duration:3.9s}
+
+/* High levels look a little more polished without altering stats. */
+.slot b{
+  transition:
+    transform .2s ease,
+    border-color .2s ease,
+    box-shadow .2s ease;
+}
+
+.slot.selected b{
+  border-color:rgba(223,255,126,.28);
+  box-shadow:
+    0 3px 8px rgba(0,0,0,.18),
+    0 0 10px rgba(206,255,112,.10);
+}
+
+/* Selected dino remains obvious even while internal parts animate. */
+.slot.selected .dino-sprite{
+  filter:
+    drop-shadow(0 6px 5px rgba(0,0,0,.18))
+    drop-shadow(0 0 7px rgba(213,255,125,.18));
+}
+
+/* Internal animations */
+@keyframes dinoTailIdle{
+  0%,100%{
+    transform:rotate(-2deg);
+  }
+  50%{
+    transform:rotate(5deg);
+  }
+}
+
+@keyframes dinoHeadIdle{
+  0%,100%{
+    transform:translate3d(0,0,0) rotate(-.7deg);
+  }
+  42%{
+    transform:translate3d(0,-1px,0) rotate(1.5deg);
+  }
+  62%{
+    transform:translate3d(1px,-1px,0) rotate(.5deg);
+  }
+}
+
+@keyframes dinoBodyBreathe{
+  0%,100%{
+    transform:scaleY(1) scaleX(1);
+  }
+  50%{
+    transform:scaleY(1.018) scaleX(1.008);
+  }
+}
+
+@keyframes dinoArmsIdle{
+  0%,100%{
+    transform:rotate(0deg);
+  }
+  50%{
+    transform:rotate(4deg);
+  }
+}
+
+@keyframes dinoBlink{
+  0%,43%,47%,100%{
+    opacity:0;
+    transform:scaleY(.08);
+  }
+  44%,46%{
+    opacity:1;
+    transform:scaleY(1);
+  }
+}
+
+/* Long-neck visual archetype gets slower, calmer motion. */
+.dino-type-3 .dino-neck-head{
+  animation-name:dinoLongNeckIdle;
+}
+
+@keyframes dinoLongNeckIdle{
+  0%,100%{
+    transform:translate3d(0,0,0) rotate(-1deg);
+  }
+  50%{
+    transform:translate3d(1px,-2px,0) rotate(1.2deg);
+  }
+}
+
+/* Performance: transforms/opacity only. */
+@media (prefers-reduced-motion:reduce){
+  .dino-sprite .dino-tail,
+  .dino-sprite .dino-neck-head,
+  .dino-sprite .dino-body,
+  .dino-sprite .dino-arms,
+  .dino-sprite .dino-eyelid{
+    animation:none !important;
+  }
+}
