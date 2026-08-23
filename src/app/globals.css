@@ -1595,3 +1595,445 @@
     padding-right:5px;
   }
 }
+
+/* =========================================================
+   APPROVED GAME ART — STAGE 6A: GAME / MERGE BOARD
+   Existing move/merge/buy callbacks remain unchanged.
+   ========================================================= */
+
+.game-board-screen{
+  position:relative;
+  isolation:isolate;
+  gap:10px !important;
+  padding:13px 10px 20px !important;
+  overflow:hidden;
+  border-radius:28px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8,28,18,.08),
+      rgba(7,24,15,.24) 60%,
+      rgba(5,19,12,.55)
+    ),
+    url("/assets/game/background/prehistoric-bg.webp")
+    center 46% / cover
+    no-repeat;
+}
+
+.game-board-screen::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 50% 10%,rgba(255,243,174,.14),transparent 38%),
+    linear-gradient(180deg,transparent 58%,rgba(4,18,11,.36));
+}
+
+/* ---------- Header ---------- */
+
+.game-board-head{
+  position:relative;
+  z-index:3;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  min-height:72px;
+  padding:9px 12px 9px 16px;
+
+  background:
+    url("/assets/game/ui/panel.webp")
+    center / 110% 176%
+    no-repeat;
+
+  filter:drop-shadow(0 6px 6px rgba(0,0,0,.23));
+}
+
+.game-board-title{
+  min-width:0;
+  display:grid;
+  gap:0;
+}
+
+.game-board-title .eyebrow{
+  color:#e6c17b !important;
+  font-size:8px !important;
+  line-height:1;
+  letter-spacing:.13em;
+  font-weight:950;
+  text-shadow:0 1px 2px rgba(0,0,0,.32);
+}
+
+.game-board-title h2{
+  margin:2px 0 0 !important;
+  color:#fff0bd !important;
+  font-size:20px !important;
+  line-height:1;
+  font-weight:1000;
+  text-shadow:
+    0 2px 0 rgba(72,34,16,.88),
+    0 3px 4px rgba(0,0,0,.25);
+}
+
+/* Existing buyDino button, now game-art only. */
+.game-board-head .game-buy-dino{
+  flex:0 0 auto;
+  width:108px !important;
+  min-height:48px;
+  padding:4px 17px 4px 8px !important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+
+  border:0 !important;
+  border-radius:0 !important;
+  background:
+    url("/assets/game/ui/button-primary.webp")
+    center / 100% 100%
+    no-repeat !important;
+
+  color:#173713 !important;
+  font-size:14px !important;
+  font-weight:1000 !important;
+  box-shadow:none !important;
+  text-shadow:0 1px 0 rgba(255,255,255,.58);
+}
+
+.game-buy-dino-art{
+  width:38px;
+  height:38px;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.20));
+}
+
+.game-board-head .game-buy-dino:not(:disabled):active{
+  transform:translateY(2px) scale(.985);
+  filter:brightness(.93);
+}
+
+.game-board-head .game-buy-dino:disabled{
+  opacity:.65;
+  filter:saturate(.65);
+}
+
+/* ---------- Short instruction plaque ---------- */
+
+.game-board-hint{
+  position:relative;
+  z-index:3;
+  width:92%;
+  margin:-3px auto 0 !important;
+  padding:6px 12px;
+  border-radius:999px;
+  text-align:center;
+  color:#fff0c4 !important;
+  font-size:10px !important;
+  line-height:1.2;
+  font-weight:850;
+
+  background:rgba(74,38,19,.78);
+  border:1px solid rgba(255,214,127,.23);
+  box-shadow:
+    inset 0 1px 2px rgba(0,0,0,.28),
+    0 3px 7px rgba(0,0,0,.14);
+  text-shadow:0 1px 2px rgba(0,0,0,.36);
+}
+
+/* ---------- Merge board ---------- */
+
+.game-art-board{
+  position:relative;
+  z-index:2;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:7px !important;
+  padding:17px !important;
+  border:0 !important;
+  border-radius:27px !important;
+
+  background:
+    url("/assets/game/ui/panel.webp")
+    center / 120% 116%
+    no-repeat !important;
+
+  box-shadow:
+    0 12px 24px rgba(0,0,0,.26),
+    inset 0 0 0 1px rgba(255,228,155,.08) !important;
+}
+
+/* Each slot becomes a little stone/soil game platform. */
+.game-art-board .slot{
+  position:relative;
+  isolation:isolate;
+  aspect-ratio:1;
+  min-width:0;
+  padding:3px 3px 4px !important;
+  gap:0 !important;
+
+  border:1px solid rgba(122,76,38,.54) !important;
+  border-radius:17px !important;
+
+  background:
+    radial-gradient(circle at 50% 38%,rgba(197,230,132,.17),transparent 44%),
+    linear-gradient(180deg,#76502f 0%,#4e321f 64%,#382316 100%) !important;
+
+  box-shadow:
+    inset 0 2px 2px rgba(255,225,164,.16),
+    inset 0 -4px 6px rgba(28,13,7,.25),
+    0 2px 3px rgba(0,0,0,.21);
+
+  color:#fff;
+  overflow:visible;
+  transform-origin:center;
+  transition:
+    transform .14s ease,
+    filter .14s ease,
+    box-shadow .14s ease;
+}
+
+.game-art-board .slot::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  left:11%;
+  right:11%;
+  bottom:7%;
+  height:26%;
+  border-radius:50%;
+  background:rgba(17,12,7,.25);
+  filter:blur(2px);
+}
+
+.game-art-board .slot:not(:disabled):active{
+  transform:scale(.95);
+}
+
+/* Existing selected index only. */
+.game-art-board .slot.selected{
+  outline:0 !important;
+  transform:translateY(-3px) scale(.96) !important;
+  filter:brightness(1.10) saturate(1.12);
+
+  background:
+    radial-gradient(circle at 50% 38%,rgba(220,255,112,.28),transparent 47%),
+    linear-gradient(180deg,#92733b,#604522 68%,#423016) !important;
+
+  box-shadow:
+    inset 0 0 0 2px rgba(225,255,112,.82),
+    inset 0 2px 2px rgba(255,255,255,.17),
+    0 0 0 2px rgba(117,180,48,.38),
+    0 0 16px rgba(196,255,84,.34),
+    0 6px 7px rgba(0,0,0,.24) !important;
+}
+
+.game-art-board .dino{
+  width:100%;
+  height:72%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:0 !important;
+  pointer-events:none;
+}
+
+.game-art-board .board-dino-art{
+  display:block;
+  width:88%;
+  height:88%;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  transform-origin:50% 80%;
+  filter:
+    drop-shadow(0 5px 3px rgba(0,0,0,.28))
+    saturate(1.06);
+  transition:transform .14s ease;
+}
+
+.game-art-board .slot.selected .board-dino-art{
+  transform:translateY(-3px) scale(1.07);
+}
+
+.game-art-board .slot b{
+  position:absolute;
+  z-index:3;
+  left:50%;
+  bottom:4px;
+  transform:translateX(-50%);
+  min-width:36px;
+  padding:2px 7px !important;
+  border-radius:999px !important;
+
+  background:linear-gradient(180deg,#70421f,#402313) !important;
+  border:1px solid rgba(255,218,129,.35);
+  color:#fff1bc !important;
+
+  font-size:9px !important;
+  line-height:1.1;
+  font-weight:1000;
+  text-shadow:0 1px 2px rgba(0,0,0,.45);
+  box-shadow:0 2px 3px rgba(0,0,0,.22);
+}
+
+/* Empty cells: no emoji, just an understated game plus. */
+.game-art-board .plus{
+  width:35px;
+  height:35px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  color:#caa16a !important;
+  font-size:24px !important;
+  font-weight:500;
+  line-height:1;
+
+  background:rgba(35,22,13,.28);
+  border:1px dashed rgba(230,188,111,.28);
+  text-shadow:0 2px 3px rgba(0,0,0,.28);
+}
+
+/* ---------- Production panel ---------- */
+
+.game-production-card{
+  position:relative;
+  z-index:3;
+  min-height:58px;
+  margin-top:1px;
+  padding:10px 31px !important;
+  border:0 !important;
+  border-radius:0 !important;
+
+  background:
+    url("/assets/game/ui/panel.webp")
+    center / 108% 180%
+    no-repeat !important;
+
+  color:#ffeab3;
+  box-shadow:none !important;
+  filter:drop-shadow(0 5px 5px rgba(0,0,0,.20));
+}
+
+.game-production-card strong{
+  color:#ffe8aa !important;
+  font-size:11px;
+  font-weight:900;
+  text-shadow:0 1px 2px rgba(0,0,0,.36);
+}
+
+.game-production-card span{
+  color:#f5ffb8 !important;
+  font-size:13px;
+  font-weight:1000;
+  text-shadow:0 1px 2px rgba(0,0,0,.36);
+}
+
+@media(max-width:430px){
+  .game-board-screen{
+    padding:10px 7px 17px !important;
+    border-radius:24px;
+  }
+
+  .game-board-head{
+    min-height:68px;
+    padding-left:14px;
+    padding-right:9px;
+  }
+
+  .game-board-title h2{
+    font-size:18px !important;
+  }
+
+  .game-board-head .game-buy-dino{
+    width:101px !important;
+    min-height:46px;
+    padding-right:14px !important;
+    font-size:13px !important;
+  }
+
+  .game-buy-dino-art{
+    width:35px;
+    height:35px;
+  }
+
+  .game-board-hint{
+    width:94%;
+    font-size:9px !important;
+  }
+
+  .game-art-board{
+    gap:6px !important;
+    padding:14px !important;
+    border-radius:24px !important;
+  }
+
+  .game-art-board .slot{
+    border-radius:15px !important;
+  }
+
+  .game-art-board .slot b{
+    min-width:32px;
+    bottom:3px;
+    padding:2px 5px !important;
+    font-size:8px !important;
+  }
+
+  .game-art-board .plus{
+    width:31px;
+    height:31px;
+    font-size:21px !important;
+  }
+
+  .game-production-card{
+    min-height:54px;
+    padding-left:26px !important;
+    padding-right:26px !important;
+  }
+}
+
+@media(max-width:370px){
+  .game-board-head{
+    min-height:62px;
+    padding-left:11px;
+  }
+
+  .game-board-title h2{
+    font-size:16px !important;
+  }
+
+  .game-board-title .eyebrow{
+    font-size:7px !important;
+  }
+
+  .game-board-head .game-buy-dino{
+    width:91px !important;
+    min-height:42px;
+    font-size:12px !important;
+  }
+
+  .game-buy-dino-art{
+    width:31px;
+    height:31px;
+  }
+
+  .game-art-board{
+    gap:5px !important;
+    padding:12px !important;
+  }
+
+  .game-art-board .slot{
+    border-radius:13px !important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .game-art-board .slot,
+  .game-art-board .board-dino-art,
+  .game-board-head .game-buy-dino{
+    transition:none !important;
+  }
+}
