@@ -5254,20 +5254,71 @@ export default function GameApp() {
         )}
 
         {tab === "menu" && (
-          <div className="screen">
-            <span className="eyebrow">TOOLS</span><h2>Меню</h2>
+          <div className="screen menu-art-screen">
+            <div className="menu-art-heading">
+              <img
+                src="/assets/game/ui/nav/menu.webp"
+                alt=""
+                className="menu-heading-art"
+                draggable={false}
+                aria-hidden="true"
+              />
+              <div>
+                <span className="eyebrow">TOOLS</span>
+                <h2>Меню</h2>
+              </div>
+            </div>
 
-            <div className="menu-list">
-              <button onClick={openProfile}><span>👤 Мой профиль</span><b>СТАТИСТИКА</b></button>
-              <button onClick={openWalletHistory}><span>💰 История баланса</span><b>ПОПОЛНЕНИЯ / ВЫВОДЫ</b></button>
-              <button onClick={openDnaWithdrawal}><span>🧬 Вывод DNA</span><b>→ USDT</b></button>
-              <button onClick={() => setLevelsOpen((value) => !value)}><span>📈 Уровни динозавров</span><b>Lv.1–16</b></button>
-              <button onClick={() => setProfitPlanOpen((value) => !value)}><span>📊 Profit Plan</span><b>МОЯ ФЕРМА</b></button>
-              <button onClick={openDailyReward}><span>🎁 Ежедневный бонус</span><b>{dailyInfo?.canClaim ? "ЗАБРАТЬ" : "›"}</b></button>
-              <button onClick={openTasks}><span>✅ Задания</span><b>{tasks.some((task) => task.claimable) ? "ЗАБРАТЬ" : "›"}</b></button>
-              <button onClick={openAchievements}><span>🏅 Достижения</span><b>{achievements.some((achievement) => achievement.claimable) ? "ЗАБРАТЬ" : "›"}</b></button>
-              <button onClick={() => setToast("Рулетка отключена до server-side реализации")}><span>🎰 Рулетка</span><b>OFF</b></button>
-              <button onClick={() => window.location.reload()}><span>🔄 Перезагрузить из Neon</span><b>›</b></button>
+            <div className="menu-list menu-art-grid">
+              <button onClick={openProfile}>
+                <span>Мой профиль</span>
+                <b>СТАТИСТИКА</b>
+              </button>
+
+              <button onClick={openWalletHistory}>
+                <span>История баланса</span>
+                <b>ПОПОЛНЕНИЯ / ВЫВОДЫ</b>
+              </button>
+
+              <button onClick={openDnaWithdrawal}>
+                <span>Вывод DNA</span>
+                <b>USDT</b>
+              </button>
+
+              <button onClick={() => setLevelsOpen((value) => !value)}>
+                <span>Уровни динозавров</span>
+                <b>Lv.1–16</b>
+              </button>
+
+              <button onClick={() => setProfitPlanOpen((value) => !value)}>
+                <span>Profit Plan</span>
+                <b>МОЯ ФЕРМА</b>
+              </button>
+
+              <button onClick={openDailyReward} className={dailyInfo?.canClaim ? "menu-art-claimable" : ""}>
+                <span>Ежедневный бонус</span>
+                <b>{dailyInfo?.canClaim ? "ЗАБРАТЬ" : "ОТКРЫТЬ"}</b>
+              </button>
+
+              <button onClick={openTasks} className={tasks.some((task) => task.claimable) ? "menu-art-claimable" : ""}>
+                <span>Задания</span>
+                <b>{tasks.some((task) => task.claimable) ? "ЗАБРАТЬ" : "ОТКРЫТЬ"}</b>
+              </button>
+
+              <button onClick={openAchievements} className={achievements.some((achievement) => achievement.claimable) ? "menu-art-claimable" : ""}>
+                <span>Достижения</span>
+                <b>{achievements.some((achievement) => achievement.claimable) ? "ЗАБРАТЬ" : "ОТКРЫТЬ"}</b>
+              </button>
+
+              <button onClick={() => setToast("Рулетка отключена до server-side реализации")} className="menu-art-disabled">
+                <span>Рулетка</span>
+                <b>OFF</b>
+              </button>
+
+              <button onClick={() => window.location.reload()}>
+                <span>Перезагрузить данные</span>
+                <b>NEON</b>
+              </button>
             </div>
 
             {walletHistoryOpen ? (
