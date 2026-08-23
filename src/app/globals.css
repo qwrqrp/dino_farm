@@ -2037,3 +2037,463 @@
     transition:none !important;
   }
 }
+
+/* =========================================================
+   APPROVED GAME ART — STAGE 6B: SHOP
+   Catalog visuals only. Purchase/deposit logic unchanged.
+   ========================================================= */
+
+.shop-art-screen{
+  position:relative;
+  isolation:isolate;
+  gap:10px !important;
+  padding:13px 10px 22px !important;
+  overflow:hidden;
+  border-radius:28px;
+
+  background:
+    linear-gradient(180deg,rgba(7,27,17,.12),rgba(5,21,13,.45)),
+    url("/assets/game/background/prehistoric-bg.webp")
+    center 45% / cover no-repeat;
+}
+
+.shop-art-screen::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 50% 4%,rgba(255,240,168,.16),transparent 31%),
+    linear-gradient(180deg,transparent 45%,rgba(4,18,11,.46));
+}
+
+.shop-art-heading{
+  position:relative;
+  z-index:2;
+  min-height:69px;
+  padding:13px 27px 10px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  background:
+    url("/assets/game/ui/panel.webp")
+    center / 110% 180% no-repeat;
+  filter:drop-shadow(0 6px 6px rgba(0,0,0,.22));
+}
+
+.shop-art-heading .eyebrow{
+  color:#e7c27a !important;
+  font-size:8px !important;
+  font-weight:950;
+  letter-spacing:.14em;
+  text-shadow:0 1px 2px rgba(0,0,0,.32);
+}
+
+.shop-art-heading h2{
+  margin:2px 0 0 !important;
+  color:#fff0bd !important;
+  font-size:22px !important;
+  line-height:1;
+  font-weight:1000;
+  text-shadow:
+    0 2px 0 rgba(71,33,16,.9),
+    0 3px 4px rgba(0,0,0,.25);
+}
+
+/* ---------- Section selector ---------- */
+
+.shop-art-switch{
+  position:relative;
+  z-index:2;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+  margin:0 0 7px;
+}
+
+.shop-art-switch > button{
+  min-height:57px !important;
+  margin:0 !important;
+  padding:7px 16px !important;
+  display:flex !important;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  border:0 !important;
+  border-radius:0 !important;
+  background:
+    url("/assets/game/ui/button-primary.webp")
+    center / 100% 100% no-repeat !important;
+  box-shadow:none !important;
+  color:#1d3918 !important;
+  font-size:12px !important;
+  font-weight:1000 !important;
+  line-height:1;
+  text-shadow:0 1px 0 rgba(255,255,255,.58);
+  filter:saturate(.64) brightness(.82);
+}
+
+.shop-art-switch > button.primary{
+  filter:saturate(1) brightness(1.03);
+}
+
+.shop-art-switch > button:not(:disabled):active{
+  transform:translateY(2px) scale(.985);
+}
+
+.shop-switch-dino{
+  width:39px;
+  height:39px;
+  object-fit:contain;
+  pointer-events:none;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.18));
+}
+
+.shop-card-symbol{
+  width:30px;
+  height:30px;
+  display:grid;
+  place-items:center;
+  border-radius:9px;
+  color:#fff4a8;
+  background:linear-gradient(145deg,#5f8bc9,#284a8d);
+  border:2px solid rgba(255,231,143,.78);
+  box-shadow:
+    inset 0 2px 3px rgba(255,255,255,.25),
+    0 2px 3px rgba(0,0,0,.22);
+  transform:rotate(45deg) scale(.72);
+  font-size:0;
+}
+
+.shop-card-symbol::after{
+  content:"$";
+  transform:rotate(-45deg);
+  font-size:15px;
+  line-height:1;
+  font-weight:1000;
+}
+
+/* ---------- Dinosaur shop title / info ---------- */
+
+.shop-dino-title{
+  margin:0 !important;
+  text-align:center;
+  color:#fff0bd !important;
+  font-size:19px !important;
+  font-weight:1000;
+  text-shadow:
+    0 2px 0 rgba(56,31,16,.88),
+    0 3px 5px rgba(0,0,0,.32);
+}
+
+.shop-art-screen > .hint,
+.shop-art-screen .hint{
+  color:#f1dfb4 !important;
+  text-shadow:0 1px 2px rgba(0,0,0,.44);
+}
+
+.shop-unlock-card{
+  min-height:73px;
+  padding:14px 30px !important;
+  display:block !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:
+    url("/assets/game/ui/panel.webp")
+    center / 108% 178% no-repeat !important;
+  box-shadow:none !important;
+  filter:drop-shadow(0 5px 5px rgba(0,0,0,.18));
+}
+
+.shop-unlock-card strong{
+  color:#eeffad !important;
+  font-size:13px;
+  font-weight:1000;
+  text-shadow:0 1px 2px rgba(0,0,0,.38);
+}
+
+.shop-unlock-card p{
+  margin:4px 0 0 !important;
+  color:#f5ddb0 !important;
+  font-size:10px !important;
+  line-height:1.25;
+}
+
+/* ---------- Catalog ---------- */
+
+.shop-dino-list{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px !important;
+}
+
+.shop-dino-list > button{
+  position:relative;
+  isolation:isolate;
+  min-width:0;
+  min-height:151px;
+  padding:8px 7px 10px !important;
+  display:flex !important;
+  flex-direction:column;
+  justify-content:space-between !important;
+  align-items:stretch !important;
+  gap:5px !important;
+
+  border:1px solid rgba(113,69,34,.58) !important;
+  border-radius:20px !important;
+  background:
+    radial-gradient(circle at 50% 29%,rgba(187,221,115,.18),transparent 37%),
+    linear-gradient(180deg,#77502f,#4d301e 67%,#352114) !important;
+  box-shadow:
+    inset 0 2px 2px rgba(255,224,157,.15),
+    inset 0 -5px 8px rgba(27,12,6,.25),
+    0 5px 8px rgba(0,0,0,.20) !important;
+
+  overflow:hidden;
+  transform-origin:center;
+  transition:
+    transform .13s ease,
+    filter .13s ease,
+    box-shadow .13s ease;
+}
+
+.shop-dino-list > button:not(:disabled):active{
+  transform:scale(.97);
+}
+
+.shop-dino-list > button:not(:disabled){
+  box-shadow:
+    inset 0 2px 2px rgba(255,224,157,.16),
+    inset 0 -5px 8px rgba(27,12,6,.25),
+    0 0 0 1px rgba(139,205,58,.18),
+    0 5px 8px rgba(0,0,0,.20) !important;
+}
+
+.shop-dino-card-main{
+  min-width:0;
+  width:100%;
+  display:flex !important;
+  flex-direction:column;
+  align-items:center;
+  gap:3px;
+}
+
+.shop-dino-portrait{
+  position:relative;
+  width:75px;
+  height:75px;
+  display:grid;
+  place-items:center;
+  border-radius:20px;
+  background:
+    radial-gradient(circle at 50% 42%,rgba(220,255,141,.18),transparent 56%),
+    rgba(30,21,12,.18);
+}
+
+.shop-dino-card-art{
+  width:86%;
+  height:86%;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  filter:
+    drop-shadow(0 5px 3px rgba(0,0,0,.25))
+    saturate(1.05);
+}
+
+.shop-dino-card-copy{
+  min-width:0;
+  width:100%;
+  display:grid !important;
+  gap:2px;
+  text-align:center;
+}
+
+.shop-dino-card-copy strong{
+  color:#fff0bc !important;
+  font-size:12px !important;
+  line-height:1.05;
+  font-weight:1000;
+  text-shadow:0 2px 2px rgba(0,0,0,.38);
+}
+
+.shop-dino-card-copy small{
+  display:block;
+  min-height:25px;
+  color:#e9d4a6 !important;
+  font-size:8px !important;
+  line-height:1.15;
+  font-weight:750;
+}
+
+.shop-dino-list > button > b{
+  align-self:center;
+  min-width:78px;
+  padding:5px 9px !important;
+  border-radius:999px;
+  background:linear-gradient(180deg,#a1db3b,#5f9d24);
+  border:1px solid rgba(226,255,132,.45);
+  color:#173315 !important;
+  font-size:10px !important;
+  line-height:1.05;
+  font-weight:1000;
+  text-shadow:0 1px 0 rgba(255,255,255,.45);
+  box-shadow:
+    inset 0 1px 2px rgba(255,255,255,.24),
+    0 2px 3px rgba(0,0,0,.20);
+}
+
+.shop-dino-list > button[style*="opacity"]{
+  filter:grayscale(.15) saturate(.45) brightness(.72);
+}
+
+.shop-lock{
+  position:absolute;
+  right:4px;
+  top:4px;
+  width:26px;
+  height:26px;
+  display:grid;
+  place-items:center;
+  border-radius:8px;
+  background:#5c321e;
+  border:1px solid rgba(255,220,145,.35);
+  color:#ffe9aa;
+  box-shadow:0 2px 4px rgba(0,0,0,.30);
+  font-size:0;
+}
+
+.shop-lock::after{
+  content:"🔒";
+  font-size:15px;
+}
+
+/* ---------- Balance ---------- */
+
+.shop-balance-card{
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  min-height:90px;
+  padding:16px 32px !important;
+  display:block !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:
+    url("/assets/game/ui/panel.webp")
+    center / 108% 162% no-repeat !important;
+  box-shadow:none !important;
+  filter:drop-shadow(0 5px 5px rgba(0,0,0,.18));
+}
+
+.shop-balance-card strong{
+  color:#ffe9ad !important;
+  font-size:13px;
+  font-weight:1000;
+  text-shadow:0 1px 2px rgba(0,0,0,.38);
+}
+
+.shop-balance-card p{
+  margin:4px 0 0 !important;
+  color:#efffb6 !important;
+  font-size:10px !important;
+  line-height:1.2;
+  font-weight:850;
+  text-shadow:0 1px 2px rgba(0,0,0,.34);
+}
+
+/* Deposit section remains functionally and structurally untouched.
+   It inherits only the screen background/header selector styling. */
+
+@media(max-width:430px){
+  .shop-art-screen{
+    padding:10px 7px 19px !important;
+    border-radius:24px;
+  }
+
+  .shop-art-heading{
+    min-height:65px;
+  }
+
+  .shop-art-heading h2{
+    font-size:20px !important;
+  }
+
+  .shop-art-switch > button{
+    min-height:53px !important;
+    padding-left:11px !important;
+    padding-right:11px !important;
+    font-size:11px !important;
+  }
+
+  .shop-switch-dino{
+    width:35px;
+    height:35px;
+  }
+
+  .shop-dino-list{
+    gap:7px !important;
+  }
+
+  .shop-dino-list > button{
+    min-height:143px;
+    border-radius:18px !important;
+  }
+
+  .shop-dino-portrait{
+    width:69px;
+    height:69px;
+  }
+
+  .shop-dino-card-copy strong{
+    font-size:11px !important;
+  }
+
+  .shop-dino-card-copy small{
+    font-size:7.5px !important;
+  }
+}
+
+@media(max-width:370px){
+  .shop-art-switch > button{
+    font-size:10px !important;
+  }
+
+  .shop-switch-dino{
+    width:31px;
+    height:31px;
+  }
+
+  .shop-dino-list > button{
+    min-height:133px;
+    padding-left:5px !important;
+    padding-right:5px !important;
+  }
+
+  .shop-dino-portrait{
+    width:62px;
+    height:62px;
+  }
+
+  .shop-dino-card-copy strong{
+    font-size:10px !important;
+  }
+
+  .shop-dino-card-copy small{
+    font-size:7px !important;
+  }
+
+  .shop-dino-list > button > b{
+    min-width:69px;
+    font-size:9px !important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .shop-dino-list > button,
+  .shop-art-switch > button{
+    transition:none !important;
+  }
+}
