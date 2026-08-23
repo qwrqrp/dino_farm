@@ -3893,26 +3893,27 @@ export default function GameApp() {
 
             {shopSection === "dinos" ? (
               <>
-                <h2 className="shop-dino-title">Магазин динозавров</h2>
+                <div className="shop-copy-stack">
+                  <h2 className="shop-dino-title">Магазин динозавров</h2>
 
-                <p className="hint">
-                  Lv.1 доступен сразу. Lv.2–Lv.16
-                  открываются для прямой покупки
-                  только после того, как вы сами
-                  получили этот уровень через
-                  merge.
-                </p>
+                  <div className="shop-intro-card">
+                    <p className="hint shop-intro-text">
+                      <span>Lv.1 доступен сразу.</span>
+                      <span>Lv.2–Lv.16 открываются для прямой покупки только после того, как вы сами получили этот уровень через merge.</span>
+                    </p>
+                  </div>
 
-                <div className="card shop-unlock-card">
-                  <strong>
-                    Открыто до Lv.{dinoUnlockedLevel}
-                  </strong>
-                  <p>
-                    Прямая покупка не открывает
-                    следующий уровень. Чтобы
-                    разблокировать новый уровень
-                    магазина, нужно сделать merge.
-                  </p>
+                  <div className="shop-unlock-wrap">
+                    <div className="shop-unlock-badge">
+                      Открыто до Lv.{dinoUnlockedLevel}
+                    </div>
+
+                    <div className="card shop-unlock-card">
+                      <p>
+                        Прямая покупка не открывает следующий уровень. Чтобы разблокировать новый уровень магазина, нужно сделать merge.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 {shopStatus === "loading" ||
