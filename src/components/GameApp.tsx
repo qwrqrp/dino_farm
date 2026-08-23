@@ -3772,13 +3772,40 @@ export default function GameApp() {
         )}
 
         {tab === "game" && (
-          <div className="screen">
-            <div className="section-head">
-              <div><span className="eyebrow">MERGE FARM</span><h2>Игровая доска</h2></div>
-              <button className="coin-button" onClick={buyDino} disabled={isLoading || isBuying || Boolean(loadError)}>{isBuying ? "⏳ ПОКУПКА..." : "+ 🦕 100"}</button>
+          <div className="screen game-board-screen">
+            <div className="game-board-head">
+              <div className="game-board-title">
+                <span className="eyebrow">MERGE FARM</span>
+                <h2>Игровая доска</h2>
+              </div>
+
+              <button
+                className="coin-button game-buy-dino"
+                onClick={buyDino}
+                disabled={isLoading || isBuying || Boolean(loadError)}
+              >
+                {isBuying ? (
+                  "ПОКУПКА..."
+                ) : (
+                  <>
+                    <img
+                      src="/assets/game/dinosaurs/trex.webp"
+                      alt=""
+                      className="game-buy-dino-art"
+                      draggable={false}
+                      aria-hidden="true"
+                    />
+                    <span>+ 100</span>
+                  </>
+                )}
+              </button>
             </div>
-            <p className="hint">Данные загружены из Neon. Сбор, покупка и merge сохраняются в Neon через сервер.</p>
-            <div className="board">
+
+            <p className="hint game-board-hint">
+              Соединяй одинаковых динозавров и открывай новые уровни
+            </p>
+
+            <div className="board game-art-board">
               {state.board.map((level, index) => (
                 <button
                   key={index}
@@ -3811,7 +3838,11 @@ export default function GameApp() {
                 </button>
               ))}
             </div>
-            <div className="card"><strong>Общее производство</strong><span>{formatNumber(eggsPerHour, 0)} яиц / час</span></div>
+
+            <div className="card game-production-card">
+              <strong>Общее производство</strong>
+              <span>{formatNumber(eggsPerHour, 0)} яиц / час</span>
+            </div>
           </div>
         )}
 
