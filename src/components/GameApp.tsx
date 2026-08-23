@@ -2,6 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  DinoSprite,
+  JungleSilhouette,
+  NestSprite,
+  SunSprite,
+} from "@/components/game/GameVisuals";
+import {
   dinosaurs,
   formatNumber,
   gameConfig,
@@ -3339,22 +3345,28 @@ export default function GameApp() {
                 isCollecting ? "collecting" : ""
               }`}
             >
-              <div className="sun">☀️</div>
-              <div className="jungle">🌿🌴🌿</div>
+              <div className="sun">
+                <SunSprite />
+              </div>
+              <div className="jungle">
+                <JungleSilhouette />
+              </div>
 
               <div
                 className="collect-particles"
                 aria-hidden="true"
               >
-                <span>✨</span>
-                <span>🥚</span>
-                <span>✨</span>
-                <span>🪙</span>
-                <span>🧬</span>
-                <span>✨</span>
+                <span className="visual-spark">✦</span>
+                <span className="visual-dot" />
+                <span className="visual-spark">✧</span>
+                <span className="visual-dot" />
+                <span className="visual-spark">✦</span>
+                <span className="visual-dot" />
               </div>
 
-              <div className="nest-visual">🪺<span className="egg">🥚</span></div>
+              <div className="nest-visual">
+                <NestSprite fill={progress} />
+              </div>
               <h1>Гнездо</h1>
               <p>
                 {formatNumber(state.eggs, 2)} /{" "}
@@ -3730,7 +3742,16 @@ export default function GameApp() {
                   aria-label={level ? `Динозавр уровня ${level}` : "Пустая клетка"}
                   disabled={isLoading || isMerging || Boolean(loadError)}
                 >
-                  {level ? <><span className="dino">🦖</span><b>Lv.{level}</b></> : <span className="plus">+</span>}
+                  {level ? (
+                    <>
+                      <span className="dino">
+                        <DinoSprite level={level} />
+                      </span>
+                      <b>Lv.{level}</b>
+                    </>
+                  ) : (
+                    <span className="plus">+</span>
+                  )}
                 </button>
                 );
               })}
@@ -8237,7 +8258,9 @@ export default function GameApp() {
                   background: "rgba(255,255,255,.04)",
                 }}
               >
-                <div style={{ fontSize: 24 }}>🦖</div>
+                <div className="merge-preview-dino">
+                  <DinoSprite level={pendingMerge.level} />
+                </div>
                 <strong>Lv.{pendingMerge.level}</strong>
               </div>
 
@@ -8250,7 +8273,9 @@ export default function GameApp() {
                   background: "rgba(255,255,255,.04)",
                 }}
               >
-                <div style={{ fontSize: 24 }}>🦖</div>
+                <div className="merge-preview-dino">
+                  <DinoSprite level={pendingMerge.level} />
+                </div>
                 <strong>Lv.{pendingMerge.level}</strong>
               </div>
             </div>
@@ -8274,7 +8299,9 @@ export default function GameApp() {
                 textAlign: "center",
               }}
             >
-              <div style={{ fontSize: 28 }}>🦖</div>
+              <div className="merge-preview-dino result">
+                <DinoSprite level={pendingMerge.resultLevel} />
+              </div>
               <strong style={{ fontSize: 18 }}>
                 Получите Lv.{pendingMerge.resultLevel}
               </strong>
