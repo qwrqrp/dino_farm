@@ -3235,7 +3235,204 @@
   }
 }
 
-\n\n/* =========================================================\n   APPROVED GAME ART — STAGE 6E: PLAYER PROFILE\n   Existing profile data/load callbacks unchanged.\n   ========================================================= */\n\n.profile-art-panel{\n  position:relative;\n  isolation:isolate;\n  width:100% !important;\n  min-width:0 !important;\n  margin-top:14px !important;\n  padding:13px 11px 17px !important;\n  border:0 !important;\n  border-radius:24px !important;\n  background:\n    linear-gradient(180deg,rgba(8,30,19,.1),rgba(5,20,13,.56)),\n    url('/assets/game/background/prehistoric-bg.webp') center 47% / cover no-repeat !important;\n  box-shadow:0 10px 20px rgba(0,0,0,.25) !important;\n  overflow:hidden;\n}\n\n.profile-art-panel::before{\n  content:'';\n  position:absolute;\n  z-index:-1;\n  inset:0;\n  background:linear-gradient(180deg,rgba(4,20,12,.12),rgba(4,18,11,.62));\n  pointer-events:none;\n}\n\n.profile-art-head{\n  min-height:68px;\n  padding:8px 20px !important;\n  border-radius:0 !important;\n  background:url('/assets/game/ui/panel.webp') center / 110% 185% no-repeat;\n  filter:drop-shadow(0 5px 5px rgba(0,0,0,.2));\n}\n\n.profile-art-head .eyebrow{\n  color:#e6c17c !important;\n  font-size:8px !important;\n  font-weight:950;\n  letter-spacing:.13em;\n}\n\n.profile-art-head h2{\n  margin:2px 0 0 !important;\n  color:#fff0bd !important;\n  font-size:19px !important;\n  line-height:1;\n  font-weight:1000;\n  text-shadow:0 2px 0 rgba(71,34,16,.9),0 3px 4px rgba(0,0,0,.25);\n}\n\n.profile-art-head .coin-button{\n  width:39px !important;\n  min-width:39px !important;\n  height:39px !important;\n  min-height:39px !important;\n  padding:0 !important;\n  border:0 !important;\n  border-radius:0 !important;\n  background:url('/assets/game/ui/button-primary.webp') center / 100% 100% no-repeat !important;\n  color:#1a3615 !important;\n  box-shadow:none !important;\n  font-size:14px !important;\n  font-weight:1000;\n}\n\n.profile-player-card{\n  position:relative;\n  padding:16px 18px 15px !important;\n  margin-top:10px !important;\n  border:0 !important;\n  border-radius:0 !important;\n  background:url('/assets/game/ui/panel.webp') center / 108% 168% no-repeat !important;\n  filter:drop-shadow(0 5px 5px rgba(0,0,0,.18));\n}\n\n.profile-player-card strong{\n  color:#fff0bb !important;\n  font-size:17px !important;\n  text-align:center;\n  text-shadow:0 2px 3px rgba(0,0,0,.35);\n}\n\n.profile-player-card small{\n  color:#e7d2a5 !important;\n  opacity:1 !important;\n  text-align:center;\n  font-size:9px !important;\n}\n\n.profile-stats-grid{\n  gap:7px !important;\n  margin-top:9px !important;\n}\n\n.profile-stat-card{\n  min-height:67px;\n  padding:10px 8px !important;\n  display:flex;\n  flex-direction:column;\n  align-items:center;\n  justify-content:center;\n  border:1px solid rgba(124,76,38,.48);\n  border-radius:16px !important;\n  background:linear-gradient(180deg,rgba(111,67,35,.93),rgba(57,34,20,.96)) !important;\n  box-shadow:inset 0 1px 0 rgba(255,235,185,.12),0 4px 7px rgba(0,0,0,.17);\n}\n\n.profile-stat-card small{\n  color:#dfc89a !important;\n  opacity:1 !important;\n  font-size:8px !important;\n  text-align:center;\n}\n\n.profile-stat-card strong{\n  margin-top:3px !important;\n  color:#edffac !important;\n  font-size:15px !important;\n  line-height:1.05;\n  text-align:center;\n  text-shadow:0 1px 2px rgba(0,0,0,.35);\n}\n\n.profile-detail-card{\n  padding:14px 16px !important;\n  border:1px solid rgba(126,77,38,.42) !important;\n  border-radius:18px !important;\n  background:linear-gradient(180deg,rgba(102,61,32,.93),rgba(52,31,19,.96)) !important;\n  box-shadow:inset 0 1px 0 rgba(255,237,190,.11),0 5px 9px rgba(0,0,0,.17);\n}\n\n.profile-detail-card > strong{\n  display:block;\n  color:#fff0b9 !important;\n  font-size:13px !important;\n  font-weight:1000;\n  text-align:center;\n  text-shadow:0 1px 2px rgba(0,0,0,.37);\n}\n\n.profile-detail-card small{\n  color:#ddc69a !important;\n  opacity:1 !important;\n  font-size:9px !important;\n}\n\n.profile-detail-card strong{ color:#f0ffb5; }\n\n.profile-summary-grid{ gap:7px !important; }\n.profile-summary-card{\n  min-height:92px;\n  padding:13px 9px !important;\n  border:1px solid rgba(126,77,38,.42);\n  border-radius:17px !important;\n  background:linear-gradient(180deg,rgba(103,62,32,.94),rgba(53,31,19,.97)) !important;\n  text-align:center;\n  box-shadow:0 5px 8px rgba(0,0,0,.17);\n}\n.profile-summary-card > strong{ color:#ffeab0 !important; font-size:12px; }\n.profile-summary-card > div{ color:#edffab !important; }\n.profile-summary-card small{ color:#dbc397 !important; opacity:1 !important; font-size:8px !important; }\n\n.profile-level-chip{\n  padding:6px 9px !important;\n  border:1px solid rgba(207,255,106,.23) !important;\n  background:linear-gradient(180deg,rgba(124,161,49,.44),rgba(65,91,29,.48)) !important;\n  color:#efffb6 !important;\n  font-size:10px !important;\n  box-shadow:inset 0 1px 0 rgba(255,255,255,.11);\n}\n\n@media(max-width:430px){\n  .profile-art-panel{ padding:10px 8px 14px !important; border-radius:21px !important; }\n  .profile-art-head{ min-height:63px; padding-left:17px !important; padding-right:14px !important; }\n  .profile-art-head h2{ font-size:17px !important; }\n  .profile-art-head .coin-button{ width:36px !important; min-width:36px !important; height:36px !important; min-height:36px !important; }\n  .profile-player-card{ padding:14px 15px !important; }\n  .profile-player-card strong{ font-size:15px !important; }\n  .profile-stat-card{ min-height:62px; }\n  .profile-stat-card strong{ font-size:14px !important; }\n  .profile-detail-card{ padding:12px 13px !important; }\n}\n\n@media(max-width:370px){\n  .profile-art-head h2{ font-size:16px !important; }\n  .profile-player-card strong{ font-size:14px !important; }\n  .profile-stat-card small{ font-size:7px !important; }\n  .profile-stat-card strong{ font-size:13px !important; }\n  .profile-detail-card small{ font-size:8px !important; }\n  .profile-summary-card small{ font-size:7px !important; }\n}\n
+
+
+/* =========================================================
+   APPROVED GAME ART — STAGE 6E: PLAYER PROFILE
+   Existing profile data/load callbacks unchanged.
+   ========================================================= */
+
+.profile-art-panel{
+  position:relative;
+  isolation:isolate;
+  width:100% !important;
+  min-width:0 !important;
+  margin-top:14px !important;
+  padding:13px 11px 17px !important;
+  border:0 !important;
+  border-radius:24px !important;
+  background:
+    linear-gradient(180deg,rgba(8,30,19,.1),rgba(5,20,13,.56)),
+    url('/assets/game/background/prehistoric-bg.webp') center 47% / cover no-repeat !important;
+  box-shadow:0 10px 20px rgba(0,0,0,.25) !important;
+  overflow:hidden;
+}
+
+.profile-art-panel::before{
+  content:'';
+  position:absolute;
+  z-index:-1;
+  inset:0;
+  background:linear-gradient(180deg,rgba(4,20,12,.12),rgba(4,18,11,.62));
+  pointer-events:none;
+}
+
+.profile-art-head{
+  min-height:68px;
+  padding:8px 20px !important;
+  border-radius:0 !important;
+  background:url('/assets/game/ui/panel.webp') center / 110% 185% no-repeat;
+  filter:drop-shadow(0 5px 5px rgba(0,0,0,.2));
+}
+
+.profile-art-head .eyebrow{
+  color:#e6c17c !important;
+  font-size:8px !important;
+  font-weight:950;
+  letter-spacing:.13em;
+}
+
+.profile-art-head h2{
+  margin:2px 0 0 !important;
+  color:#fff0bd !important;
+  font-size:19px !important;
+  line-height:1;
+  font-weight:1000;
+  text-shadow:0 2px 0 rgba(71,34,16,.9),0 3px 4px rgba(0,0,0,.25);
+}
+
+.profile-art-head .coin-button{
+  width:39px !important;
+  min-width:39px !important;
+  height:39px !important;
+  min-height:39px !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:url('/assets/game/ui/button-primary.webp') center / 100% 100% no-repeat !important;
+  color:#1a3615 !important;
+  box-shadow:none !important;
+  font-size:14px !important;
+  font-weight:1000;
+}
+
+.profile-player-card{
+  position:relative;
+  padding:16px 18px 15px !important;
+  margin-top:10px !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:url('/assets/game/ui/panel.webp') center / 108% 168% no-repeat !important;
+  filter:drop-shadow(0 5px 5px rgba(0,0,0,.18));
+}
+
+.profile-player-card strong{
+  color:#fff0bb !important;
+  font-size:17px !important;
+  text-align:center;
+  text-shadow:0 2px 3px rgba(0,0,0,.35);
+}
+
+.profile-player-card small{
+  color:#e7d2a5 !important;
+  opacity:1 !important;
+  text-align:center;
+  font-size:9px !important;
+}
+
+.profile-stats-grid{
+  gap:7px !important;
+  margin-top:9px !important;
+}
+
+.profile-stat-card{
+  min-height:67px;
+  padding:10px 8px !important;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  border:1px solid rgba(124,76,38,.48);
+  border-radius:16px !important;
+  background:linear-gradient(180deg,rgba(111,67,35,.93),rgba(57,34,20,.96)) !important;
+  box-shadow:inset 0 1px 0 rgba(255,235,185,.12),0 4px 7px rgba(0,0,0,.17);
+}
+
+.profile-stat-card small{
+  color:#dfc89a !important;
+  opacity:1 !important;
+  font-size:8px !important;
+  text-align:center;
+}
+
+.profile-stat-card strong{
+  margin-top:3px !important;
+  color:#edffac !important;
+  font-size:15px !important;
+  line-height:1.05;
+  text-align:center;
+  text-shadow:0 1px 2px rgba(0,0,0,.35);
+}
+
+.profile-detail-card{
+  padding:14px 16px !important;
+  border:1px solid rgba(126,77,38,.42) !important;
+  border-radius:18px !important;
+  background:linear-gradient(180deg,rgba(102,61,32,.93),rgba(52,31,19,.96)) !important;
+  box-shadow:inset 0 1px 0 rgba(255,237,190,.11),0 5px 9px rgba(0,0,0,.17);
+}
+
+.profile-detail-card > strong{
+  display:block;
+  color:#fff0b9 !important;
+  font-size:13px !important;
+  font-weight:1000;
+  text-align:center;
+  text-shadow:0 1px 2px rgba(0,0,0,.37);
+}
+
+.profile-detail-card small{
+  color:#ddc69a !important;
+  opacity:1 !important;
+  font-size:9px !important;
+}
+
+.profile-detail-card strong{ color:#f0ffb5; }
+
+.profile-summary-grid{ gap:7px !important; }
+.profile-summary-card{
+  min-height:92px;
+  padding:13px 9px !important;
+  border:1px solid rgba(126,77,38,.42);
+  border-radius:17px !important;
+  background:linear-gradient(180deg,rgba(103,62,32,.94),rgba(53,31,19,.97)) !important;
+  text-align:center;
+  box-shadow:0 5px 8px rgba(0,0,0,.17);
+}
+.profile-summary-card > strong{ color:#ffeab0 !important; font-size:12px; }
+.profile-summary-card > div{ color:#edffab !important; }
+.profile-summary-card small{ color:#dbc397 !important; opacity:1 !important; font-size:8px !important; }
+
+.profile-level-chip{
+  padding:6px 9px !important;
+  border:1px solid rgba(207,255,106,.23) !important;
+  background:linear-gradient(180deg,rgba(124,161,49,.44),rgba(65,91,29,.48)) !important;
+  color:#efffb6 !important;
+  font-size:10px !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.11);
+}
+
+@media(max-width:430px){
+  .profile-art-panel{ padding:10px 8px 14px !important; border-radius:21px !important; }
+  .profile-art-head{ min-height:63px; padding-left:17px !important; padding-right:14px !important; }
+  .profile-art-head h2{ font-size:17px !important; }
+  .profile-art-head .coin-button{ width:36px !important; min-width:36px !important; height:36px !important; min-height:36px !important; }
+  .profile-player-card{ padding:14px 15px !important; }
+  .profile-player-card strong{ font-size:15px !important; }
+  .profile-stat-card{ min-height:62px; }
+  .profile-stat-card strong{ font-size:14px !important; }
+  .profile-detail-card{ padding:12px 13px !important; }
+}
+
+@media(max-width:370px){
+  .profile-art-head h2{ font-size:16px !important; }
+  .profile-player-card strong{ font-size:14px !important; }
+  .profile-stat-card small{ font-size:7px !important; }
+  .profile-stat-card strong{ font-size:13px !important; }
+  .profile-detail-card small{ font-size:8px !important; }
+  .profile-summary-card small{ font-size:7px !important; }
+}
+
 /* STAGE 6F WALLET HISTORY */
 
 .wallet-art-panel{margin-top:14px!important;width:100%;min-width:0;box-sizing:border-box;padding:13px 10px 18px!important;border:0!important;border-radius:24px!important;background:linear-gradient(180deg,rgba(72,43,24,.95),rgba(39,24,15,.97))!important;box-shadow:inset 0 1px 0 rgba(255,236,188,.12),0 9px 18px rgba(0,0,0,.22)!important}
@@ -4433,52 +4630,4 @@
     width:52px;
     height:52px;
   }
-}
-
-
-
-/* =========================================================
-   STAGE 6J — INTERNAL I18N LANGUAGE SELECTOR
-   ========================================================= */
-.menu-art-heading{position:relative}
-.menu-art-heading-copy{display:grid;gap:1px;min-width:0}
-.menu-language-select{
-  position:absolute;
-  right:16px;
-  top:50%;
-  transform:translateY(-50%);
-  display:grid;
-  gap:2px;
-  width:94px;
-  z-index:3;
-}
-.menu-language-select>span{
-  color:#d7bd88;
-  font-size:7px;
-  line-height:1;
-  font-weight:900;
-  text-align:center;
-  text-transform:uppercase;
-}
-.menu-language-select select{
-  width:100%;
-  min-width:0;
-  padding:6px 22px 6px 8px;
-  border-radius:10px;
-  border:1px solid rgba(255,222,150,.22);
-  outline:none;
-  background:rgba(55,33,19,.78);
-  color:#fff0bd;
-  font-size:9px;
-  font-weight:850;
-}
-@media(max-width:430px){
-  .menu-art-heading{justify-content:flex-start;padding-left:17px;padding-right:116px}
-  .menu-language-select{right:12px;width:91px}
-  .menu-heading-art{flex:0 0 auto}
-}
-@media(max-width:370px){
-  .menu-art-heading{padding-right:105px}
-  .menu-language-select{right:8px;width:85px}
-  .menu-language-select select{font-size:8px;padding-left:6px}
 }
