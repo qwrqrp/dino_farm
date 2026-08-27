@@ -4777,3 +4777,23 @@
     font-size:9px;
   }
 }
+
+/* =========================================================
+   LANGUAGE SWITCHER — HUD OVERFLOW / STACKING FIX
+   Visual-only hotfix. No gameplay/API/callback changes.
+   ========================================================= */
+
+/* Stage 5D used .hud.glass { overflow:hidden }, which clips the
+   language dropdown. The dropdown must be allowed outside the HUD. */
+.hud.glass{
+  overflow:visible !important;
+  z-index:100 !important;
+}
+
+.language-switcher{
+  z-index:110 !important;
+}
+
+.language-switcher-menu{
+  z-index:120 !important;
+}
