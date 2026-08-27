@@ -6,7 +6,6 @@ import {
   COINS_PER_USD,
   DEPOSIT_MAX_USD,
   DEPOSIT_MIN_USD,
-  DEPOSIT_USER_FEE_PERCENT,
   FIRST_DEPOSIT_BONUS_PERCENT,
   coinsForUsd,
   createProviderPayment,
@@ -20,6 +19,9 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+// UI estimate only. Exact crypto amount is returned by NOWPayments.
+const DEPOSIT_USER_FEE_PERCENT = 1;
 
 export async function GET() {
   try {
