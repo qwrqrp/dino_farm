@@ -5637,3 +5637,154 @@
     transition:none !important;
   }
 }
+
+/* =========================================================
+   NEST REWARDS HUB POPUP — V10.13
+   Keeps the approved Nest scene untouched. The rewards list
+   now opens as a true modal instead of covering the nest art.
+   ========================================================= */
+
+.nest-rewards-hub-backdrop{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:180 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:
+    calc(18px + env(safe-area-inset-top))
+    16px
+    calc(92px + env(safe-area-inset-bottom)) !important;
+  background:rgba(4,18,12,.68) !important;
+  backdrop-filter:blur(5px) !important;
+  -webkit-backdrop-filter:blur(5px) !important;
+}
+
+.nest-rewards-hub-modal{
+  width:min(420px,100%) !important;
+  max-height:min(520px,calc(100dvh - 135px)) !important;
+  overflow:auto !important;
+  padding:16px !important;
+  border:1px solid rgba(255,215,122,.38) !important;
+  border-radius:26px !important;
+  background:
+    radial-gradient(circle at 50% -10%,rgba(255,229,157,.14),transparent 38%),
+    linear-gradient(180deg,#754a2c 0%,#482819 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,242,202,.14),
+    0 24px 54px rgba(0,0,0,.46) !important;
+  animation:nestRewardsModalIn .18s ease-out both;
+}
+
+.nest-rewards-hub-head{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:14px !important;
+  margin-bottom:12px !important;
+}
+
+.nest-rewards-hub-head small{
+  display:block !important;
+  margin-bottom:2px !important;
+  color:#e8c88f !important;
+  font-size:9px !important;
+  font-weight:950 !important;
+  letter-spacing:.16em !important;
+}
+
+.nest-rewards-hub-head h2{
+  margin:0 !important;
+  color:#fff2c8 !important;
+  font-size:24px !important;
+  line-height:1.05 !important;
+  text-shadow:0 2px 2px rgba(57,28,13,.72) !important;
+}
+
+.nest-rewards-hub-close{
+  flex:0 0 44px !important;
+  width:44px !important;
+  height:44px !important;
+  border:1px solid rgba(204,255,92,.66) !important;
+  border-radius:15px !important;
+  background:linear-gradient(180deg,#67a82c,#315f1d) !important;
+  color:#f3ffd8 !important;
+  font-size:30px !important;
+  line-height:1 !important;
+  font-weight:500 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.18),
+    0 4px 0 rgba(38,71,20,.72) !important;
+}
+
+.nest-rewards-options.nest-rewards-options-modal{
+  position:static !important;
+  inset:auto !important;
+  width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+  gap:10px !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  animation:none !important;
+}
+
+.nest-rewards-options-modal > button{
+  min-height:64px !important;
+  padding:12px 14px !important;
+  border-radius:18px !important;
+}
+
+.nest-rewards-options-modal > button span{
+  font-size:14px !important;
+}
+
+.nest-rewards-options-modal > button b{
+  min-width:86px !important;
+  padding:9px 12px !important;
+  font-size:9px !important;
+}
+
+@keyframes nestRewardsModalIn{
+  from{opacity:0;transform:translateY(8px) scale(.97)}
+  to{opacity:1;transform:none}
+}
+
+@media(max-width:430px){
+  .nest-rewards-hub-backdrop{
+    align-items:center !important;
+    padding:
+      calc(12px + env(safe-area-inset-top))
+      14px
+      calc(84px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .nest-rewards-hub-modal{
+    width:100% !important;
+    padding:14px !important;
+    border-radius:23px !important;
+  }
+
+  .nest-rewards-hub-head h2{
+    font-size:21px !important;
+  }
+
+  .nest-rewards-hub-close{
+    flex-basis:40px !important;
+    width:40px !important;
+    height:40px !important;
+    font-size:27px !important;
+  }
+
+  .nest-rewards-options-modal > button{
+    min-height:58px !important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .nest-rewards-hub-modal{
+    animation:none !important;
+  }
+}
