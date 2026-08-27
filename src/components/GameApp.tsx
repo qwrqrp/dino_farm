@@ -1064,6 +1064,7 @@ export default function GameApp() {
   const [claimingAchievementCode, setClaimingAchievementCode] = useState<string | null>(null);
   const [levelsOpen, setLevelsOpen] = useState(false);
   const [profitPlanOpen, setProfitPlanOpen] = useState(false);
+  const [farmToolsMenuOpen, setFarmToolsMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileStatus, setProfileStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
@@ -1088,6 +1089,7 @@ export default function GameApp() {
     setWithdrawalOpen(false);
     setLevelsOpen(false);
     setProfitPlanOpen(false);
+    setFarmToolsMenuOpen(false);
   };
 
   const closeNestRewardPopups = () => {
@@ -3947,6 +3949,7 @@ export default function GameApp() {
       setWithdrawalOpen(false);
       setLevelsOpen(false);
       setProfitPlanOpen(false);
+      setFarmToolsMenuOpen(false);
     }
 
     if (tab !== "nest") {
@@ -6067,6 +6070,7 @@ export default function GameApp() {
               withdrawalOpen ||
               levelsOpen ||
               profitPlanOpen ||
+              farmToolsMenuOpen ||
               dailyOpen ||
               tasksOpen ||
               achievementsOpen
@@ -6109,6 +6113,37 @@ export default function GameApp() {
                   <button
                     onClick={() => {
                       closeMenuPopups();
+                      setFarmToolsMenuOpen(true);
+                    }}
+                  >
+                    <span>Ферма</span>
+                    <b>Lv.1–16 · Profit</b>
+                  </button>
+                </div>
+              </>
+            ) : null}
+
+            {farmToolsMenuOpen ? (
+              <div className="form-card menu-popup-panel menu-farm-hub-panel">
+                <div className="menu-farm-hub-head">
+                  <div>
+                    <span className="eyebrow">FARM</span>
+                    <h2>Ферма</h2>
+                  </div>
+                  <button
+                    className="coin-button"
+                    onClick={() => setFarmToolsMenuOpen(false)}
+                    aria-label="Закрыть"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div className="menu-farm-hub-actions">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMenuPopups();
                       setLevelsOpen(true);
                     }}
                   >
@@ -6117,6 +6152,7 @@ export default function GameApp() {
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => {
                       closeMenuPopups();
                       setProfitPlanOpen(true);
@@ -6126,7 +6162,7 @@ export default function GameApp() {
                     <b>МОЯ ФЕРМА</b>
                   </button>
                 </div>
-              </>
+              </div>
             ) : null}
 
             {walletHistoryOpen ? (
