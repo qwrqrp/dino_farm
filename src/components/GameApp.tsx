@@ -5915,25 +5915,6 @@ export default function GameApp() {
                   </div>
                 ) : null}
 
-                <div className="card">
-                  <strong>
-                    🔒 Как начисляются Coins
-                  </strong>
-                  <p>
-                    Нажатие «Оплатить» Coins не
-                    начисляет. Баланс меняется только
-                    после подтверждения платежа
-                    сервером.
-                  </p>
-                  <p
-                    style={{
-                      marginBottom: 0,
-                    }}
-                  >
-                    Один и тот же платёж не может
-                    быть зачислен дважды.
-                  </p>
-                </div>
               </>
             )}
           </div>
