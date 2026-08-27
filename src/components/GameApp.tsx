@@ -846,6 +846,32 @@ const UI_TRANSLATION_ROWS = [
   ["Auth / Database error", "Auth / Database error", "Помилка Auth / Database", "Errore Auth / Database", "Erreur Auth / Database", "Error Auth / Database", "Auth / Database त्रुटि", "Błąd Auth / Database", "Auth-/Datenbankfehler", "Auth / Database hatası"],
   ["Level 1 · Telegram", "Level 1 · Telegram", "Рівень 1 · Telegram", "Livello 1 · Telegram", "Niveau 1 · Telegram", "Nivel 1 · Telegram", "स्तर 1 · Telegram", "Poziom 1 · Telegram", "Level 1 · Telegram", "Seviye 1 · Telegram"],
   ["Level 1 · Demo", "Level 1 · Demo", "Рівень 1 · Demo", "Livello 1 · Demo", "Niveau 1 · Démo", "Nivel 1 · Demo", "स्तर 1 · Demo", "Poziom 1 · Demo", "Level 1 · Demo", "Seviye 1 · Demo"],
+
+  // LANGUAGE SWITCHER V3 — dynamic Shop / Tasks / Achievements / Profit Plan text.
+  // Display-only translations. API payloads, task codes, rewards and callbacks stay unchanged.
+  ["Динозавр Lv.", "Dinosaur Lv.", "Динозавр Lv.", "Dinosauro Lv.", "Dinosaure niv.", "Dinosaurio Nv.", "डायनासोर Lv.", "Dinozaur Lv.", "Dinosaurier Lv.", "Dinozor Lv."],
+  ["в сутки", "per day", "на добу", "al giorno", "par jour", "al día", "प्रति दिन", "dziennie", "pro Tag", "günlük"],
+  ["Coins + столько же DNA", "Coins + the same amount of DNA", "Coins + стільки ж DNA", "Coins + la stessa quantità di DNA", "Coins + la même quantité de DNA", "Coins + la misma cantidad de DNA", "Coins + उतनी ही DNA", "Coins + tyle samo DNA", "Coins + die gleiche Menge DNA", "Coins + aynı miktarda DNA"],
+  ["Merge комиссия", "Merge fee", "Merge комісія", "Commissione merge", "Frais de fusion", "Comisión de merge", "Merge शुल्क", "Opłata za merge", "Merge-Gebühr", "Merge ücreti"],
+  ["Цена Lv.1", "Lv.1 price", "Ціна Lv.1", "Prezzo Lv.1", "Prix Lv.1", "Precio Lv.1", "Lv.1 कीमत", "Cena Lv.1", "Preis Lv.1", "Lv.1 fiyatı"],
+
+  ["Собери 1 000 яиц", "Collect 1,000 eggs", "Збери 1 000 яєць", "Raccogli 1.000 uova", "Collecte 1 000 œufs", "Recoge 1.000 huevos", "1,000 अंडे इकट्ठा करें", "Zbierz 1 000 jaj", "Sammle 1.000 Eier", "1.000 yumurta topla"],
+  ["Соберите суммарно 1 000 яиц из гнезда.", "Collect a total of 1,000 eggs from the nest.", "Збери загалом 1 000 яєць із гнізда.", "Raccogli in totale 1.000 uova dal nido.", "Collecte au total 1 000 œufs dans le nid.", "Recoge un total de 1.000 huevos del nido.", "घोंसले से कुल 1,000 अंडे इकट्ठा करें।", "Zbierz łącznie 1 000 jaj z gniazda.", "Sammle insgesamt 1.000 Eier aus dem Nest.", "Yuvadan toplam 1.000 yumurta topla."],
+  ["Собери 3 динозавров", "Collect 3 dinosaurs", "Збери 3 динозаврів", "Raccogli 3 dinosauri", "Obtiens 3 dinosaures", "Consigue 3 dinosaurios", "3 डायनासोर इकट्ठा करें", "Zdobądź 3 dinozaury", "Sammle 3 Dinosaurier", "3 dinozor topla"],
+  ["Держите на игровой доске минимум 3 динозавров.", "Keep at least 3 dinosaurs on the game board.", "Тримай на ігровому полі щонайменше 3 динозаврів.", "Tieni almeno 3 dinosauri sulla plancia di gioco.", "Garde au moins 3 dinosaures sur le plateau de jeu.", "Mantén al menos 3 dinosaurios en el tablero de juego.", "गेम बोर्ड पर कम से कम 3 डायनासोर रखें।", "Miej co najmniej 3 dinozaury na planszy gry.", "Halte mindestens 3 Dinosaurier auf dem Spielfeld.", "Oyun tahtasında en az 3 dinozor bulundur."],
+
+  ["Юный заводчик", "Young Breeder", "Юний заводчик", "Giovane allevatore", "Jeune éleveur", "Joven criador", "युवा ब्रीडर", "Młody hodowca", "Junger Züchter", "Genç yetiştirici"],
+  ["Мастер эволюции", "Evolution Master", "Майстер еволюції", "Maestro dell'evoluzione", "Maître de l'évolution", "Maestro de la evolución", "विकास मास्टर", "Mistrz ewolucji", "Meister der Evolution", "Evrim ustası"],
+  ["Король динозавров", "Dinosaur King", "Король динозаврів", "Re dei dinosauri", "Roi des dinosaures", "Rey de los dinosaurios", "डायनासोर राजा", "Król dinozaurów", "König der Dinosaurier", "Dinozor kralı"],
+  ["Получите максимального динозавра Lv.", "Obtain the maximum-level dinosaur Lv.", "Отримайте максимального динозавра Lv.", "Ottieni il dinosauro di livello massimo Lv.", "Obtiens le dinosaure de niveau maximal Lv.", "Consigue el dinosaurio de nivel máximo Nv.", "अधिकतम स्तर का डायनासोर Lv. प्राप्त करें", "Zdobądź dinozaura na maksymalnym poziomie Lv.", "Erhalte den Dinosaurier auf Maximallevel Lv.", "Maksimum seviyedeki dinozoru Lv. elde et"],
+  ["Получите динозавра Lv.", "Obtain a dinosaur Lv.", "Отримайте динозавра Lv.", "Ottieni un dinosauro Lv.", "Obtiens un dinosaure niv.", "Consigue un dinosaurio Nv.", "डायनासोर Lv. प्राप्त करें", "Zdobądź dinozaura Lv.", "Erhalte einen Dinosaurier Lv.", "Bir dinozor Lv. elde et"],
+
+  // Generic fragments used by server-provided task/achievement descriptions.
+  ["Соберите суммарно", "Collect a total of", "Збери загалом", "Raccogli in totale", "Collecte au total", "Recoge un total de", "कुल इकट्ठा करें", "Zbierz łącznie", "Sammle insgesamt", "Toplam topla"],
+  ["Собери", "Collect", "Збери", "Raccogli", "Collecte", "Recoge", "इकट्ठा करें", "Zbierz", "Sammle", "Topla"],
+  ["из гнезда", "from the nest", "із гнізда", "dal nido", "dans le nid", "del nido", "घोंसले से", "z gniazda", "aus dem Nest", "yuvadan"],
+  ["динозавров", "dinosaurs", "динозаврів", "dinosauri", "dinosaures", "dinosaurios", "डायनासोर", "dinozaurów", "Dinosaurier", "dinozor"],
+  ["максимального динозавра", "maximum-level dinosaur", "максимального динозавра", "dinosauro di livello massimo", "dinosaure de niveau maximal", "dinosaurio de nivel máximo", "अधिकतम स्तर का डायनासोर", "dinozaura na maksymalnym poziomie", "Dinosaurier auf Maximallevel", "maksimum seviyedeki dinozor"],
 ] as const;
 
 const SORTED_UI_TRANSLATION_ROWS = [...UI_TRANSLATION_ROWS].sort(
