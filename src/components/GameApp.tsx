@@ -6024,7 +6024,7 @@ export default function GameApp() {
         {tab === "friends" && (
           <div className="screen friends-art-screen">
             <div className="friends-art-heading">
-              <span className="eyebrow">REFERRALS</span>
+              <span className="eyebrow">Рефералы</span>
               <h2>Друзья</h2>
             </div>
 
