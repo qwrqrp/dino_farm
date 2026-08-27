@@ -3939,6 +3939,13 @@ export default function GameApp() {
   return (
     <main className="app-shell" ref={appRootRef}>
       <style>{`
+        /* When a menu popup is open, lift the whole menu stacking context
+           above the sticky HUD / language switcher / bottom navigation. */
+        .menu-art-screen.menu-popup-active {
+          z-index: 2000 !important;
+          overflow: visible !important;
+        }
+
         .menu-popup-panel {
           position: fixed !important;
           left: 50% !important;
@@ -3949,7 +3956,7 @@ export default function GameApp() {
           margin: 0 !important;
           overflow-y: auto !important;
           overscroll-behavior: contain;
-          z-index: 100 !important;
+          z-index: 2010 !important;
           padding-bottom: calc(18px + env(safe-area-inset-bottom)) !important;
           box-shadow:
             0 0 0 100vmax rgba(2, 12, 8, .76),
@@ -6058,7 +6065,20 @@ export default function GameApp() {
         )}
 
         {tab === "menu" && (
-          <div className="screen menu-art-screen">
+          <div
+            className={`screen menu-art-screen${
+              walletHistoryOpen ||
+              profileOpen ||
+              withdrawalOpen ||
+              levelsOpen ||
+              profitPlanOpen ||
+              dailyOpen ||
+              tasksOpen ||
+              achievementsOpen
+                ? " menu-popup-active"
+                : ""
+            }`}
+          >
             <div className="menu-art-heading">
               <img
                 src="/assets/game/ui/nav/menu.webp"
