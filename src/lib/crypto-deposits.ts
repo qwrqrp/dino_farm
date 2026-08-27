@@ -23,6 +23,7 @@ export type DepositMethod = {
   network: string;
   label: string;
   providerCurrency: string;
+  requiresMerchantConfirmation?: boolean;
 };
 
 export const DEPOSIT_METHODS: DepositMethod[] = [
@@ -69,6 +70,27 @@ export const DEPOSIT_METHODS: DepositMethod[] = [
     providerCurrency: "usdterc20",
   },
   {
+    code: "USDT_SOLANA",
+    coin: "USDT",
+    network: "Solana",
+    label: "USDT — Solana",
+    providerCurrency: "usdtsol",
+  },
+  {
+    code: "USDT_ARBITRUM_ONE",
+    coin: "USDT",
+    network: "Arbitrum One",
+    label: "USDT — Arbitrum One",
+    providerCurrency: "usdtarb",
+  },
+  {
+    code: "USDT_OPTIMISM",
+    coin: "USDT",
+    network: "Optimism",
+    label: "USDT — Optimism",
+    providerCurrency: "usdtop",
+  },
+  {
     code: "USDT_BEP20",
     coin: "USDT",
     network: "BEP20",
@@ -97,11 +119,47 @@ export const DEPOSIT_METHODS: DepositMethod[] = [
     providerCurrency: "usdcbsc",
   },
   {
+    code: "USDC_SOLANA",
+    coin: "USDC",
+    network: "Solana",
+    label: "USDC — Solana",
+    providerCurrency: "usdcsol",
+  },
+  {
     code: "USDC_POLYGON",
     coin: "USDC",
     network: "Polygon",
     label: "USDC — Polygon",
     providerCurrency: "usdcmatic",
+  },
+  {
+    code: "SHIB_BEP20",
+    coin: "SHIB",
+    network: "BEP20",
+    label: "SHIB — BEP20",
+    providerCurrency: "shibbsc",
+  },
+  {
+    code: "POL_POLYGON",
+    coin: "POL",
+    network: "Polygon",
+    label: "POL — Polygon",
+    providerCurrency: "matic",
+  },
+  {
+    code: "BONK_SOLANA",
+    coin: "BONK",
+    network: "Solana",
+    label: "BONK — Solana",
+    providerCurrency: "bonk",
+    requiresMerchantConfirmation: true,
+  },
+  {
+    code: "ARB_ARBITRUM_ONE",
+    coin: "ARB",
+    network: "Arbitrum One",
+    label: "ARB — Arbitrum One",
+    providerCurrency: "arb",
   },
 ];
 
@@ -339,16 +397,27 @@ export async function getDepositMethodsForUi() {
       ? await getMerchantCurrencies()
       : null;
 
-  return DEPOSIT_METHODS.map((method) => ({
-    ...method,
-    available:
-      configured &&
-      (merchantCurrencies === null ||
-        merchantCurrencies.size === 0 ||
-        merchantCurrencies.has(
-          method.providerCurrency.toLowerCase(),
-        )),
-  }));
+  return DEPOSIT_METHODS.map((method) => {
+    const merchantHasCurrency =
+      merchantCurrencies?.has(
+        method.providerCurrency.toLowerCase(),
+      ) ?? false;
+
+    return {
+      ...method,
+      available:
+        configured &&
+        (method.requiresMerchantConfirmation
+          ? Boolean(
+              merchantCurrencies &&
+                merchantCurrencies.size > 0 &&
+                merchantHasCurrency,
+            )
+          : merchantCurrencies === null ||
+            merchantCurrencies.size === 0 ||
+            merchantHasCurrency),
+    };
+  });
 }
 
 export function normalizeUsdAmount(
