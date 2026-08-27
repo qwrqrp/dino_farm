@@ -866,6 +866,38 @@ const UI_TRANSLATION_ROWS = [
   ["Получите максимального динозавра Lv.", "Obtain the maximum-level dinosaur Lv.", "Отримайте максимального динозавра Lv.", "Ottieni il dinosauro di livello massimo Lv.", "Obtiens le dinosaure de niveau maximal Lv.", "Consigue el dinosaurio de nivel máximo Nv.", "अधिकतम स्तर का डायनासोर Lv. प्राप्त करें", "Zdobądź dinozaura na maksymalnym poziomie Lv.", "Erhalte den Dinosaurier auf Maximallevel Lv.", "Maksimum seviyedeki dinozoru Lv. elde et"],
   ["Получите динозавра Lv.", "Obtain a dinosaur Lv.", "Отримайте динозавра Lv.", "Ottieni un dinosauro Lv.", "Obtiens un dinosaure niv.", "Consigue un dinosaurio Nv.", "डायनासोर Lv. प्राप्त करें", "Zdobądź dinozaura Lv.", "Erhalte einen Dinosaurier Lv.", "Bir dinozor Lv. elde et"],
 
+  // LANGUAGE SWITCHER V4 — remaining Main Menu + server-provided Achievements.
+  // These are display-only strings. Progress, rewards, codes and API data stay unchanged.
+  ["СТАТИСТИКА", "STATISTICS", "СТАТИСТИКА", "STATISTICHE", "STATISTIQUES", "ESTADÍSTICAS", "आँकड़े", "STATYSTYKI", "STATISTIK", "İSTATİSTİK"],
+  ["ПОПОЛНЕНИЯ / ВЫВОДЫ", "DEPOSITS / WITHDRAWALS", "ПОПОВНЕННЯ / ВИВЕДЕННЯ", "DEPOSITI / PRELIEVI", "DÉPÔTS / RETRAITS", "DEPÓSITOS / RETIROS", "जमा / निकासी", "WPŁATY / WYPŁATY", "EINZAHLUNGEN / AUSZAHLUNGEN", "YATIRMA / ÇEKME"],
+  ["МОЯ ФЕРМА", "MY FARM", "МОЯ ФЕРМА", "LA MIA FATTORIA", "MA FERME", "MI GRANJA", "मेरा फार्म", "MOJA FARMA", "MEINE FARM", "ÇİFTLİĞİM"],
+  ["ОТКРЫТЬ", "OPEN", "ВІДКРИТИ", "APRI", "OUVRIR", "ABRIR", "खोलें", "OTWÓRZ", "ÖFFNEN", "AÇ"],
+
+  ["Большой урожай", "Big Harvest", "Великий урожай", "Grande raccolto", "Grande récolte", "Gran cosecha", "बड़ी फसल", "Wielkie zbiory", "Große Ernte", "Büyük hasat"],
+  ["Миллион яиц", "Million Eggs", "Мільйон яєць", "Un milione di uova", "Un million d'œufs", "Un millón de huevos", "दस लाख अंडे", "Milion jaj", "Eine Million Eier", "Bir milyon yumurta"],
+  ["Исполнитель", "Achiever", "Виконавець", "Esecutore", "Accomplisseur", "Cumplidor", "लक्ष्य साधक", "Wykonawca", "Erfüller", "Tamamlayıcı"],
+  ["Все задачи выполнены", "All Tasks Completed", "Усі завдання виконано", "Tutte le missioni completate", "Toutes les tâches terminées", "Todas las tareas completadas", "सभी कार्य पूरे", "Wszystkie zadania ukończone", "Alle Aufgaben abgeschlossen", "Tüm görevler tamamlandı"],
+  ["Постоянный игрок", "Regular Player", "Постійний гравець", "Giocatore abituale", "Joueur régulier", "Jugador habitual", "नियमित खिलाड़ी", "Stały gracz", "Stammspieler", "Düzenli oyuncu"],
+  ["Команда фермеров", "Farmers Team", "Команда фермерів", "Squadra di fattori", "Équipe de fermiers", "Equipo de granjeros", "किसानों की टीम", "Drużyna farmerów", "Farmer-Team", "Çiftçi takımı"],
+  ["Амбассадор фермы", "Farm Ambassador", "Амбасадор ферми", "Ambasciatore della fattoria", "Ambassadeur de la ferme", "Embajador de la granja", "फार्म एम्बेसडर", "Ambasador farmy", "Farm-Botschafter", "Çiftlik elçisi"],
+
+  ["Соберите суммарно 100 000 яиц.", "Collect a total of 100 000 eggs.", "Зберіть загалом 100 000 яєць.", "Raccogli in totale 100.000 uova.", "Collectez au total 100 000 œufs.", "Recoge un total de 100 000 huevos.", "कुल 100,000 अंडे इकट्ठा करें।", "Zbierz łącznie 100 000 jaj.", "Sammle insgesamt 100.000 Eier.", "Toplam 100.000 yumurta topla."],
+  ["Соберите суммарно 1 000 000 яиц.", "Collect a total of 1 000 000 eggs.", "Зберіть загалом 1 000 000 яєць.", "Raccogli in totale 1.000.000 di uova.", "Collectez au total 1 000 000 d'œufs.", "Recoge un total de 1 000 000 de huevos.", "कुल 1,000,000 अंडे इकट्ठा करें।", "Zbierz łącznie 1 000 000 jaj.", "Sammle insgesamt 1.000.000 Eier.", "Toplam 1.000.000 yumurta topla."],
+  ["Получите награды за 3 задания.", "You receive rewards for 3 tasks.", "Отримайте нагороди за 3 завдання.", "Ricevi ricompense per 3 missioni.", "Recevez des récompenses pour 3 tâches.", "Recibe recompensas por 3 tareas.", "3 कार्यों के लिए पुरस्कार प्राप्त करें।", "Odbierz nagrody za 3 zadania.", "Erhalte Belohnungen für 3 Aufgaben.", "3 görev için ödül al."],
+  ["Получите награды за все 6 текущих заданий.", "You receive rewards for all 6 current tasks.", "Отримайте нагороди за всі 6 поточних завдань.", "Ricevi ricompense per tutte le 6 missioni attuali.", "Recevez des récompenses pour les 6 tâches actuelles.", "Recibe recompensas por las 6 tareas actuales.", "मौजूदा सभी 6 कार्यों के लिए पुरस्कार प्राप्त करें।", "Odbierz nagrody za wszystkie 6 bieżących zadań.", "Erhalte Belohnungen für alle 6 aktuellen Aufgaben.", "Mevcut 6 görevin tümü için ödül al."],
+  ["Получите ежедневный бонус 7 раз.", "You receive the daily reward 7 times.", "Отримайте щоденний бонус 7 разів.", "Ricevi il bonus giornaliero 7 volte.", "Recevez le bonus quotidien 7 fois.", "Recibe el bono diario 7 veces.", "दैनिक बोनस 7 बार प्राप्त करें।", "Odbierz bonus dzienny 7 razy.", "Erhalte den Tagesbonus 7-mal.", "Günlük bonusu 7 kez al."],
+  ["Пригласите 5 игроков по своей реферальной ссылке.", "Invite 5 players using your referral link.", "Запросіть 5 гравців за своїм реферальним посиланням.", "Invita 5 giocatori usando il tuo link referral.", "Invitez 5 joueurs avec votre lien de parrainage.", "Invita a 5 jugadores con tu enlace de referido.", "अपने रेफरल लिंक से 5 खिलाड़ियों को आमंत्रित करें।", "Zaproś 5 graczy przez swój link polecający.", "Lade 5 Spieler über deinen Referral-Link ein.", "Referans bağlantınla 5 oyuncu davet et."],
+  ["Пригласите 10 игроков по своей реферальной ссылке.", "Invite 10 players using your referral link.", "Запросіть 10 гравців за своїм реферальним посиланням.", "Invita 10 giocatori usando il tuo link referral.", "Invitez 10 joueurs avec votre lien de parrainage.", "Invita a 10 jugadores con tu enlace de referido.", "अपने रेफरल लिंक से 10 खिलाड़ियों को आमंत्रित करें।", "Zaproś 10 graczy przez swój link polecający.", "Lade 10 Spieler über deinen Referral-Link ein.", "Referans bağlantınla 10 oyuncu davet et."],
+
+  // Mixed-language fragments that may arrive from the server.
+  ["Вы получите", "You receive", "Ви отримаєте", "Riceverai", "Vous recevrez", "Recibirás", "आप प्राप्त करेंगे", "Otrzymasz", "Du erhältst", "Alacaksınız"],
+  ["награды", "rewards", "нагороди", "ricompense", "récompenses", "recompensas", "पुरस्कार", "nagrody", "Belohnungen", "ödüller"],
+  ["за 3 задания", "for 3 tasks", "за 3 завдання", "per 3 missioni", "pour 3 tâches", "por 3 tareas", "3 कार्यों के लिए", "za 3 zadania", "für 3 Aufgaben", "3 görev için"],
+  ["за все 6 текущих заданий", "for all 6 current tasks", "за всі 6 поточних завдань", "per tutte le 6 missioni attuali", "pour les 6 tâches actuelles", "por las 6 tareas actuales", "मौजूदा सभी 6 कार्यों के लिए", "za wszystkie 6 bieżących zadań", "für alle 6 aktuellen Aufgaben", "mevcut 6 görevin tümü için"],
+  ["ежедневный бонус 7 раз", "the daily reward 7 times", "щоденний бонус 7 разів", "il bonus giornaliero 7 volte", "le bonus quotidien 7 fois", "el bono diario 7 veces", "दैनिक बोनस 7 बार", "bonus dzienny 7 razy", "den Tagesbonus 7-mal", "günlük bonusu 7 kez"],
+  ["максимального динозавра", "the maximum-level dinosaur", "максимального динозавра", "il dinosauro di livello massimo", "le dinosaure de niveau maximal", "el dinosaurio de nivel máximo", "अधिकतम स्तर का डायनासोर", "dinozaura na maksymalnym poziomie", "den Dinosaurier auf Maximallevel", "maksimum seviyedeki dinozoru"],
+  ["динозавра", "a dinosaur", "динозавра", "un dinosauro", "un dinosaure", "un dinosaurio", "एक डायनासोर", "dinozaura", "einen Dinosaurier", "bir dinozor"],
+
   // Generic fragments used by server-provided task/achievement descriptions.
   ["Соберите суммарно", "Collect a total of", "Збери загалом", "Raccogli in totale", "Collecte au total", "Recoge un total de", "कुल इकट्ठा करें", "Zbierz łącznie", "Sammle insgesamt", "Toplam topla"],
   ["Собери", "Collect", "Збери", "Raccogli", "Collecte", "Recoge", "इकट्ठा करें", "Zbierz", "Sammle", "Topla"],
@@ -874,25 +906,35 @@ const UI_TRANSLATION_ROWS = [
   ["максимального динозавра", "maximum-level dinosaur", "максимального динозавра", "dinosauro di livello massimo", "dinosaure de niveau maximal", "dinosaurio de nivel máximo", "अधिकतम स्तर का डायनासोर", "dinozaura na maksymalnym poziomie", "Dinosaurier auf Maximallevel", "maksimum seviyedeki dinozor"],
 ] as const;
 
-const SORTED_UI_TRANSLATION_ROWS = [...UI_TRANSLATION_ROWS].sort(
-  (a, b) => b[0].length - a[0].length,
-);
+const UI_TRANSLATION_CANDIDATES = UI_TRANSLATION_ROWS.flatMap(
+  (row, rowIndex) =>
+    [...new Set(row as readonly string[])].map((variant) => ({
+      row,
+      rowIndex,
+      variant,
+    })),
+).sort((a, b) => b.variant.length - a.variant.length);
 
 function isLanguageCode(value: string): value is LanguageCode {
   return LANGUAGE_OPTIONS.some((item) => item.code === value);
 }
 
 function translateUiString(value: string, language: LanguageCode) {
-  if (language === "ru" || !value.trim()) return value;
+  if (!value.trim()) return value;
 
   const column = LANGUAGE_COLUMN[language];
   let translated = value;
+  const matchedRows = new Set<number>();
 
-  for (const row of SORTED_UI_TRANSLATION_ROWS) {
-    const source = row[0];
-    if (!translated.includes(source)) continue;
-    const replacement = row[column] as string;
-    translated = translated.split(source).join(replacement);
+  for (const candidate of UI_TRANSLATION_CANDIDATES) {
+    if (matchedRows.has(candidate.rowIndex)) continue;
+
+    const replacement = candidate.row[column] as string;
+    if (!candidate.variant || candidate.variant === replacement) continue;
+    if (!translated.includes(candidate.variant)) continue;
+
+    translated = translated.split(candidate.variant).join(replacement);
+    matchedRows.add(candidate.rowIndex);
   }
 
   return translated;
