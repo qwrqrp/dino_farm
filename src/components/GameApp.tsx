@@ -591,6 +591,287 @@ type TelegramWebApp = {
   openTelegramLink?: (url: string) => void;
 };
 
+
+
+type LanguageCode = "ru" | "en" | "uk" | "it" | "fr" | "es" | "hi" | "pl" | "de" | "tr";
+
+const LANGUAGE_STORAGE_KEY = "dino-farm-language";
+
+const LANGUAGE_OPTIONS: ReadonlyArray<{ code: LanguageCode; short: string; label: string }> = [
+  { code: "ru", short: "RU", label: "Русский" },
+  { code: "en", short: "EN", label: "English" },
+  { code: "uk", short: "UA", label: "Українська" },
+  { code: "it", short: "IT", label: "Italiano" },
+  { code: "fr", short: "FR", label: "Français" },
+  { code: "es", short: "ES", label: "Español" },
+  { code: "hi", short: "HI", label: "हिन्दी" },
+  { code: "pl", short: "PL", label: "Polski" },
+  { code: "de", short: "DE", label: "Deutsch" },
+  { code: "tr", short: "TR", label: "Türkçe" },
+];
+
+const LANGUAGE_COLUMN: Record<LanguageCode, number> = {
+  ru: 0,
+  en: 1,
+  uk: 2,
+  it: 3,
+  fr: 4,
+  es: 5,
+  hi: 6,
+  pl: 7,
+  de: 8,
+  tr: 9,
+};
+
+const UI_TRANSLATION_ROWS = [
+  ["Загрузка данных фермы...", "Loading farm data...", "Завантаження даних ферми...", "Caricamento dati della fattoria...", "Chargement des données de la ferme...", "Cargando datos de la granja...", "फार्म डेटा लोड हो रहा है...", "Ładowanie danych farmy...", "Farmdaten werden geladen...", "Çiftlik verileri yükleniyor..."],
+  ["Загрузка...", "Loading...", "Завантаження...", "Caricamento...", "Chargement...", "Cargando...", "लोड हो रहा है...", "Ładowanie...", "Laden...", "Yükleniyor..."],
+  ["Гнездо улучшено до максимума", "Nest upgraded to maximum", "Гніздо покращено до максимуму", "Nido potenziato al massimo", "Nid amélioré au maximum", "Nido mejorado al máximo", "घोंसला अधिकतम स्तर पर है", "Gniazdo ulepszone do maksimum", "Nest maximal verbessert", "Yuva maksimuma yükseltildi"],
+  ["Можно купить только следующую ступень.", "Only the next tier can be purchased.", "Можна придбати лише наступний рівень.", "Puoi acquistare solo il livello successivo.", "Seul le niveau suivant peut être acheté.", "Solo se puede comprar el siguiente nivel.", "केवल अगला स्तर खरीदा जा सकता है।", "Można kupić tylko następny poziom.", "Nur die nächste Stufe kann gekauft werden.", "Yalnızca sonraki seviye satın alınabilir."],
+  ["Цена и текущая вместимость проверяются на сервере перед списанием Coins.", "Price and current capacity are checked by the server before Coins are deducted.", "Ціна й поточна місткість перевіряються сервером перед списанням Coins.", "Prezzo e capacità attuale vengono verificati dal server prima dell'addebito dei Coins.", "Le prix et la capacité actuelle sont vérifiés par le serveur avant le débit des Coins.", "El precio y la capacidad actual se verifican en el servidor antes de descontar Coins.", "Coins काटने से पहले कीमत और वर्तमान क्षमता सर्वर पर जाँची जाती है।", "Cena i aktualna pojemność są sprawdzane na serwerze przed pobraniem Coins.", "Preis und aktuelle Kapazität werden vor dem Abzug der Coins auf dem Server geprüft.", "Coins düşülmeden önce fiyat ve mevcut kapasite sunucuda kontrol edilir."],
+  ["Соединяй одинаковых динозавров и открывай новые уровни", "Merge identical dinosaurs to unlock new levels", "Об'єднуй однакових динозаврів і відкривай нові рівні", "Unisci dinosauri uguali e sblocca nuovi livelli", "Fusionne des dinosaures identiques pour débloquer de nouveaux niveaux", "Combina dinosaurios iguales y desbloquea nuevos niveles", "एक जैसे डायनासोर मिलाकर नए स्तर खोलें", "Łącz identyczne dinozaury i odblokowuj nowe poziomy", "Verbinde gleiche Dinosaurier und schalte neue Level frei", "Aynı dinozorları birleştir ve yeni seviyeler aç"],
+  ["Lv.2–Lv.16 открываются для прямой покупки только после того, как вы сами получили этот уровень через merge.", "Lv.2–Lv.16 become available for direct purchase only after you obtain that level through merge.", "Lv.2–Lv.16 відкриваються для прямої покупки лише після того, як ви самі отримали цей рівень через merge.", "I livelli 2–16 si sbloccano per l'acquisto diretto solo dopo aver ottenuto quel livello tramite merge.", "Les niveaux 2–16 sont disponibles à l'achat direct seulement après avoir obtenu ce niveau par fusion.", "Los niveles 2–16 se desbloquean para compra directa solo después de obtener ese nivel mediante merge.", "Lv.2–Lv.16 की सीधी खरीद तभी खुलती है जब आप merge से वह स्तर प्राप्त कर लें।", "Poziomy 2–16 można kupić bezpośrednio dopiero po zdobyciu danego poziomu przez merge.", "Lv.2–Lv.16 können erst direkt gekauft werden, nachdem du das Level durch Merge erreicht hast.", "Lv.2–Lv.16 doğrudan satın alma için ancak o seviyeyi merge ile elde ettikten sonra açılır."],
+  ["Прямая покупка не открывает следующий уровень. Чтобы разблокировать новый уровень магазина, нужно сделать merge.", "Direct purchase does not unlock the next level. To unlock a new shop level, you must merge.", "Пряма покупка не відкриває наступний рівень. Щоб розблокувати новий рівень магазину, потрібно зробити merge.", "L'acquisto diretto non sblocca il livello successivo. Per sbloccare un nuovo livello del negozio devi fare un merge.", "L'achat direct ne débloque pas le niveau suivant. Pour débloquer un nouveau niveau de boutique, vous devez faire une fusion.", "La compra directa no desbloquea el siguiente nivel. Para desbloquear un nuevo nivel de tienda debes hacer un merge.", "सीधी खरीद अगला स्तर नहीं खोलती। नया दुकान स्तर खोलने के लिए merge करना होगा।", "Bezpośredni zakup nie odblokowuje następnego poziomu. Aby odblokować nowy poziom sklepu, wykonaj merge.", "Direkter Kauf schaltet das nächste Level nicht frei. Für ein neues Shop-Level musst du mergen.", "Doğrudan satın alma sonraki seviyeyi açmaz. Yeni mağaza seviyesi için merge yapmalısın."],
+  ["Coins начисляются только после подтверждения криптоплатежа.", "Coins are credited only after the crypto payment is confirmed.", "Coins нараховуються лише після підтвердження криптоплатежу.", "I Coins vengono accreditati solo dopo la conferma del pagamento crypto.", "Les Coins sont crédités uniquement après confirmation du paiement crypto.", "Los Coins se acreditan solo después de confirmar el pago cripto.", "क्रिप्टो भुगतान की पुष्टि के बाद ही Coins जमा होते हैं।", "Coins są naliczane dopiero po potwierdzeniu płatności krypto.", "Coins werden erst nach Bestätigung der Krypto-Zahlung gutgeschrieben.", "Coins yalnızca kripto ödeme onaylandıktan sonra eklenir."],
+  ["Минимум рассчитывается отдельно для выбранной монеты и сети и может меняться из-за комиссий и курса.", "The minimum is calculated separately for the selected coin and network and may change due to fees and exchange rates.", "Мінімум розраховується окремо для вибраної монети й мережі та може змінюватися через комісії й курс.", "Il minimo viene calcolato separatamente per moneta e rete selezionate e può variare per commissioni e cambio.", "Le minimum est calculé séparément pour la monnaie et le réseau choisis et peut varier selon les frais et le taux.", "El mínimo se calcula por separado para la moneda y red elegidas y puede cambiar por comisiones y tipo de cambio.", "न्यूनतम राशि चुनी गई कॉइन और नेटवर्क के लिए अलग से गणना होती है और फीस/रेट के कारण बदल सकती है।", "Minimum jest obliczane osobno dla wybranej monety i sieci i może się zmieniać przez opłaty i kurs.", "Das Minimum wird für Coin und Netzwerk separat berechnet und kann sich durch Gebühren und Kurs ändern.", "Minimum tutar seçilen coin ve ağ için ayrı hesaplanır; ücretler ve kur nedeniyle değişebilir."],
+  ["Пополнение реального баланса недоступно в демо-режиме браузера.", "Real balance top-up is unavailable in browser demo mode.", "Поповнення реального балансу недоступне в демо-режимі браузера.", "La ricarica del saldo reale non è disponibile nella modalità demo del browser.", "Le rechargement du solde réel n'est pas disponible en mode démo du navigateur.", "La recarga del saldo real no está disponible en el modo demo del navegador.", "ब्राउज़र डेमो मोड में वास्तविक बैलेंस टॉप-अप उपलब्ध नहीं है।", "Doładowanie prawdziwego salda jest niedostępne w trybie demo przeglądarki.", "Das Aufladen des echten Guthabens ist im Browser-Demo-Modus nicht verfügbar.", "Gerçek bakiye yükleme tarayıcı demo modunda kullanılamaz."],
+  ["Нажатие «Оплатить» Coins не начисляет. Баланс меняется только после подтверждения платежа сервером.", "Pressing “Pay” does not credit Coins. The balance changes only after the server confirms the payment.", "Натискання «Оплатити» не нараховує Coins. Баланс змінюється лише після підтвердження платежу сервером.", "Premere “Paga” non accredita Coins. Il saldo cambia solo dopo la conferma del pagamento da parte del server.", "Appuyer sur « Payer » ne crédite pas de Coins. Le solde change seulement après confirmation du paiement par le serveur.", "Pulsar “Pagar” no acredita Coins. El saldo cambia solo tras la confirmación del pago por el servidor.", "“भुगतान करें” दबाने से Coins जमा नहीं होते। बैलेंस केवल सर्वर द्वारा भुगतान की पुष्टि के बाद बदलता है।", "Kliknięcie „Zapłać” nie nalicza Coins. Saldo zmienia się dopiero po potwierdzeniu płatności przez serwer.", "Das Drücken von „Bezahlen“ schreibt keine Coins gut. Das Guthaben ändert sich erst nach Serverbestätigung.", "“Öde” düğmesine basmak Coins eklemez. Bakiye yalnızca sunucu ödemeyi onayladıktan sonra değişir."],
+  ["Один и тот же платёж не может быть зачислен дважды.", "The same payment cannot be credited twice.", "Один і той самий платіж не може бути зарахований двічі.", "Lo stesso pagamento non può essere accreditato due volte.", "Le même transaction ne peut pas être créditée deux fois.", "El mismo pago no puede acreditarse dos veces.", "एक ही भुगतान दो बार जमा नहीं किया जा सकता।", "Ta sama płatność nie może zostać zaksięgowana dwa razy.", "Dieselbe Zahlung kann nicht zweimal gutgeschrieben werden.", "Aynı ödeme iki kez hesaba geçirilemez."],
+  ["Откройте игру через Telegram, чтобы получить личную ссылку приглашения.", "Open the game through Telegram to get your personal invite link.", "Відкрийте гру через Telegram, щоб отримати особисте посилання-запрошення.", "Apri il gioco tramite Telegram per ottenere il tuo link di invito personale.", "Ouvrez le jeu via Telegram pour obtenir votre lien d'invitation personnel.", "Abre el juego desde Telegram para obtener tu enlace personal de invitación.", "अपना व्यक्तिगत आमंत्रण लिंक पाने के लिए गेम Telegram में खोलें।", "Otwórz grę przez Telegram, aby otrzymać osobisty link zaproszenia.", "Öffne das Spiel über Telegram, um deinen persönlichen Einladungslink zu erhalten.", "Kişisel davet bağlantınızı almak için oyunu Telegram üzerinden açın."],
+  ["Реферальная ссылка пока недоступна. Попробуйте открыть игру через Telegram ещё раз.", "The referral link is not available yet. Try opening the game through Telegram again.", "Реферальне посилання поки недоступне. Спробуйте ще раз відкрити гру через Telegram.", "Il link referral non è ancora disponibile. Prova a riaprire il gioco tramite Telegram.", "Le lien de parrainage n'est pas encore disponible. Essayez de rouvrir le jeu via Telegram.", "El enlace de referido aún no está disponible. Intenta abrir el juego desde Telegram de nuevo.", "रेफरल लिंक अभी उपलब्ध नहीं है। गेम को Telegram में फिर से खोलें।", "Link polecający nie jest jeszcze dostępny. Spróbuj ponownie otworzyć grę przez Telegram.", "Der Referral-Link ist noch nicht verfügbar. Öffne das Spiel erneut über Telegram.", "Referans bağlantısı henüz kullanılamıyor. Oyunu Telegram üzerinden yeniden açmayı deneyin."],
+  ["Здесь появятся пополнения Coins и заявки на вывод DNA.", "Coin deposits and DNA withdrawal requests will appear here.", "Тут з'являться поповнення Coins і заявки на виведення DNA.", "Qui appariranno le ricariche Coins e le richieste di prelievo DNA.", "Les dépôts de Coins et les demandes de retrait DNA apparaîtront ici.", "Aquí aparecerán los depósitos de Coins y las solicitudes de retiro de DNA.", "यहाँ Coins जमा और DNA निकासी अनुरोध दिखाई देंगे।", "Tutaj pojawią się wpłaty Coins i wnioski o wypłatę DNA.", "Hier erscheinen Coin-Einzahlungen und DNA-Auszahlungsanträge.", "Coins yüklemeleri ve DNA çekim talepleri burada görünecek."],
+  ["Добавьте динозавров на ферму, и здесь появится персональный расчёт доходности.", "Add dinosaurs to the farm and your personal profitability calculation will appear here.", "Додайте динозаврів на ферму, і тут з'явиться персональний розрахунок прибутковості.", "Aggiungi dinosauri alla fattoria e qui apparirà il tuo calcolo personale della redditività.", "Ajoutez des dinosaures à la ferme et votre calcul personnel de rentabilité apparaîtra ici.", "Añade dinosaurios a la granja y aquí aparecerá tu cálculo personal de rentabilidad.", "फार्म में डायनासोर जोड़ें और यहाँ आपकी व्यक्तिगत लाभ गणना दिखाई देगी।", "Dodaj dinozaury do farmy, a pojawi się tu Twój indywidualny kalkulator opłacalności.", "Füge Dinosaurier zur Farm hinzu; hier erscheint dann deine persönliche Rentabilitätsberechnung.", "Çiftliğe dinozor ekleyin; kişisel kazanç hesabınız burada görünecek."],
+  ["Это расчёт по текущему составу вашей фермы и установленной игровой экономике.", "This calculation uses your current farm composition and the configured game economy.", "Цей розрахунок базується на поточному складі вашої ферми та встановленій ігровій економіці.", "Questo calcolo usa la composizione attuale della fattoria e l'economia di gioco impostata.", "Ce calcul utilise la composition actuelle de votre ferme et l'économie du jeu configurée.", "Este cálculo usa la composición actual de tu granja y la economía configurada del juego.", "यह गणना आपके वर्तमान फार्म और सेट की गई गेम अर्थव्यवस्था पर आधारित है।", "To wyliczenie bazuje na aktualnym składzie farmy i ustawionej ekonomii gry.", "Diese Berechnung basiert auf deiner aktuellen Farm und der eingestellten Spielökonomie.", "Bu hesap mevcut çiftlik yapınız ve ayarlı oyun ekonomisine dayanır."],
+  ["Два одинаковых динозавра объединяются в один следующего уровня.", "Two identical dinosaurs merge into one dinosaur of the next level.", "Два однакові динозаври об'єднуються в одного динозавра наступного рівня.", "Due dinosauri uguali si uniscono in un dinosauro del livello successivo.", "Deux dinosaures identiques fusionnent en un dinosaure du niveau suivant.", "Dos dinosaurios iguales se combinan en uno del siguiente nivel.", "दो एक जैसे डायनासोर मिलकर अगले स्तर का एक डायनासोर बनाते हैं।", "Dwa identyczne dinozaury łączą się w jednego dinozaura następnego poziomu.", "Zwei gleiche Dinosaurier verschmelzen zu einem Dinosaurier des nächsten Levels.", "İki aynı dinozor birleşerek bir sonraki seviyeden tek dinozor olur."],
+  ["Merge оплачивается Coins.", "Merge is paid with Coins.", "Merge оплачується Coins.", "Il merge si paga in Coins.", "La fusion est payée en Coins.", "El merge se paga con Coins.", "Merge का भुगतान Coins से होता है।", "Merge jest opłacany w Coins.", "Merge wird mit Coins bezahlt.", "Merge ücreti Coins ile ödenir."],
+  ["Награды за задания выдаются только в Coins. DNA за задания не начисляется.", "Task rewards are paid only in Coins. Tasks do not award DNA.", "Нагороди за завдання видаються лише в Coins. DNA за завдання не нараховується.", "Le ricompense delle missioni sono solo in Coins. Le missioni non danno DNA.", "Les récompenses des tâches sont uniquement en Coins. Les tâches ne donnent pas de DNA.", "Las recompensas de tareas se pagan solo en Coins. Las tareas no otorgan DNA.", "टास्क के पुरस्कार केवल Coins में मिलते हैं। टास्क से DNA नहीं मिलता।", "Nagrody za zadania są wypłacane tylko w Coins. Zadania nie dają DNA.", "Aufgabenbelohnungen werden nur in Coins ausgezahlt. Aufgaben geben keine DNA.", "Görev ödülleri yalnızca Coins olarak verilir. Görevlerden DNA kazanılmaz."],
+  ["Каждая награда выдаётся только один раз.", "Each reward can be claimed only once.", "Кожна нагорода видається лише один раз.", "Ogni ricompensa può essere riscattata una sola volta.", "Chaque récompense ne peut être récupérée qu'une seule fois.", "Cada recompensa solo puede reclamarse una vez.", "हर पुरस्कार केवल एक बार लिया जा सकता है।", "Każdą nagrodę można odebrać tylko raz.", "Jede Belohnung kann nur einmal abgeholt werden.", "Her ödül yalnızca bir kez alınabilir."],
+  ["Условия проверяются на сервере.", "Conditions are checked on the server.", "Умови перевіряються на сервері.", "Le condizioni vengono verificate sul server.", "Les conditions sont vérifiées sur le serveur.", "Las condiciones se verifican en el servidor.", "शर्तें सर्वर पर जाँची जाती हैं।", "Warunki są sprawdzane na serwerze.", "Bedingungen werden auf dem Server geprüft.", "Koşullar sunucuda kontrol edilir."],
+  ["Достижения начисляют только Coins — DNA здесь не выдаётся.", "Achievements award only Coins — no DNA is granted here.", "Досягнення дають лише Coins — DNA тут не нараховується.", "Gli obiettivi danno solo Coins — qui non viene assegnato DNA.", "Les succès donnent uniquement des Coins — aucun DNA n'est attribué ici.", "Los logros otorgan solo Coins; aquí no se entrega DNA.", "Achievements से केवल Coins मिलते हैं — यहाँ DNA नहीं दिया जाता।", "Osiągnięcia dają tylko Coins — DNA nie jest tu przyznawane.", "Erfolge geben nur Coins — hier wird keine DNA vergeben.", "Başarımlar yalnızca Coins verir — burada DNA verilmez."],
+  ["Награда выдаётся только в Coins.", "The reward is paid only in Coins.", "Нагорода видається лише в Coins.", "La ricompensa viene pagata solo in Coins.", "La récompense est versée uniquement en Coins.", "La recompensa se paga solo en Coins.", "पुरस्कार केवल Coins में मिलता है।", "Nagroda jest wypłacana tylko w Coins.", "Die Belohnung wird nur in Coins ausgezahlt.", "Ödül yalnızca Coins olarak verilir."],
+  ["Новый бонус доступен через 24 часа.", "A new reward is available after 24 hours.", "Новий бонус доступний через 24 години.", "Un nuovo bonus è disponibile dopo 24 ore.", "Un nouveau bonus est disponible après 24 heures.", "Un nuevo bono está disponible después de 24 horas.", "नया बोनस 24 घंटे बाद उपलब्ध होता है।", "Nowy bonus jest dostępny po 24 godzinach.", "Ein neuer Bonus ist nach 24 Stunden verfügbar.", "Yeni bonus 24 saat sonra kullanılabilir."],
+  ["Если пропустить более 48 часов, серия начинается с первого дня.", "If more than 48 hours are missed, the streak restarts from day one.", "Якщо пропустити понад 48 годин, серія починається з першого дня.", "Se salti più di 48 ore, la serie riparte dal primo giorno.", "Si vous manquez plus de 48 heures, la série recommence au jour 1.", "Si pasan más de 48 horas, la racha vuelve al día 1.", "48 घंटे से अधिक चूकने पर स्ट्रीक पहले दिन से शुरू होगी।", "Jeśli minie ponad 48 godzin, seria zaczyna się od pierwszego dnia.", "Bei mehr als 48 Stunden Pause startet die Serie wieder bei Tag 1.", "48 saatten fazla kaçırırsanız seri 1. günden başlar."],
+  ["Сетевая комиссия оплачивается проектом", "Network fee is paid by the project", "Мережева комісія оплачується проєктом", "La commissione di rete è pagata dal progetto", "Les frais de réseau sont payés par le projet", "La comisión de red la paga el proyecto", "नेटवर्क शुल्क प्रोजेक्ट द्वारा दिया जाता है", "Opłatę sieciową pokrywa projekt", "Die Netzwerkgebühr wird vom Projekt bezahlt", "Ağ ücreti proje tarafından ödenir"],
+  ["На кошелёк игрок получает полностью указанную сумму USDT.", "The player receives the full stated USDT amount in the wallet.", "На гаманець гравець отримує повну зазначену суму USDT.", "Il giocatore riceve sul wallet l'intero importo USDT indicato.", "Le joueur reçoit le montant USDT indiqué en totalité sur son portefeuille.", "El jugador recibe en su wallet el importe completo indicado en USDT.", "खिलाड़ी को वॉलेट में पूरी बताई गई USDT राशि मिलती है।", "Gracz otrzymuje na portfel pełną wskazaną kwotę USDT.", "Der Spieler erhält den vollständig angegebenen USDT-Betrag auf die Wallet.", "Oyuncu cüzdanına belirtilen USDT tutarının tamamını alır."],
+  ["Статус активной заявки обновляется автоматически примерно каждые 15 секунд.", "The active request status updates automatically about every 15 seconds.", "Статус активної заявки оновлюється автоматично приблизно кожні 15 секунд.", "Lo stato della richiesta attiva si aggiorna automaticamente circa ogni 15 secondi.", "Le statut de la demande active est mis à jour automatiquement environ toutes les 15 secondes.", "El estado de la solicitud activa se actualiza automáticamente aproximadamente cada 15 segundos.", "सक्रिय अनुरोध की स्थिति लगभग हर 15 सेकंड में अपने आप अपडेट होती है।", "Status aktywnego wniosku odświeża się automatycznie mniej więcej co 15 sekund.", "Der Status des aktiven Antrags wird etwa alle 15 Sekunden automatisch aktualisiert.", "Aktif talebin durumu yaklaşık her 15 saniyede otomatik güncellenir."],
+  ["DNA резервируется сразу после создания заявки.", "DNA is reserved immediately after the request is created.", "DNA резервується одразу після створення заявки.", "Il DNA viene riservato subito dopo la creazione della richiesta.", "Le DNA est réservé immédiatement après la création de la demande.", "El DNA se reserva inmediatamente después de crear la solicitud.", "अनुरोध बनते ही DNA रिज़र्व हो जाता है।", "DNA jest rezerwowane od razu po utworzeniu wniosku.", "DNA wird direkt nach Erstellung des Antrags reserviert.", "Talep oluşturulur oluşturulmaz DNA rezerve edilir."],
+  ["После первого вывода заявка появится здесь вместе со статусом и суммой.", "After your first withdrawal, the request will appear here with its status and amount.", "Після першого виведення заявка з'явиться тут разом зі статусом і сумою.", "Dopo il primo prelievo, la richiesta apparirà qui con stato e importo.", "Après votre premier retrait, la demande apparaîtra ici avec son statut et son montant.", "Después del primer retiro, la solicitud aparecerá aquí con su estado e importe.", "पहली निकासी के बाद अनुरोध यहाँ स्थिति और राशि के साथ दिखाई देगा।", "Po pierwszej wypłacie wniosek pojawi się tutaj wraz ze statusem i kwotą.", "Nach der ersten Auszahlung erscheint der Antrag hier mit Status und Betrag.", "İlk çekimden sonra talep burada durumu ve tutarıyla görünecek."],
+  ["Заявка ожидает автоматической проверки и выплаты.", "The request is awaiting automatic review and payout.", "Заявка очікує автоматичної перевірки та виплати.", "La richiesta è in attesa di verifica e pagamento automatici.", "La demande attend la vérification et le paiement automatiques.", "La solicitud está esperando revisión y pago automáticos.", "अनुरोध स्वचालित जाँच और भुगतान की प्रतीक्षा में है।", "Wniosek oczekuje na automatyczną weryfikację i wypłatę.", "Der Antrag wartet auf automatische Prüfung und Auszahlung.", "Talep otomatik kontrol ve ödeme bekliyor."],
+  ["Заявка одобрена и ожидает отправки USDT.", "The request is approved and awaiting USDT transfer.", "Заявка схвалена й очікує відправлення USDT.", "La richiesta è approvata e attende l'invio di USDT.", "La demande est approuvée et attend l'envoi des USDT.", "La solicitud está aprobada y esperando el envío de USDT.", "अनुरोध स्वीकृत है और USDT भेजे जाने की प्रतीक्षा में है।", "Wniosek został zatwierdzony i oczekuje na wysłanie USDT.", "Der Antrag ist genehmigt und wartet auf die USDT-Überweisung.", "Talep onaylandı ve USDT gönderimini bekliyor."],
+  ["Выплата отправлена на указанный кошелёк.", "The payout was sent to the specified wallet.", "Виплату надіслано на вказаний гаманець.", "Il pagamento è stato inviato al wallet indicato.", "Le paiement a été envoyé au portefeuille indiqué.", "El pago se envió al wallet indicado.", "भुगतान दिए गए वॉलेट पर भेज दिया गया है।", "Wypłata została wysłana na wskazany portfel.", "Die Auszahlung wurde an die angegebene Wallet gesendet.", "Ödeme belirtilen cüzdana gönderildi."],
+  ["Динозавр будет добавлен на свободную клетку.", "The dinosaur will be added to a free slot.", "Динозавра буде додано у вільну клітинку.", "Il dinosauro verrà aggiunto a uno slot libero.", "Le dinosaure sera ajouté à une case libre.", "El dinosaurio se añadirá a una casilla libre.", "डायनासोर को खाली स्लॉट में जोड़ा जाएगा।", "Dinozaur zostanie dodany do wolnego pola.", "Der Dinosaurier wird einem freien Feld hinzugefügt.", "Dinozor boş bir alana eklenecek."],
+  ["Этот уровень уже разблокирован вашим прогрессом merge.", "This level is already unlocked by your merge progress.", "Цей рівень уже розблоковано вашим прогресом merge.", "Questo livello è già sbloccato dai tuoi progressi di merge.", "Ce niveau est déjà débloqué par votre progression de fusion.", "Este nivel ya está desbloqueado por tu progreso de merge.", "यह स्तर आपके merge प्रगति से पहले ही खुल चुका है।", "Ten poziom został już odblokowany dzięki postępowi w merge.", "Dieses Level ist durch deinen Merge-Fortschritt bereits freigeschaltet.", "Bu seviye merge ilerlemenizle zaten açıldı."],
+  ["Coins будут списаны только после подтверждения.", "Coins will be deducted only after confirmation.", "Coins буде списано лише після підтвердження.", "I Coins verranno addebitati solo dopo la conferma.", "Les Coins seront débités uniquement après confirmation.", "Los Coins se descontarán solo después de confirmar.", "पुष्टि के बाद ही Coins काटे जाएंगे।", "Coins zostaną pobrane dopiero po potwierdzeniu.", "Coins werden erst nach der Bestätigung abgezogen.", "Coins yalnızca onaydan sonra düşülür."],
+  ["будут объединены без возможности отмены.", "will be merged and cannot be undone.", "будуть об'єднані без можливості скасування.", "verranno uniti e non sarà possibile annullare.", "seront fusionnés sans possibilité d'annuler.", "se combinarán y no se podrá deshacer.", "मिलाए जाएंगे और इसे वापस नहीं किया जा सकेगा।", "zostaną połączone bez możliwości cofnięcia.", "werden zusammengeführt und können nicht rückgängig gemacht werden.", "birleştirilecek ve işlem geri alınamayacak."],
+  ["Главная навигация", "Main navigation", "Головна навігація", "Navigazione principale", "Navigation principale", "Navegación principal", "मुख्य नेविगेशन", "Główna nawigacja", "Hauptnavigation", "Ana gezinme"],
+  ["Гнездо", "Nest", "Гніздо", "Nido", "Nid", "Nido", "घोंसला", "Gniazdo", "Nest", "Yuva"],
+  ["Игра", "Game", "Гра", "Gioco", "Jeu", "Juego", "खेल", "Gra", "Spiel", "Oyun"],
+  ["Магазин", "Shop", "Магазин", "Negozio", "Boutique", "Tienda", "दुकान", "Sklep", "Shop", "Mağaza"],
+  ["Друзья", "Friends", "Друзі", "Amici", "Amis", "Amigos", "दोस्त", "Znajomi", "Freunde", "Arkadaşlar"],
+  ["Меню", "Menu", "Меню", "Menu", "Menu", "Menú", "मेनू", "Menu", "Menü", "Menü"],
+  ["Мой профиль", "My profile", "Мій профіль", "Il mio profilo", "Mon profil", "Mi perfil", "मेरी प्रोफ़ाइल", "Mój profil", "Mein Profil", "Profilim"],
+  ["История баланса", "Balance history", "Історія балансу", "Cronologia saldo", "Historique du solde", "Historial de saldo", "बैलेंस इतिहास", "Historia salda", "Kontoverlauf", "Bakiye geçmişi"],
+  ["Вывод DNA", "DNA withdrawal", "Виведення DNA", "Prelievo DNA", "Retrait DNA", "Retiro de DNA", "DNA निकासी", "Wypłata DNA", "DNA-Auszahlung", "DNA çekimi"],
+  ["Уровни динозавров", "Dinosaur levels", "Рівні динозаврів", "Livelli dinosauri", "Niveaux des dinosaures", "Niveles de dinosaurios", "डायनासोर स्तर", "Poziomy dinozaurów", "Dinosaurier-Level", "Dinozor seviyeleri"],
+  ["Моя ферма", "My farm", "Моя ферма", "La mia fattoria", "Ma ferme", "Mi granja", "मेरा फार्म", "Moja farma", "Meine Farm", "Çiftliğim"],
+  ["Ежедневный бонус", "Daily reward", "Щоденний бонус", "Bonus giornaliero", "Bonus quotidien", "Bono diario", "दैनिक बोनस", "Bonus dzienny", "Tagesbonus", "Günlük bonus"],
+  ["Задания", "Tasks", "Завдання", "Missioni", "Tâches", "Tareas", "कार्य", "Zadania", "Aufgaben", "Görevler"],
+  ["Достижения", "Achievements", "Досягнення", "Obiettivi", "Succès", "Logros", "उपलब्धियाँ", "Osiągnięcia", "Erfolge", "Başarımlar"],
+  ["Рулетка", "Roulette", "Рулетка", "Roulette", "Roulette", "Ruleta", "रूलेट", "Ruletka", "Roulette", "Rulet"],
+  ["Перезагрузить данные", "Reload data", "Перезавантажити дані", "Ricarica dati", "Recharger les données", "Recargar datos", "डेटा फिर लोड करें", "Odśwież dane", "Daten neu laden", "Verileri yenile"],
+  ["Игровая доска", "Game board", "Ігрове поле", "Plancia di gioco", "Plateau de jeu", "Tablero de juego", "गेम बोर्ड", "Plansza gry", "Spielfeld", "Oyun tahtası"],
+  ["Общее производство", "Total production", "Загальне виробництво", "Produzione totale", "Production totale", "Producción total", "कुल उत्पादन", "Łączna produkcja", "Gesamtproduktion", "Toplam üretim"],
+  ["Магазин динозавров", "Dinosaur shop", "Магазин динозаврів", "Negozio dinosauri", "Boutique de dinosaures", "Tienda de dinosaurios", "डायनासोर दुकान", "Sklep z dinozaurami", "Dinosaurier-Shop", "Dinozor mağazası"],
+  ["Пополнение баланса", "Top up balance", "Поповнення балансу", "Ricarica saldo", "Recharger le solde", "Recargar saldo", "बैलेंस टॉप-अप", "Doładowanie salda", "Guthaben aufladen", "Bakiye yükleme"],
+  ["Стройте ферму вместе", "Build the farm together", "Будуйте ферму разом", "Costruite la fattoria insieme", "Construisez la ferme ensemble", "Construyan la granja juntos", "मिलकर फार्म बनाएं", "Budujcie farmę razem", "Baut die Farm gemeinsam", "Çiftliği birlikte kurun"],
+  ["История пополнений", "Deposit history", "Історія поповнень", "Cronologia ricariche", "Historique des dépôts", "Historial de depósitos", "जमा इतिहास", "Historia wpłat", "Einzahlungsverlauf", "Yükleme geçmişi"],
+  ["История выплат", "Payout history", "Історія виплат", "Cronologia pagamenti", "Historique des paiements", "Historial de pagos", "भुगतान इतिहास", "Historia wypłat", "Auszahlungsverlauf", "Ödeme geçmişi"],
+  ["Пополнение Coins", "Coins deposit", "Поповнення Coins", "Ricarica Coins", "Dépôt de Coins", "Depósito de Coins", "Coins जमा", "Wpłata Coins", "Coin-Einzahlung", "Coins yükleme"],
+  ["Вместимость гнезда", "Nest capacity", "Місткість гнізда", "Capacità del nido", "Capacité du nid", "Capacidad del nido", "घोंसला क्षमता", "Pojemność gniazda", "Nestkapazität", "Yuva kapasitesi"],
+  ["Следующая награда", "Next reward", "Наступна нагорода", "Prossima ricompensa", "Prochaine récompense", "Próxima recompensa", "अगला पुरस्कार", "Następna nagroda", "Nächste Belohnung", "Sonraki ödül"],
+  ["Следующая ступень", "Next tier", "Наступний рівень", "Livello successivo", "Niveau suivant", "Siguiente nivel", "अगला स्तर", "Następny poziom", "Nächste Stufe", "Sonraki seviye"],
+  ["Вместимость", "Capacity", "Місткість", "Capacità", "Capacité", "Capacidad", "क्षमता", "Pojemność", "Kapazität", "Kapasite"],
+  ["Баланс", "Balance", "Баланс", "Saldo", "Solde", "Saldo", "बैलेंस", "Saldo", "Guthaben", "Bakiye"],
+  ["Ваш баланс", "Your balance", "Ваш баланс", "Il tuo saldo", "Votre solde", "Tu saldo", "आपका बैलेंस", "Twoje saldo", "Dein Guthaben", "Bakiyeniz"],
+  ["За день", "Per day", "За день", "Al giorno", "Par jour", "Por día", "प्रति दिन", "Dziennie", "Pro Tag", "Günlük"],
+  ["расчётно", "estimated", "розрахунково", "stimato", "estimé", "estimado", "अनुमानित", "szacunkowo", "geschätzt", "tahmini"],
+  ["Coins / день", "Coins / day", "Coins / день", "Coins / giorno", "Coins / jour", "Coins / día", "Coins / दिन", "Coins / dzień", "Coins / Tag", "Coins / gün"],
+  ["DNA / день", "DNA / day", "DNA / день", "DNA / giorno", "DNA / jour", "DNA / día", "DNA / दिन", "DNA / dzień", "DNA / Tag", "DNA / gün"],
+  ["яиц / час", "eggs / hour", "яєць / год", "uova / ora", "œufs / heure", "huevos / hora", "अंडे / घंटा", "jaj / godz.", "Eier / Stunde", "yumurta / saat"],
+  ["яиц/ч", "eggs/h", "яєць/год", "uova/h", "œufs/h", "huevos/h", "अंडे/घं", "jaj/h", "Eier/h", "yumurta/s"],
+  ["яиц", "eggs", "яєць", "uova", "œufs", "huevos", "अंडे", "jaj", "Eier", "yumurta"],
+  ["СОБРАТЬ ЯЙЦА", "COLLECT EGGS", "ЗІБРАТИ ЯЙЦЯ", "RACCOGLI UOVA", "RAMASSER LES ŒUFS", "RECOGER HUEVOS", "अंडे इकट्ठा करें", "ZBIERZ JAJKA", "EIER SAMMELN", "YUMURTALARI TOPLA"],
+  ["СОБИРАЕМ...", "COLLECTING...", "ЗБИРАЄМО...", "RACCOLTA...", "COLLECTE...", "RECOGIENDO...", "इकट्ठा हो रहा है...", "ZBIERANIE...", "SAMMLE...", "TOPLANIYOR..."],
+  ["УЛУЧШИТЬ ГНЕЗДО", "UPGRADE NEST", "ПОКРАЩИТИ ГНІЗДО", "POTENZIA NIDO", "AMÉLIORER LE NID", "MEJORAR NIDO", "घोंसला अपग्रेड करें", "ULEPSZ GNIAZDO", "NEST VERBESSERN", "YUVAYI GELİŞTİR"],
+  ["Улучшение гнезда", "Nest upgrade", "Покращення гнізда", "Potenziamento nido", "Amélioration du nid", "Mejora del nido", "घोंसला अपग्रेड", "Ulepszenie gniazda", "Nest-Upgrade", "Yuva geliştirme"],
+  ["Загружаем уровни гнезда...", "Loading nest tiers...", "Завантажуємо рівні гнізда...", "Caricamento livelli del nido...", "Chargement des niveaux du nid...", "Cargando niveles del nido...", "घोंसला स्तर लोड हो रहे हैं...", "Ładowanie poziomów gniazda...", "Neststufen werden geladen...", "Yuva seviyeleri yükleniyor..."],
+  ["Не удалось загрузить улучшения.", "Failed to load upgrades.", "Не вдалося завантажити покращення.", "Impossibile caricare i potenziamenti.", "Impossible de charger les améliorations.", "No se pudieron cargar las mejoras.", "अपग्रेड लोड नहीं हो सके।", "Nie udało się wczytać ulepszeń.", "Upgrades konnten nicht geladen werden.", "Geliştirmeler yüklenemedi."],
+  ["ПОВТОРИТЬ", "RETRY", "ПОВТОРИТИ", "RIPROVA", "RÉESSAYER", "REINTENTAR", "फिर कोशिश करें", "SPRÓBUJ PONOWNIE", "ERNEUT VERSUCHEN", "TEKRAR DENE"],
+  ["ПОДТВЕРДИТЬ И СОЗДАТЬ ПЛАТЁЖ", "CONFIRM AND CREATE PAYMENT", "ПІДТВЕРДИТИ Й СТВОРИТИ ПЛАТІЖ", "CONFERMA E CREA PAGAMENTO", "CONFIRMER ET CRÉER LE PAIEMENT", "CONFIRMAR Y CREAR PAGO", "पुष्टि करें और भुगतान बनाएं", "POTWIERDŹ I UTWÓRZ PŁATNOŚĆ", "BESTÄTIGEN UND ZAHLUNG ERSTELLEN", "ONAYLA VE ÖDEME OLUŞTUR"],
+  ["ПРОДОЛЖИТЬ К ОПЛАТЕ", "CONTINUE TO PAYMENT", "ПРОДОВЖИТИ ДО ОПЛАТИ", "CONTINUA AL PAGAMENTO", "CONTINUER VERS LE PAIEMENT", "CONTINUAR AL PAGO", "भुगतान पर जाएं", "PRZEJDŹ DO PŁATNOŚCI", "WEITER ZUR ZAHLUNG", "ÖDEMEYE DEVAM ET"],
+  ["ПОДТВЕРЖДЕНИЕ ОПЛАТЫ", "PAYMENT CONFIRMATION", "ПІДТВЕРДЖЕННЯ ОПЛАТИ", "CONFERMA PAGAMENTO", "CONFIRMATION DU PAIEMENT", "CONFIRMACIÓN DE PAGO", "भुगतान पुष्टि", "POTWIERDZENIE PŁATNOŚCI", "ZAHLUNGSBESTÄTIGUNG", "ÖDEME ONAYI"],
+  ["Создать платёж?", "Create payment?", "Створити платіж?", "Creare il pagamento?", "Créer le paiement ?", "¿Crear pago?", "भुगतान बनाएं?", "Utworzyć płatność?", "Zahlung erstellen?", "Ödeme oluşturulsun mu?"],
+  ["Выбранный способ", "Selected method", "Вибраний спосіб", "Metodo selezionato", "Méthode sélectionnée", "Método seleccionado", "चुना गया तरीका", "Wybrana metoda", "Gewählte Methode", "Seçilen yöntem"],
+  ["Получите", "You receive", "Отримаєте", "Riceverai", "Vous recevez", "Recibirás", "आपको मिलेगा", "Otrzymasz", "Du erhältst", "Alacaksınız"],
+  ["Включён бонус первого пополнения:", "First deposit bonus enabled:", "Увімкнено бонус першого поповнення:", "Bonus primo deposito attivo:", "Bonus de premier dépôt activé :", "Bono de primer depósito activado:", "पहली जमा बोनस सक्रिय:", "Bonus za pierwszą wpłatę aktywny:", "Bonus für erste Einzahlung aktiv:", "İlk yükleme bonusu aktif:"],
+  ["Текущий платёж", "Current payment", "Поточний платіж", "Pagamento corrente", "Paiement actuel", "Pago actual", "वर्तमान भुगतान", "Bieżąca płatność", "Aktuelle Zahlung", "Mevcut ödeme"],
+  ["Отправить точно", "Send exactly", "Надіслати точно", "Invia esattamente", "Envoyer exactement", "Enviar exactamente", "ठीक इतना भेजें", "Wyślij dokładnie", "Genau senden", "Tam olarak gönder"],
+  ["СКОПИРОВАТЬ СУММУ", "COPY AMOUNT", "СКОПІЮВАТИ СУМУ", "COPIA IMPORTO", "COPIER LE MONTANT", "COPIAR IMPORTE", "राशि कॉपी करें", "KOPIUJ KWOTĘ", "BETRAG KOPIEREN", "TUTARI KOPYALA"],
+  ["СКОПИРОВАТЬ АДРЕС", "COPY ADDRESS", "СКОПІЮВАТИ АДРЕСУ", "COPIA INDIRIZZO", "COPIER L'ADRESSE", "COPIAR DIRECCIÓN", "पता कॉपी करें", "KOPIUJ ADRES", "ADRESSE KOPIEREN", "ADRESİ KOPYALA"],
+  ["ПРОВЕРИТЬ СЕЙЧАС", "CHECK NOW", "ПЕРЕВІРИТИ ЗАРАЗ", "CONTROLLA ORA", "VÉRIFIER MAINTENANT", "COMPROBAR AHORA", "अभी जाँचें", "SPRAWDŹ TERAZ", "JETZT PRÜFEN", "ŞİMDİ KONTROL ET"],
+  ["Как начисляются Coins", "How Coins are credited", "Як нараховуються Coins", "Come vengono accreditati i Coins", "Comment les Coins sont crédités", "Cómo se acreditan los Coins", "Coins कैसे जमा होते हैं", "Jak naliczane są Coins", "Wie Coins gutgeschrieben werden", "Coins nasıl eklenir"],
+  ["ПРИГЛАСИТЬ ДРУГА", "INVITE A FRIEND", "ЗАПРОСИТИ ДРУГА", "INVITA UN AMICO", "INVITER UN AMI", "INVITAR A UN AMIGO", "दोस्त को आमंत्रित करें", "ZAPROŚ ZNAJOMEGO", "FREUND EINLADEN", "ARKADAŞ DAVET ET"],
+  ["Приглашено", "Invited", "Запрошено", "Invitati", "Invités", "Invitados", "आमंत्रित", "Zaproszono", "Eingeladen", "Davet edilen"],
+  ["Бонус за друга", "Friend bonus", "Бонус за друга", "Bonus amico", "Bonus ami", "Bono por amigo", "दोस्त बोनस", "Bonus za znajomego", "Freundesbonus", "Arkadaş bonusu"],
+  ["Начислено", "Earned", "Нараховано", "Accreditato", "Crédité", "Acreditado", "जमा", "Naliczono", "Gutgeschrieben", "Kazanılan"],
+  ["Последние приглашённые", "Recent invites", "Останні запрошені", "Inviti recenti", "Invitations récentes", "Invitaciones recientes", "हाल के आमंत्रण", "Ostatnio zaproszeni", "Letzte Einladungen", "Son davetler"],
+  ["Операций пока нет", "No operations yet", "Операцій поки немає", "Nessuna operazione", "Aucune opération pour le moment", "Aún no hay operaciones", "अभी कोई लेनदेन नहीं", "Brak operacji", "Noch keine Vorgänge", "Henüz işlem yok"],
+  ["Пополнено", "Deposited", "Поповнено", "Depositato", "Déposé", "Depositado", "जमा", "Wpłacono", "Eingezahlt", "Yüklendi"],
+  ["Выплачено", "Paid out", "Виплачено", "Pagato", "Payé", "Pagado", "भुगतान किया", "Wypłacono", "Ausgezahlt", "Ödendi"],
+  ["Бонусные Coins", "Bonus Coins", "Бонусні Coins", "Coins bonus", "Coins bonus", "Coins de bonificación", "बोनस Coins", "Bonusowe Coins", "Bonus-Coins", "Bonus Coins"],
+  ["Сумма", "Amount", "Сума", "Importo", "Montant", "Importe", "राशि", "Kwota", "Betrag", "Tutar"],
+  ["Бонус", "Bonus", "Бонус", "Bonus", "Bonus", "Bono", "बोनस", "Bonus", "Bonus", "Bonus"],
+  ["К выплате", "Payout", "До виплати", "Da pagare", "À payer", "A pagar", "भुगतान", "Do wypłaty", "Auszahlung", "Ödenecek"],
+  ["Сеть", "Network", "Мережа", "Rete", "Réseau", "Red", "नेटवर्क", "Sieć", "Netzwerk", "Ağ"],
+  ["Ферма", "Farm", "Ферма", "Fattoria", "Ferme", "Granja", "फार्म", "Farma", "Farm", "Çiftlik"],
+  ["Производство", "Production", "Виробництво", "Produzione", "Production", "Producción", "उत्पादन", "Produkcja", "Produktion", "Üretim"],
+  ["Собрано яиц всего", "Total eggs collected", "Усього зібрано яєць", "Uova raccolte totali", "Total d'œufs collectés", "Total de huevos recogidos", "कुल इकट्ठे अंडे", "Łącznie zebrane jaja", "Gesammelte Eier gesamt", "Toplam toplanan yumurta"],
+  ["Экв. стоимость фермы", "Equivalent farm cost", "Екв. вартість ферми", "Costo equivalente fattoria", "Coût équivalent de la ferme", "Coste equivalente de la granja", "समतुल्य फार्म लागत", "Równowartość kosztu farmy", "Äquivalente Farmkosten", "Eşdeğer çiftlik maliyeti"],
+  ["Прогресс", "Progress", "Прогрес", "Progressi", "Progression", "Progreso", "प्रगति", "Postęp", "Fortschritt", "İlerleme"],
+  ["Заданий выполнено", "Tasks completed", "Завдань виконано", "Missioni completate", "Tâches terminées", "Tareas completadas", "पूरे किए गए कार्य", "Ukończone zadania", "Aufgaben abgeschlossen", "Tamamlanan görevler"],
+  ["Рефералы", "Referrals", "Реферали", "Referral", "Parrainages", "Referidos", "रेफरल", "Polecenia", "Empfehlungen", "Referanslar"],
+  ["Выплаты", "Payouts", "Виплати", "Pagamenti", "Paiements", "Pagos", "भुगतान", "Wypłaty", "Auszahlungen", "Ödemeler"],
+  ["Коллекция", "Collection", "Колекція", "Collezione", "Collection", "Colección", "संग्रह", "Kolekcja", "Sammlung", "Koleksiyon"],
+  ["Динозавров", "Dinosaurs", "Динозаврів", "Dinosauri", "Dinosaures", "Dinosaurios", "डायनासोर", "Dinozaury", "Dinosaurier", "Dinozorlar"],
+  ["Макс. уровень", "Max level", "Макс. рівень", "Livello max", "Niveau max", "Nivel máx.", "अधिकतम स्तर", "Maks. poziom", "Max. Level", "Maks. seviye"],
+  ["Теоретическая стоимость фермы", "Theoretical farm cost", "Теоретична вартість ферми", "Costo teorico fattoria", "Coût théorique de la ferme", "Coste teórico de la granja", "सैद्धांतिक फार्म लागत", "Teoretyczny koszt farmy", "Theoretische Farmkosten", "Teorik çiftlik maliyeti"],
+  ["Coins-окупаемость", "Coins payback", "Coins-окупність", "Rientro Coins", "Rentabilité Coins", "Retorno Coins", "Coins पेबैक", "Zwrot w Coins", "Coins-Amortisation", "Coins geri dönüşü"],
+  ["Состав фермы", "Farm composition", "Склад ферми", "Composizione fattoria", "Composition de la ferme", "Composición de la granja", "फार्म संरचना", "Skład farmy", "Farmzusammensetzung", "Çiftlik yapısı"],
+  ["Окупаемость", "Payback", "Окупність", "Rientro", "Rentabilité", "Retorno", "पेबैक", "Zwrot", "Amortisation", "Geri dönüş"],
+  ["Полная экв. стоимость", "Full equivalent cost", "Повна екв. вартість", "Costo equivalente totale", "Coût équivalent total", "Coste equivalente total", "पूर्ण समतुल्य लागत", "Pełny koszt równoważny", "Vollständige äquivalente Kosten", "Tam eşdeğer maliyet"],
+  ["Для merge", "For merge", "Для merge", "Per il merge", "Pour la fusion", "Para merge", "Merge के लिए", "Do merge", "Für Merge", "Merge için"],
+  ["ОТКРЫТ", "UNLOCKED", "ВІДКРИТО", "SBLOCCATO", "DÉBLOQUÉ", "DESBLOQUEADO", "खुला", "ODBLOKOWANY", "FREIGESCHALTET", "AÇIK"],
+  ["НЕ ОТКРЫТ", "LOCKED", "НЕ ВІДКРИТО", "BLOCCATO", "VERROUILLÉ", "BLOQUEADO", "बंद", "ZABLOKOWANY", "GESPERRT", "KİLİTLİ"],
+  ["Получено", "Claimed", "Отримано", "Riscattato", "Récupéré", "Reclamado", "प्राप्त", "Odebrano", "Abgeholt", "Alındı"],
+  ["Можно забрать", "Ready to claim", "Можна забрати", "Da riscattare", "À récupérer", "Listo para reclamar", "ले सकते हैं", "Do odebrania", "Abholbereit", "Alınabilir"],
+  ["ПОЛУЧЕНО", "CLAIMED", "ОТРИМАНО", "RISCATTATO", "RÉCUPÉRÉ", "RECLAMADO", "प्राप्त", "ODEBRANO", "ABGEHOLT", "ALINDI"],
+  ["ЗАБРАТЬ", "CLAIM", "ЗАБРАТИ", "RISCATTA", "RÉCUPÉRER", "RECLAMAR", "लेें", "ODBIERZ", "ABHOLEN", "AL"],
+  ["В процессе", "In progress", "У процесі", "In corso", "En cours", "En progreso", "प्रगति में", "W trakcie", "In Arbeit", "Devam ediyor"],
+  ["Серия", "Streak", "Серія", "Serie", "Série", "Racha", "स्ट्रीक", "Seria", "Serie", "Seri"],
+  ["Доступно", "Available", "Доступно", "Disponibile", "Disponible", "Disponible", "उपलब्ध", "Dostępne", "Verfügbar", "Mevcut"],
+  ["Минимум", "Minimum", "Мінімум", "Minimo", "Minimum", "Mínimo", "न्यूनतम", "Minimum", "Minimum", "Minimum"],
+  ["Курс", "Rate", "Курс", "Tasso", "Taux", "Tasa", "दर", "Kurs", "Kurs", "Kur"],
+  ["Количество DNA", "DNA amount", "Кількість DNA", "Quantità DNA", "Montant DNA", "Cantidad de DNA", "DNA राशि", "Ilość DNA", "DNA-Menge", "DNA miktarı"],
+  ["Сеть USDT", "USDT network", "Мережа USDT", "Rete USDT", "Réseau USDT", "Red USDT", "USDT नेटवर्क", "Sieć USDT", "USDT-Netzwerk", "USDT ağı"],
+  ["Адрес USDT-кошелька", "USDT wallet address", "Адреса USDT-гаманця", "Indirizzo wallet USDT", "Adresse du portefeuille USDT", "Dirección de wallet USDT", "USDT वॉलेट पता", "Adres portfela USDT", "USDT-Wallet-Adresse", "USDT cüzdan adresi"],
+  ["К получению", "You receive", "До отримання", "Da ricevere", "À recevoir", "A recibir", "प्राप्त होगा", "Do otrzymania", "Zu erhalten", "Alınacak"],
+  ["ЗАПРОСИТЬ ВЫПЛАТУ", "REQUEST PAYOUT", "ЗАПРОСИТИ ВИПЛАТУ", "RICHIEDI PAGAMENTO", "DEMANDER LE PAIEMENT", "SOLICITAR PAGO", "भुगतान का अनुरोध करें", "ZLEĆ WYPŁATĘ", "AUSZAHLUNG ANFORDERN", "ÖDEME TALEP ET"],
+  ["Заявок пока нет", "No requests yet", "Заявок поки немає", "Nessuna richiesta", "Aucune demande pour le moment", "Aún no hay solicitudes", "अभी कोई अनुरोध नहीं", "Brak wniosków", "Noch keine Anträge", "Henüz talep yok"],
+  ["Дата", "Date", "Дата", "Data", "Date", "Fecha", "तारीख", "Data", "Datum", "Tarih"],
+  ["Кошелёк", "Wallet", "Гаманець", "Wallet", "Portefeuille", "Wallet", "वॉलेट", "Portfel", "Wallet", "Cüzdan"],
+  ["ОТМЕНИТЬ ЗАЯВКУ", "CANCEL REQUEST", "СКАСУВАТИ ЗАЯВКУ", "ANNULLA RICHIESTA", "ANNULER LA DEMANDE", "CANCELAR SOLICITUD", "अनुरोध रद्द करें", "ANULUJ WNIOSEK", "ANTRAG STORNIEREN", "TALEBİ İPTAL ET"],
+  ["Подтвердить покупку?", "Confirm purchase?", "Підтвердити покупку?", "Confermare l'acquisto?", "Confirmer l'achat ?", "¿Confirmar compra?", "खरीद की पुष्टि करें?", "Potwierdzić zakup?", "Kauf bestätigen?", "Satın alma onaylansın mı?"],
+  ["Стоимость", "Cost", "Вартість", "Costo", "Coût", "Coste", "लागत", "Koszt", "Kosten", "Maliyet"],
+  ["Баланс после покупки", "Balance after purchase", "Баланс після покупки", "Saldo dopo l'acquisto", "Solde après achat", "Saldo después de la compra", "खरीद के बाद बैलेंस", "Saldo po zakupie", "Guthaben nach Kauf", "Satın alma sonrası bakiye"],
+  ["ОТМЕНА", "CANCEL", "СКАСУВАТИ", "ANNULLA", "ANNULER", "CANCELAR", "रद्द करें", "ANULUJ", "ABBRECHEN", "İPTAL"],
+  ["ПОДТВЕРДИТЬ", "CONFIRM", "ПІДТВЕРДИТИ", "CONFERMA", "CONFIRMER", "CONFIRMAR", "पुष्टि करें", "POTWIERDŹ", "BESTÄTIGEN", "ONAYLA"],
+  ["Подтвердить merge?", "Confirm merge?", "Підтвердити merge?", "Confermare il merge?", "Confirmer la fusion ?", "¿Confirmar merge?", "Merge की पुष्टि करें?", "Potwierdzić merge?", "Merge bestätigen?", "Merge onaylansın mı?"],
+  ["Получите Lv.", "You get Lv.", "Отримаєте Lv.", "Riceverai Lv.", "Vous obtenez Lv.", "Obtendrás Lv.", "आपको Lv. मिलेगा", "Otrzymasz Lv.", "Du erhältst Lv.", "Lv. alacaksınız"],
+  ["Комиссия", "Fee", "Комісія", "Commissione", "Frais", "Comisión", "शुल्क", "Opłata", "Gebühr", "Ücret"],
+  ["Доступен сейчас", "Available now", "Доступний зараз", "Disponibile ora", "Disponible maintenant", "Disponible ahora", "अभी उपलब्ध", "Dostępne teraz", "Jetzt verfügbar", "Şimdi mevcut"],
+  ["Ожидает проверки", "Pending review", "Очікує перевірки", "In attesa di verifica", "En attente de vérification", "Pendiente de revisión", "जाँच की प्रतीक्षा", "Oczekuje na weryfikację", "Wartet auf Prüfung", "Kontrol bekliyor"],
+  ["Одобрено", "Approved", "Схвалено", "Approvato", "Approuvé", "Aprobado", "स्वीकृत", "Zatwierdzono", "Genehmigt", "Onaylandı"],
+  ["Оплачено", "Paid", "Оплачено", "Pagato", "Payé", "Pagado", "भुगतान किया गया", "Opłacono", "Bezahlt", "Ödendi"],
+  ["Отменено · DNA возвращена", "Canceled · DNA returned", "Скасовано · DNA повернено", "Annullato · DNA restituito", "Annulé · DNA restitué", "Cancelado · DNA devuelto", "रद्द · DNA वापस", "Anulowano · DNA zwrócone", "Storniert · DNA zurück", "İptal edildi · DNA iade edildi"],
+  ["Отклонено · DNA возвращена", "Rejected · DNA returned", "Відхилено · DNA повернено", "Rifiutato · DNA restituito", "Refusé · DNA restitué", "Rechazado · DNA devuelto", "अस्वीकृत · DNA वापस", "Odrzucono · DNA zwrócone", "Abgelehnt · DNA zurück", "Reddedildi · DNA iade edildi"],
+  ["Зачислено", "Credited", "Зараховано", "Accreditato", "Crédité", "Acreditado", "जमा", "Zaksięgowano", "Gutgeschrieben", "Hesaba geçti"],
+  ["Ошибка", "Error", "Помилка", "Errore", "Erreur", "Error", "त्रुटि", "Błąd", "Fehler", "Hata"],
+  ["Истёк", "Expired", "Закінчився", "Scaduto", "Expiré", "Caducado", "समाप्त", "Wygasło", "Abgelaufen", "Süresi doldu"],
+  ["Возвращено", "Refunded", "Повернено", "Rimborsato", "Remboursé", "Reembolsado", "वापस किया", "Zwrócono", "Erstattet", "İade edildi"],
+  ["Частично оплачено", "Partially paid", "Частково оплачено", "Pagato parzialmente", "Partiellement payé", "Pagado parcialmente", "आंशिक भुगतान", "Częściowo opłacone", "Teilweise bezahlt", "Kısmen ödendi"],
+  ["Подтверждается", "Confirming", "Підтверджується", "In conferma", "Confirmation en cours", "Confirmando", "पुष्टि हो रही है", "Potwierdzanie", "Wird bestätigt", "Onaylanıyor"],
+  ["Ожидает оплату", "Awaiting payment", "Очікує оплату", "In attesa di pagamento", "En attente de paiement", "Esperando pago", "भुगतान की प्रतीक्षा", "Oczekuje na płatność", "Wartet auf Zahlung", "Ödeme bekliyor"],
+  ["Отклонено", "Rejected", "Відхилено", "Rifiutato", "Refusé", "Rechazado", "अस्वीकृत", "Odrzucono", "Abgelehnt", "Reddedildi"],
+  ["На проверке", "Under review", "На перевірці", "In verifica", "En vérification", "En revisión", "जाँच में", "W trakcie weryfikacji", "In Prüfung", "İnceleniyor"],
+  ["Дата неизвестна", "Unknown date", "Дата невідома", "Data sconosciuta", "Date inconnue", "Fecha desconocida", "अज्ञात तारीख", "Nieznana data", "Unbekanntes Datum", "Tarih bilinmiyor"],
+  ["Не удалось загрузить магазин", "Failed to load shop", "Не вдалося завантажити магазин", "Impossibile caricare il negozio", "Impossible de charger la boutique", "No se pudo cargar la tienda", "दुकान लोड नहीं हो सकी", "Nie udało się wczytać sklepu", "Shop konnte nicht geladen werden", "Mağaza yüklenemedi"],
+  ["Загружаем товары...", "Loading items...", "Завантажуємо товари...", "Caricamento articoli...", "Chargement des articles...", "Cargando artículos...", "आइटम लोड हो रहे हैं...", "Ładowanie produktów...", "Artikel werden geladen...", "Ürünler yükleniyor..."],
+  ["Загружаем способы оплаты...", "Loading payment methods...", "Завантажуємо способи оплати...", "Caricamento metodi di pagamento...", "Chargement des moyens de paiement...", "Cargando métodos de pago...", "भुगतान तरीके लोड हो रहे हैं...", "Ładowanie metod płatności...", "Zahlungsmethoden werden geladen...", "Ödeme yöntemleri yükleniyor..."],
+  ["Откройте игру через Telegram", "Open the game through Telegram", "Відкрийте гру через Telegram", "Apri il gioco tramite Telegram", "Ouvrez le jeu via Telegram", "Abre el juego desde Telegram", "गेम Telegram में खोलें", "Otwórz grę przez Telegram", "Öffne das Spiel über Telegram", "Oyunu Telegram üzerinden açın"],
+  ["Криптоплатежи ещё не подключены", "Crypto payments are not connected yet", "Криптоплатежі ще не підключені", "I pagamenti crypto non sono ancora collegati", "Les paiements crypto ne sont pas encore connectés", "Los pagos cripto aún no están conectados", "क्रिप्टो भुगतान अभी कनेक्ट नहीं हैं", "Płatności krypto nie są jeszcze podłączone", "Krypto-Zahlungen sind noch nicht verbunden", "Kripto ödemeler henüz bağlı değil"],
+  ["Загружаем вашу реферальную ссылку...", "Loading your referral link...", "Завантажуємо ваше реферальне посилання...", "Caricamento del tuo link referral...", "Chargement de votre lien de parrainage...", "Cargando tu enlace de referido...", "आपका रेफरल लिंक लोड हो रहा है...", "Ładowanie linku polecającego...", "Referral-Link wird geladen...", "Referans bağlantınız yükleniyor..."],
+  ["Загружаем операции...", "Loading operations...", "Завантажуємо операції...", "Caricamento operazioni...", "Chargement des opérations...", "Cargando operaciones...", "लेनदेन लोड हो रहे हैं...", "Ładowanie operacji...", "Vorgänge werden geladen...", "İşlemler yükleniyor..."],
+  ["Не удалось загрузить историю", "Failed to load history", "Не вдалося завантажити історію", "Impossibile caricare la cronologia", "Impossible de charger l'historique", "No se pudo cargar el historial", "इतिहास लोड नहीं हो सका", "Nie udało się wczytać historii", "Verlauf konnte nicht geladen werden", "Geçmiş yüklenemedi"],
+  ["Загружаем профиль...", "Loading profile...", "Завантажуємо профіль...", "Caricamento profilo...", "Chargement du profil...", "Cargando perfil...", "प्रोफ़ाइल लोड हो रही है...", "Ładowanie profilu...", "Profil wird geladen...", "Profil yükleniyor..."],
+  ["Не удалось загрузить профиль.", "Failed to load profile.", "Не вдалося завантажити профіль.", "Impossibile caricare il profilo.", "Impossible de charger le profil.", "No se pudo cargar el perfil.", "प्रोफ़ाइल लोड नहीं हो सकी।", "Nie udało się wczytać profilu.", "Profil konnte nicht geladen werden.", "Profil yüklenemedi."],
+  ["На доске пока нет динозавров", "There are no dinosaurs on the board yet", "На полі поки немає динозаврів", "Non ci sono ancora dinosauri sulla plancia", "Il n'y a pas encore de dinosaures sur le plateau", "Aún no hay dinosaurios en el tablero", "बोर्ड पर अभी कोई डायनासोर नहीं है", "Na planszy nie ma jeszcze dinozaurów", "Noch keine Dinosaurier auf dem Spielfeld", "Tahtada henüz dinozor yok"],
+  ["Загружаем достижения...", "Loading achievements...", "Завантажуємо досягнення...", "Caricamento obiettivi...", "Chargement des succès...", "Cargando logros...", "उपलब्धियाँ लोड हो रही हैं...", "Ładowanie osiągnięć...", "Erfolge werden geladen...", "Başarımlar yükleniyor..."],
+  ["Не удалось загрузить достижения.", "Failed to load achievements.", "Не вдалося завантажити досягнення.", "Impossibile caricare gli obiettivi.", "Impossible de charger les succès.", "No se pudieron cargar los logros.", "उपलब्धियाँ लोड नहीं हो सकीं।", "Nie udało się wczytać osiągnięć.", "Erfolge konnten nicht geladen werden.", "Başarımlar yüklenemedi."],
+  ["Достижений пока нет.", "No achievements yet.", "Досягнень поки немає.", "Nessun obiettivo per ora.", "Aucun succès pour le moment.", "Aún no hay logros.", "अभी कोई उपलब्धि नहीं।", "Brak osiągnięć.", "Noch keine Erfolge.", "Henüz başarım yok."],
+  ["Загружаем задания...", "Loading tasks...", "Завантажуємо завдання...", "Caricamento missioni...", "Chargement des tâches...", "Cargando tareas...", "कार्य लोड हो रहे हैं...", "Ładowanie zadań...", "Aufgaben werden geladen...", "Görevler yükleniyor..."],
+  ["Не удалось загрузить задания.", "Failed to load tasks.", "Не вдалося завантажити завдання.", "Impossibile caricare le missioni.", "Impossible de charger les tâches.", "No se pudieron cargar las tareas.", "कार्य लोड नहीं हो सके।", "Nie udało się wczytać zadań.", "Aufgaben konnten nicht geladen werden.", "Görevler yüklenemedi."],
+  ["Заданий пока нет.", "No tasks yet.", "Завдань поки немає.", "Nessuna missione per ora.", "Aucune tâche pour le moment.", "Aún no hay tareas.", "अभी कोई कार्य नहीं।", "Brak zadań.", "Noch keine Aufgaben.", "Henüz görev yok."],
+  ["Загружаем ежедневный бонус...", "Loading daily reward...", "Завантажуємо щоденний бонус...", "Caricamento bonus giornaliero...", "Chargement du bonus quotidien...", "Cargando bono diario...", "दैनिक बोनस लोड हो रहा है...", "Ładowanie bonusu dziennego...", "Tagesbonus wird geladen...", "Günlük bonus yükleniyor..."],
+  ["Не удалось загрузить бонус.", "Failed to load reward.", "Не вдалося завантажити бонус.", "Impossibile caricare il bonus.", "Impossible de charger le bonus.", "No se pudo cargar el bono.", "बोनस लोड नहीं हो सका।", "Nie udało się wczytać bonusu.", "Bonus konnte nicht geladen werden.", "Bonus yüklenemedi."],
+  ["Загружаем параметры вывода...", "Loading withdrawal settings...", "Завантажуємо параметри виведення...", "Caricamento impostazioni prelievo...", "Chargement des paramètres de retrait...", "Cargando ajustes de retiro...", "निकासी सेटिंग लोड हो रही हैं...", "Ładowanie ustawień wypłaty...", "Auszahlungseinstellungen werden geladen...", "Çekim ayarları yükleniyor..."],
+  ["Не удалось загрузить заявки", "Failed to load requests", "Не вдалося завантажити заявки", "Impossibile caricare le richieste", "Impossible de charger les demandes", "No se pudieron cargar las solicitudes", "अनुरोध लोड नहीं हो सके", "Nie udało się wczytać wniosków", "Anträge konnten nicht geladen werden", "Talepler yüklenemedi"],
+  ["Например: TON / TRC20 / BEP20", "For example: TON / TRC20 / BEP20", "Наприклад: TON / TRC20 / BEP20", "Ad esempio: TON / TRC20 / BEP20", "Par exemple : TON / TRC20 / BEP20", "Por ejemplo: TON / TRC20 / BEP20", "उदाहरण: TON / TRC20 / BEP20", "Na przykład: TON / TRC20 / BEP20", "Zum Beispiel: TON / TRC20 / BEP20", "Örneğin: TON / TRC20 / BEP20"],
+  ["Введите адрес кошелька", "Enter wallet address", "Введіть адресу гаманця", "Inserisci indirizzo wallet", "Saisissez l'adresse du portefeuille", "Introduce la dirección del wallet", "वॉलेट पता दर्ज करें", "Wpisz adres portfela", "Wallet-Adresse eingeben", "Cüzdan adresini girin"],
+  ["Закрыть вывод", "Close withdrawal", "Закрити виведення", "Chiudi prelievo", "Fermer le retrait", "Cerrar retiro", "निकासी बंद करें", "Zamknij wypłatę", "Auszahlung schließen", "Çekimi kapat"],
+  ["Обновить выплаты", "Refresh payouts", "Оновити виплати", "Aggiorna pagamenti", "Actualiser les paiements", "Actualizar pagos", "भुगतान अपडेट करें", "Odśwież wypłaty", "Auszahlungen aktualisieren", "Ödemeleri yenile"],
+  ["Обновить историю", "Refresh history", "Оновити історію", "Aggiorna cronologia", "Actualiser l'historique", "Actualizar historial", "इतिहास अपडेट करें", "Odśwież historię", "Verlauf aktualisieren", "Geçmişi yenile"],
+  ["Закрыть историю", "Close history", "Закрити історію", "Chiudi cronologia", "Fermer l'historique", "Cerrar historial", "इतिहास बंद करें", "Zamknij historię", "Verlauf schließen", "Geçmişi kapat"],
+  ["Закрыть уровни", "Close levels", "Закрити рівні", "Chiudi livelli", "Fermer les niveaux", "Cerrar niveles", "स्तर बंद करें", "Zamknij poziomy", "Level schließen", "Seviyeleri kapat"],
+  ["Подтверждение покупки", "Purchase confirmation", "Підтвердження покупки", "Conferma acquisto", "Confirmation d'achat", "Confirmación de compra", "खरीद पुष्टि", "Potwierdzenie zakupu", "Kaufbestätigung", "Satın alma onayı"],
+  ["Подтверждение merge", "Merge confirmation", "Підтвердження merge", "Conferma merge", "Confirmation de fusion", "Confirmación de merge", "Merge पुष्टि", "Potwierdzenie merge", "Merge-Bestätigung", "Merge onayı"],
+  ["Динозавр уровня", "Dinosaur level", "Динозавр рівня", "Dinosauro livello", "Dinosaure niveau", "Dinosaurio nivel", "डायनासोर स्तर", "Dinozaur poziomu", "Dinosaurier Level", "Dinozor seviyesi"],
+  ["Пустая клетка", "Empty slot", "Порожня клітинка", "Slot vuoto", "Case vide", "Casilla vacía", "खाली स्लॉट", "Puste pole", "Leeres Feld", "Boş alan"],
+  ["Открыто до Lv.", "Unlocked up to Lv.", "Відкрито до Lv.", "Sbloccato fino a Lv.", "Débloqué jusqu'au Lv.", "Desbloqueado hasta Lv.", "Lv. तक खुला ", "Odblokowano do Lv.", "Freigeschaltet bis Lv.", "Lv. seviyesine kadar açık "],
+  ["Lv.1 доступен сразу.", "Lv.1 is available immediately.", "Lv.1 доступний одразу.", "Lv.1 è disponibile subito.", "Lv.1 est disponible immédiatement.", "Lv.1 está disponible de inmediato.", "Lv.1 तुरंत उपलब्ध है।", "Lv.1 jest dostępny od razu.", "Lv.1 ist sofort verfügbar.", "Lv.1 hemen kullanılabilir."],
+  ["ЗАКРЫТО", "LOCKED", "ЗАКРИТО", "BLOCCATO", "VERROUILLÉ", "BLOQUEADO", "बंद", "ZABLOKOWANE", "GESPERRT", "KİLİTLİ"],
+  ["ДИНОЗАВРЫ", "DINOSAURS", "ДИНОЗАВРИ", "DINOSAURI", "DINOSAURES", "DINOSAURIOS", "डायनासोर", "DINOZAURY", "DINOSAURIER", "DİNOZORLAR"],
+  ["ПОПОЛНИТЬ", "TOP UP", "ПОПОВНИТИ", "RICARICA", "RECHARGER", "RECARGAR", "टॉप-अप", "DOŁADUJ", "AUFLADEN", "YÜKLE"],
+  ["НАЗАД", "BACK", "НАЗАД", "INDIETRO", "RETOUR", "ATRÁS", "वापस", "WSTECZ", "ZURÜCK", "GERİ"],
+  ["Статус", "Status", "Статус", "Stato", "Statut", "Estado", "स्थिति", "Status", "Status", "Durum"],
+  ["Адрес", "Address", "Адреса", "Indirizzo", "Adresse", "Dirección", "पता", "Adres", "Adresse", "Adres"],
+  ["Сетевая комиссия", "Network fee", "Мережева комісія", "Commissione di rete", "Frais de réseau", "Comisión de red", "नेटवर्क शुल्क", "Opłata sieciowa", "Netzwerkgebühr", "Ağ ücreti"],
+  ["1 день", "1 day", "1 день", "1 giorno", "1 jour", "1 día", "1 दिन", "1 dzień", "1 Tag", "1 gün"],
+  ["30 дней", "30 days", "30 днів", "30 giorni", "30 jours", "30 días", "30 दिन", "30 dni", "30 Tage", "30 gün"],
+  ["180 дней", "180 days", "180 днів", "180 giorni", "180 jours", "180 días", "180 दिन", "180 dni", "180 Tage", "180 gün"],
+  ["1 год", "1 year", "1 рік", "1 anno", "1 an", "1 año", "1 वर्ष", "1 rok", "1 Jahr", "1 yıl"],
+  ["дней", "days", "днів", "giorni", "jours", "días", "दिन", "dni", "Tage", "gün"],
+  ["без реинвестирования", "without reinvestment", "без реінвестування", "senza reinvestimento", "sans réinvestissement", "sin reinversión", "बिना पुनर्निवेश", "bez reinwestowania", "ohne Reinvestition", "yeniden yatırım olmadan"],
+  ["Telegram подтверждён · данные загружены из Neon ✓", "Telegram verified · data loaded from Neon ✓", "Telegram підтверджено · дані завантажено з Neon ✓", "Telegram verificato · dati caricati da Neon ✓", "Telegram vérifié · données chargées depuis Neon ✓", "Telegram verificado · datos cargados desde Neon ✓", "Telegram सत्यापित · Neon से डेटा लोड ✓", "Telegram potwierdzony · dane wczytane z Neon ✓", "Telegram bestätigt · Daten aus Neon geladen ✓", "Telegram doğrulandı · Neon verileri yüklendi ✓"],
+  ["Demo-режим · данные загружены из Neon ✓", "Demo mode · data loaded from Neon ✓", "Демо-режим · дані завантажено з Neon ✓", "Modalità demo · dati caricati da Neon ✓", "Mode démo · données chargées depuis Neon ✓", "Modo demo · datos cargados desde Neon ✓", "डेमो मोड · Neon से डेटा लोड ✓", "Tryb demo · dane wczytane z Neon ✓", "Demo-Modus · Daten aus Neon geladen ✓", "Demo modu · Neon verileri yüklendi ✓"],
+  ["Auth / Database error", "Auth / Database error", "Помилка Auth / Database", "Errore Auth / Database", "Erreur Auth / Database", "Error Auth / Database", "Auth / Database त्रुटि", "Błąd Auth / Database", "Auth-/Datenbankfehler", "Auth / Database hatası"],
+  ["Level 1 · Telegram", "Level 1 · Telegram", "Рівень 1 · Telegram", "Livello 1 · Telegram", "Niveau 1 · Telegram", "Nivel 1 · Telegram", "स्तर 1 · Telegram", "Poziom 1 · Telegram", "Level 1 · Telegram", "Seviye 1 · Telegram"],
+  ["Level 1 · Demo", "Level 1 · Demo", "Рівень 1 · Demo", "Livello 1 · Demo", "Niveau 1 · Démo", "Nivel 1 · Demo", "स्तर 1 · Demo", "Poziom 1 · Demo", "Level 1 · Demo", "Seviye 1 · Demo"],
+] as const;
+
+const SORTED_UI_TRANSLATION_ROWS = [...UI_TRANSLATION_ROWS].sort(
+  (a, b) => b[0].length - a[0].length,
+);
+
+function isLanguageCode(value: string): value is LanguageCode {
+  return LANGUAGE_OPTIONS.some((item) => item.code === value);
+}
+
+function translateUiString(value: string, language: LanguageCode) {
+  if (language === "ru" || !value.trim()) return value;
+
+  const column = LANGUAGE_COLUMN[language];
+  let translated = value;
+
+  for (const row of SORTED_UI_TRANSLATION_ROWS) {
+    const source = row[0];
+    if (!translated.includes(source)) continue;
+    const replacement = row[column] as string;
+    translated = translated.split(source).join(replacement);
+  }
+
+  return translated;
+}
+
 function getTelegramWebApp(): TelegramWebApp | undefined {
   if (typeof window === "undefined") return undefined;
 
@@ -686,6 +967,161 @@ export default function GameApp() {
   const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
   const [cancelingWithdrawalId, setCancelingWithdrawalId] = useState<string | null>(null);
   const withdrawalStatusRef = useRef<Record<string, string>>({});
+  const [language, setLanguage] = useState<LanguageCode>("ru");
+  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const appRootRef = useRef<HTMLElement | null>(null);
+  const originalUiTextRef = useRef(new WeakMap<Text, string>());
+  const translatedUiTextRef = useRef(new WeakMap<Text, string>());
+  const originalUiAttributeRef = useRef(new WeakMap<Element, Map<string, string>>());
+  const translatedUiAttributeRef = useRef(new WeakMap<Element, Map<string, string>>());
+
+  useEffect(() => {
+    const savedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (savedLanguage && isLanguageCode(savedLanguage)) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+    document.documentElement.lang = language;
+
+    const root = appRootRef.current;
+    if (!root) return;
+
+    const originalText = originalUiTextRef.current;
+    const translatedText = translatedUiTextRef.current;
+    const originalAttributes = originalUiAttributeRef.current;
+    const translatedAttributes = translatedUiAttributeRef.current;
+    const translatedAttributeNames = ["aria-label", "placeholder", "title"] as const;
+
+    const isIgnored = (node: Node) => {
+      const element = node.nodeType === Node.ELEMENT_NODE
+        ? (node as Element)
+        : node.parentElement;
+      return Boolean(element?.closest('[data-i18n-ignore="true"]'));
+    };
+
+    const translateTextNode = (node: Text) => {
+      if (isIgnored(node)) return;
+
+      const currentValue = node.nodeValue ?? "";
+      if (!originalText.has(node)) {
+        originalText.set(node, currentValue);
+      }
+
+      const sourceValue = originalText.get(node) ?? currentValue;
+      const nextValue = translateUiString(sourceValue, language);
+      translatedText.set(node, nextValue);
+
+      if (currentValue !== nextValue) {
+        node.nodeValue = nextValue;
+      }
+    };
+
+    const translateElementAttributes = (element: Element) => {
+      if (isIgnored(element)) return;
+
+      let sourceMap = originalAttributes.get(element);
+      if (!sourceMap) {
+        sourceMap = new Map<string, string>();
+        originalAttributes.set(element, sourceMap);
+      }
+
+      let translatedMap = translatedAttributes.get(element);
+      if (!translatedMap) {
+        translatedMap = new Map<string, string>();
+        translatedAttributes.set(element, translatedMap);
+      }
+
+      for (const attributeName of translatedAttributeNames) {
+        const currentValue = element.getAttribute(attributeName);
+        if (currentValue === null) continue;
+
+        if (!sourceMap.has(attributeName)) {
+          sourceMap.set(attributeName, currentValue);
+        }
+
+        const sourceValue = sourceMap.get(attributeName) ?? currentValue;
+        const nextValue = translateUiString(sourceValue, language);
+        translatedMap.set(attributeName, nextValue);
+
+        if (currentValue !== nextValue) {
+          element.setAttribute(attributeName, nextValue);
+        }
+      }
+    };
+
+    const translateTree = (node: Node) => {
+      if (isIgnored(node)) return;
+
+      if (node.nodeType === Node.TEXT_NODE) {
+        translateTextNode(node as Text);
+        return;
+      }
+
+      if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+      const element = node as Element;
+      translateElementAttributes(element);
+      element.childNodes.forEach(translateTree);
+    };
+
+    translateTree(root);
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === "characterData") {
+          const node = mutation.target as Text;
+          if (isIgnored(node)) continue;
+
+          const currentValue = node.nodeValue ?? "";
+          const lastTranslatedValue = translatedText.get(node);
+          if (currentValue !== lastTranslatedValue) {
+            originalText.set(node, currentValue);
+          }
+          translateTextNode(node);
+          continue;
+        }
+
+        if (mutation.type === "attributes") {
+          const element = mutation.target as Element;
+          if (isIgnored(element) || !mutation.attributeName) continue;
+
+          const attributeName = mutation.attributeName;
+          const currentValue = element.getAttribute(attributeName);
+          if (currentValue === null) continue;
+
+          let sourceMap = originalAttributes.get(element);
+          if (!sourceMap) {
+            sourceMap = new Map<string, string>();
+            originalAttributes.set(element, sourceMap);
+          }
+
+          const translatedMap = translatedAttributes.get(element);
+          const lastTranslatedValue = translatedMap?.get(attributeName);
+          if (currentValue !== lastTranslatedValue) {
+            sourceMap.set(attributeName, currentValue);
+          }
+
+          translateElementAttributes(element);
+          continue;
+        }
+
+        mutation.addedNodes.forEach(translateTree);
+      }
+    });
+
+    observer.observe(root, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["aria-label", "placeholder", "title"],
+    });
+
+    return () => observer.disconnect();
+  }, [language]);
 
   const depositPreview = useMemo(() => {
     const normalized = Number(
@@ -3330,7 +3766,7 @@ export default function GameApp() {
   const progress = Math.min(100, (state.eggs / Math.max(1, state.capacity)) * 100);
 
   return (
-    <main className="app-shell">
+    <main className="app-shell" ref={appRootRef}>
       <header className="hud glass">
         <div className="avatar">
           <img
@@ -3341,7 +3777,7 @@ export default function GameApp() {
           />
         </div>
         <div className="profile">
-          <strong>{playerName}</strong>
+          <strong data-i18n-ignore="true">{playerName}</strong>
           <span>{
             isLoading
               ? "Загрузка..."
@@ -3355,6 +3791,39 @@ export default function GameApp() {
         <div className="balances">
           <span>🪙 {formatNumber(state.coins, 2)}</span>
           <span>🧬 {formatNumber(state.dna, 2)}</span>
+        </div>
+        <div className="language-switcher" data-i18n-ignore="true">
+          <button
+            type="button"
+            className="language-switcher-button"
+            onClick={() => setLanguageMenuOpen((open) => !open)}
+            aria-label="Language"
+            aria-expanded={languageMenuOpen}
+          >
+            {LANGUAGE_OPTIONS.find((item) => item.code === language)?.short ?? "RU"}
+          </button>
+
+          {languageMenuOpen ? (
+            <div className="language-switcher-menu" role="menu" aria-label="Language">
+              {LANGUAGE_OPTIONS.map((item) => (
+                <button
+                  key={item.code}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={language === item.code}
+                  className={language === item.code ? "active" : ""}
+                  onClick={() => {
+                    setLanguage(item.code);
+                    setLanguageMenuOpen(false);
+                  }}
+                >
+                  <span className="language-switcher-short">{item.short}</span>
+                  <span>{item.label}</span>
+                  <b aria-hidden="true">{language === item.code ? "✓" : ""}</b>
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
       </header>
 
