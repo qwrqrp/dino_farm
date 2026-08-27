@@ -4188,8 +4188,38 @@ export default function GameApp() {
                   <b>{nestRewardsMenuOpen ? "▲" : "▼"}</b>
                 </button>
 
-                {nestRewardsMenuOpen ? (
-                  <div className="nest-rewards-options">
+              </div>
+            </div>
+
+            {nestRewardsMenuOpen ? (
+              <div
+                className="nest-rewards-hub-backdrop"
+                role="presentation"
+                onClick={() => setNestRewardsMenuOpen(false)}
+              >
+                <div
+                  className="nest-rewards-hub-modal"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Награды"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="nest-rewards-hub-head">
+                    <div>
+                      <small>REWARDS</small>
+                      <h2>🎁 Награды</h2>
+                    </div>
+                    <button
+                      type="button"
+                      className="nest-rewards-hub-close"
+                      onClick={() => setNestRewardsMenuOpen(false)}
+                      aria-label="Закрыть"
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  <div className="nest-rewards-options nest-rewards-options-modal">
                     <button
                       type="button"
                       onClick={openDailyReward}
@@ -4237,9 +4267,9 @@ export default function GameApp() {
                       </b>
                     </button>
                   </div>
-                ) : null}
+                </div>
               </div>
-            </div>
+            ) : null}
 
             <div className="stats-grid">
               <article className="stat-card"><span>За день</span><strong>{formatNumber(eggsPerHour * 24, 0)}</strong><small>яиц</small></article>
