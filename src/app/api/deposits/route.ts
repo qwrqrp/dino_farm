@@ -6,6 +6,7 @@ import {
   COINS_PER_USD,
   DEPOSIT_MAX_USD,
   DEPOSIT_MIN_USD,
+  DEPOSIT_USER_FEE_PERCENT,
   FIRST_DEPOSIT_BONUS_PERCENT,
   coinsForUsd,
   createProviderPayment,
@@ -42,6 +43,8 @@ export async function GET() {
               COINS_PER_USD,
             firstDepositBonusPercent:
               FIRST_DEPOSIT_BONUS_PERCENT,
+            userFeePercent:
+              DEPOSIT_USER_FEE_PERCENT,
           },
           firstDepositEligible: false,
           methods,
@@ -94,6 +97,8 @@ export async function GET() {
             COINS_PER_USD,
           firstDepositBonusPercent:
             FIRST_DEPOSIT_BONUS_PERCENT,
+          userFeePercent:
+            DEPOSIT_USER_FEE_PERCENT,
         },
         firstDepositEligible:
           successfulDeposits === 0,
