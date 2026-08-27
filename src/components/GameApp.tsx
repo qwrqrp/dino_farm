@@ -4726,44 +4726,6 @@ export default function GameApp() {
               </>
             ) : (
               <>
-                <h2
-                  style={{
-                    fontSize: 20,
-                    marginTop: 0,
-                  }}
-                >
-                  💳 Пополнение баланса
-                </h2>
-
-                <p className="hint">
-                  Курс:{" "}
-                  <strong>
-                    $1 ={" "}
-                    {formatNumber(
-                      depositConfig
-                        ?.coinsPerUsd ??
-                        10_000,
-                      0,
-                    )}{" "}
-                    Coins
-                  </strong>
-                  . Coins начисляются только после
-                  подтверждения криптоплатежа.
-                </p>
-
-                <p
-                  className="hint"
-                  style={{
-                    marginTop: -4,
-                    opacity: .72,
-                  }}
-                >
-                  ⚠️ Минимум рассчитывается отдельно
-                  для выбранной монеты и сети и
-                  может меняться из-за комиссий и
-                  курса.
-                </p>
-
                 {depositStatus === "loading" ||
                 depositStatus === "idle" ? (
                   <div className="card">
