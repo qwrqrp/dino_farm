@@ -3941,12 +3941,15 @@ export default function GameApp() {
       <style>{`
         /* When a menu popup is open, lift the whole menu stacking context
            above the sticky HUD / language switcher / bottom navigation. */
-        .menu-art-screen.menu-popup-active {
+        .menu-art-screen.menu-popup-active,
+        .nest-screen.nest-popup-active {
+          position: relative !important;
           z-index: 2000 !important;
           overflow: visible !important;
         }
 
-        .menu-popup-panel {
+        .menu-popup-panel,
+        .nest-upgrade-popup {
           position: fixed !important;
           left: 50% !important;
           top: 50% !important;
@@ -3965,7 +3968,8 @@ export default function GameApp() {
         }
 
         @media (max-width: 430px) {
-          .menu-popup-panel {
+          .menu-popup-panel,
+          .nest-upgrade-popup {
             width: calc(100vw - 16px) !important;
             max-height: calc(100dvh - 16px) !important;
           }
@@ -4033,7 +4037,9 @@ export default function GameApp() {
 
       <section className="content">
         {tab === "nest" && (
-          <div className="screen nest-screen">
+          <div
+            className={`screen nest-screen${nestUpgradeOpen ? " nest-popup-active" : ""}`}
+          >
             <div className="hero-card">
               <div className="sun">☀️</div>
               <div className="jungle">🌿🌴🌿</div>
@@ -4135,7 +4141,10 @@ export default function GameApp() {
 
             {nestUpgradeOpen ? (
               <div
-                className="form-card"
+                className="form-card nest-upgrade-popup"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Улучшение гнезда"
                 style={{
                   marginTop: 16,
                   borderRadius: 20,
