@@ -127,6 +127,7 @@ type DepositConfig = {
   maxUsd: number;
   coinsPerUsd: number;
   firstDepositBonusPercent: number;
+  userFeePercent?: number;
 };
 
 type DepositLoadResponse = {
@@ -805,6 +806,8 @@ const UI_TRANSLATION_ROWS = [
   ["Подтвердить merge?", "Confirm merge?", "Підтвердити merge?", "Confermare il merge?", "Confirmer la fusion ?", "¿Confirmar merge?", "Merge की पुष्टि करें?", "Potwierdzić merge?", "Merge bestätigen?", "Merge onaylansın mı?"],
   ["Получите Lv.", "You get Lv.", "Отримаєте Lv.", "Riceverai Lv.", "Vous obtenez Lv.", "Obtendrás Lv.", "आपको Lv. मिलेगा", "Otrzymasz Lv.", "Du erhältst Lv.", "Lv. alacaksınız"],
   ["Комиссия", "Fee", "Комісія", "Commissione", "Frais", "Comisión", "शुल्क", "Opłata", "Gebühr", "Ücret"],
+  ["Нужно на балансе", "Required balance", "Потрібно на балансі", "Saldo necessario", "Solde nécessaire", "Saldo necesario", "ज़रूरी बैलेंस", "Wymagane saldo", "Benötigtes Guthaben", "Gerekli bakiye"],
+  ["Точная сумма в криптовалюте будет рассчитана NOWPayments после создания платежа. Комиссия вашего кошелька или биржи за отправку может списываться отдельно.", "The exact crypto amount will be calculated by NOWPayments after the payment is created. Your wallet or exchange may charge a separate sending fee.", "Точну суму в криптовалюті NOWPayments розрахує після створення платежу. Ваш гаманець або біржа може окремо списати комісію за відправлення.", "L’importo esatto in criptovaluta sarà calcolato da NOWPayments dopo la creazione del pagamento. Il wallet o l’exchange può addebitare separatamente una commissione di invio.", "Le montant exact en cryptomonnaie sera calculé par NOWPayments après la création du paiement. Votre portefeuille ou plateforme peut facturer séparément des frais d’envoi.", "NOWPayments calculará el importe exacto en criptomoneda después de crear el pago. Tu wallet o exchange puede cobrar aparte una comisión de envío.", "भुगतान बनने के बाद सटीक क्रिप्टो राशि NOWPayments द्वारा तय की जाएगी। आपका वॉलेट या एक्सचेंज भेजने की अलग फीस ले सकता है।", "Dokładna kwota w kryptowalucie zostanie obliczona przez NOWPayments po utworzeniu płatności. Portfel lub giełda może osobno pobrać opłatę za wysyłkę.", "Der genaue Kryptobetrag wird von NOWPayments nach Erstellung der Zahlung berechnet. Wallet oder Börse können zusätzlich eine eigene Sendegebühr berechnen.", "Kesin kripto tutarı ödeme oluşturulduktan sonra NOWPayments tarafından hesaplanır. Cüzdanınız veya borsanız ayrıca gönderim ücreti kesebilir."],
   ["Доступен сейчас", "Available now", "Доступний зараз", "Disponibile ora", "Disponible maintenant", "Disponible ahora", "अभी उपलब्ध", "Dostępne teraz", "Jetzt verfügbar", "Şimdi mevcut"],
   ["Ожидает проверки", "Pending review", "Очікує перевірки", "In attesa di verifica", "En attente de vérification", "Pendiente de revisión", "जाँच की प्रतीक्षा", "Oczekuje na weryfikację", "Wartet auf Prüfung", "Kontrol bekliyor"],
   ["Одобрено", "Approved", "Схвалено", "Approvato", "Approuvé", "Aprobado", "स्वीकृत", "Zatwierdzono", "Genehmigt", "Onaylandı"],
@@ -1255,11 +1258,29 @@ export default function GameApp() {
           (bonusPercent / 100),
       );
 
+    const userFeePercent =
+      depositConfig?.userFeePercent ?? 1;
+
+    const estimatedFeeUsd =
+      amountUsd > 0
+        ? Math.ceil(
+            amountUsd * userFeePercent,
+          ) / 100
+        : 0;
+
+    const estimatedRequiredBalanceUsd =
+      Math.ceil(
+        (amountUsd + estimatedFeeUsd) * 100,
+      ) / 100;
+
     return {
       amountUsd,
       baseCoins,
       bonusPercent,
       bonusCoins,
+      userFeePercent,
+      estimatedFeeUsd,
+      estimatedRequiredBalanceUsd,
       totalCoins:
         baseCoins + bonusCoins,
       valid:
@@ -5290,6 +5311,89 @@ export default function GameApp() {
                             borderRadius:
                               14,
                             background:
+                              "rgba(255,215,106,.07)",
+                          }}
+                        >
+                          <small
+                            style={{
+                              opacity:
+                                .62,
+                            }}
+                          >
+                            Комиссия NOWPayments
+                          </small>
+                          <strong
+                            style={{
+                              display:
+                                "block",
+                              marginTop:
+                                4,
+                            }}
+                          >
+                            ≈ $
+                            {depositPreview.estimatedFeeUsd.toFixed(
+                              2,
+                            )}
+                            {" "}
+                            <span
+                              style={{
+                                fontSize: 11,
+                                opacity: .7,
+                              }}
+                            >
+                              (≈
+                              {depositPreview.userFeePercent.toFixed(
+                                1,
+                              )}
+                              %)
+                            </span>
+                          </strong>
+                        </div>
+
+                        <div
+                          style={{
+                            minWidth: 0,
+                            padding: 12,
+                            borderRadius:
+                              14,
+                            background:
+                              "rgba(167,243,72,.12)",
+                            border:
+                              "1px solid rgba(167,243,72,.20)",
+                          }}
+                        >
+                          <small
+                            style={{
+                              opacity:
+                                .7,
+                            }}
+                          >
+                            Нужно на балансе
+                          </small>
+                          <strong
+                            style={{
+                              display:
+                                "block",
+                              marginTop:
+                                4,
+                              fontSize: 18,
+                              color: "#dfff97",
+                            }}
+                          >
+                            ≈ $
+                            {depositPreview.estimatedRequiredBalanceUsd.toFixed(
+                              2,
+                            )}
+                          </strong>
+                        </div>
+
+                        <div
+                          style={{
+                            minWidth: 0,
+                            padding: 12,
+                            borderRadius:
+                              14,
+                            background:
                               "rgba(167,243,72,.08)",
                           }}
                         >
@@ -5316,6 +5420,23 @@ export default function GameApp() {
                             Coins
                           </strong>
                         </div>
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: 8,
+                          padding: 10,
+                          borderRadius: 12,
+                          background:
+                            "rgba(84,180,255,.07)",
+                          border:
+                            "1px solid rgba(84,180,255,.14)",
+                          fontSize: 11,
+                          lineHeight: 1.45,
+                          opacity: .82,
+                        }}
+                      >
+                        Точная сумма в криптовалюте будет рассчитана NOWPayments после создания платежа. Комиссия вашего кошелька или биржи за отправку может списываться отдельно.
                       </div>
 
                       {depositPreview.bonusCoins >
