@@ -5918,3 +5918,154 @@
     font-size:5.7px !important;
   }
 }
+
+/* =========================================================
+   COMPACT TOP HUD — V10.15
+   Visual-only. Keeps the approved wooden HUD art while
+   freeing vertical space on Telegram/mobile screens.
+   ========================================================= */
+
+.hud.glass{
+  width:calc(100% - 14px) !important;
+  height:60px !important;
+  min-height:60px !important;
+  margin:4px auto 0 !important;
+  padding:6px 9px !important;
+  gap:7px !important;
+  border-radius:18px !important;
+  background-size:108% 150% !important;
+  top:calc(4px + env(safe-area-inset-top)) !important;
+}
+
+.hud .avatar{
+  flex:0 0 44px !important;
+  width:44px !important;
+  height:44px !important;
+  border-radius:14px !important;
+  padding:1px !important;
+}
+
+.hud .profile{
+  gap:1px !important;
+}
+
+.hud .profile strong{
+  max-width:132px !important;
+  font-size:12px !important;
+  line-height:1 !important;
+}
+
+.hud .profile span{
+  max-width:136px !important;
+  font-size:8.5px !important;
+  line-height:1 !important;
+}
+
+.hud .balances{
+  min-width:78px !important;
+  gap:2px !important;
+  font-size:10.5px !important;
+}
+
+.hud .balances > span{
+  min-height:18px !important;
+  padding:1px 6px !important;
+  gap:3px !important;
+}
+
+.hud .language-switcher-button{
+  width:32px !important;
+  height:32px !important;
+  border-radius:11px !important;
+  font-size:9px !important;
+}
+
+@media(max-width:430px){
+  .hud.glass{
+    width:calc(100% - 10px) !important;
+    height:56px !important;
+    min-height:56px !important;
+    margin-top:3px !important;
+    padding:5px 7px !important;
+    gap:6px !important;
+    border-radius:17px !important;
+    background-size:108% 148% !important;
+  }
+
+  .hud .avatar{
+    flex-basis:40px !important;
+    width:40px !important;
+    height:40px !important;
+    border-radius:13px !important;
+  }
+
+  .hud .profile strong{
+    max-width:112px !important;
+    font-size:11px !important;
+  }
+
+  .hud .profile span{
+    max-width:116px !important;
+    font-size:8px !important;
+  }
+
+  .hud .balances{
+    min-width:72px !important;
+    font-size:9.5px !important;
+  }
+
+  .hud .balances > span{
+    min-height:17px !important;
+    padding:1px 5px !important;
+  }
+
+  .hud .language-switcher-button{
+    width:30px !important;
+    height:30px !important;
+    border-radius:10px !important;
+    font-size:8.5px !important;
+  }
+}
+
+@media(max-width:370px){
+  .hud.glass{
+    height:52px !important;
+    min-height:52px !important;
+    padding:4px 6px !important;
+    gap:5px !important;
+    border-radius:16px !important;
+  }
+
+  .hud .avatar{
+    flex-basis:36px !important;
+    width:36px !important;
+    height:36px !important;
+    border-radius:12px !important;
+  }
+
+  .hud .profile strong{
+    max-width:96px !important;
+    font-size:10px !important;
+  }
+
+  .hud .profile span{
+    max-width:100px !important;
+    font-size:7.5px !important;
+  }
+
+  .hud .balances{
+    min-width:66px !important;
+    font-size:9px !important;
+  }
+
+  .hud .balances > span{
+    min-height:16px !important;
+    padding:0 4px !important;
+  }
+
+  .hud .language-switcher-button{
+    width:28px !important;
+    height:28px !important;
+    font-size:8px !important;
+  }
+}
