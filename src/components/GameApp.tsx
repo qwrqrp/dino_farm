@@ -678,6 +678,7 @@ const UI_TRANSLATION_ROWS = [
   ["Ежедневный бонус", "Daily reward", "Щоденний бонус", "Bonus giornaliero", "Bonus quotidien", "Bono diario", "दैनिक बोनस", "Bonus dzienny", "Tagesbonus", "Günlük bonus"],
   ["Задания", "Tasks", "Завдання", "Missioni", "Tâches", "Tareas", "कार्य", "Zadania", "Aufgaben", "Görevler"],
   ["Достижения", "Achievements", "Досягнення", "Obiettivi", "Succès", "Logros", "उपलब्धियाँ", "Osiągnięcia", "Erfolge", "Başarımlar"],
+  ["Награды", "Rewards", "Нагороди", "Ricompense", "Récompenses", "Recompensas", "पुरस्कार", "Nagrody", "Belohnungen", "Ödüller"],
   ["Рулетка", "Roulette", "Рулетка", "Roulette", "Roulette", "Ruleta", "रूलेट", "Ruletka", "Roulette", "Rulet"],
   ["Перезагрузить данные", "Reload data", "Перезавантажити дані", "Ricarica dati", "Recharger les données", "Recargar datos", "डेटा फिर लोड करें", "Odśwież dane", "Daten neu laden", "Verileri yenile"],
   ["Игровая доска", "Game board", "Ігрове поле", "Plancia di gioco", "Plateau de jeu", "Tablero de juego", "गेम बोर्ड", "Plansza gry", "Spielfeld", "Oyun tahtası"],
@@ -1048,6 +1049,7 @@ export default function GameApp() {
   const [nestUpgradeStatus, setNestUpgradeStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [nestUpgradeInfo, setNestUpgradeInfo] = useState<NestUpgradeInfo | null>(null);
   const [isUpgradingNest, setIsUpgradingNest] = useState(false);
+  const [nestRewardsMenuOpen, setNestRewardsMenuOpen] = useState(false);
   const [dailyOpen, setDailyOpen] = useState(false);
   const [dailyStatus, setDailyStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [dailyInfo, setDailyInfo] = useState<DailyRewardInfo | null>(null);
@@ -1086,6 +1088,9 @@ export default function GameApp() {
     setWithdrawalOpen(false);
     setLevelsOpen(false);
     setProfitPlanOpen(false);
+  };
+
+  const closeNestRewardPopups = () => {
     setDailyOpen(false);
     setTasksOpen(false);
     setAchievementsOpen(false);
@@ -2686,6 +2691,8 @@ export default function GameApp() {
   };
 
   const openNestUpgrades = () => {
+    setNestRewardsMenuOpen(false);
+    closeNestRewardPopups();
     setNestUpgradeOpen(true);
     void loadNestUpgrades();
   };
@@ -3160,6 +3167,8 @@ export default function GameApp() {
     }
 
     closeMenuPopups();
+    closeNestRewardPopups();
+    setNestRewardsMenuOpen(false);
     setAchievementsOpen(true);
     void loadAchievements();
   };
@@ -3292,6 +3301,8 @@ export default function GameApp() {
     }
 
     closeMenuPopups();
+    closeNestRewardPopups();
+    setNestRewardsMenuOpen(false);
     setTasksOpen(true);
     void loadTasks();
   };
@@ -3400,6 +3411,8 @@ export default function GameApp() {
     }
 
     closeMenuPopups();
+    closeNestRewardPopups();
+    setNestRewardsMenuOpen(false);
     setDailyOpen(true);
     void loadDailyReward();
   };
@@ -3928,16 +3941,20 @@ export default function GameApp() {
   ]);
 
   useEffect(() => {
-    if (tab === "menu") return;
+    if (tab !== "menu") {
+      setProfileOpen(false);
+      setWalletHistoryOpen(false);
+      setWithdrawalOpen(false);
+      setLevelsOpen(false);
+      setProfitPlanOpen(false);
+    }
 
-    setProfileOpen(false);
-    setWalletHistoryOpen(false);
-    setWithdrawalOpen(false);
-    setLevelsOpen(false);
-    setProfitPlanOpen(false);
-    setDailyOpen(false);
-    setTasksOpen(false);
-    setAchievementsOpen(false);
+    if (tab !== "nest") {
+      setNestRewardsMenuOpen(false);
+      setDailyOpen(false);
+      setTasksOpen(false);
+      setAchievementsOpen(false);
+    }
   }, [tab]);
 
   const withdrawalPreview = withdrawalConfig
@@ -4049,7 +4066,11 @@ export default function GameApp() {
       <section className="content">
         {tab === "nest" && (
           <div
-            className={`screen nest-screen${nestUpgradeOpen ? " nest-popup-active" : ""}`}
+            className={`screen nest-screen${
+              nestUpgradeOpen || dailyOpen || tasksOpen || achievementsOpen
+                ? " nest-popup-active"
+                : ""
+            }`}
           >
             <div className="hero-card">
               <div className="sun">☀️</div>
@@ -4142,6 +4163,76 @@ export default function GameApp() {
               >
                 🪺 УЛУЧШИТЬ ГНЕЗДО
               </button>
+
+              <div
+                className={`nest-rewards-launcher${
+                  nestRewardsMenuOpen ? " open" : ""
+                }`}
+              >
+                <button
+                  type="button"
+                  className="coin-button nest-rewards-toggle"
+                  onClick={() =>
+                    setNestRewardsMenuOpen((open) => !open)
+                  }
+                  disabled={isLoading || Boolean(loadError)}
+                  aria-expanded={nestRewardsMenuOpen}
+                >
+                  <span>🎁 Награды</span>
+                  <b>{nestRewardsMenuOpen ? "▲" : "▼"}</b>
+                </button>
+
+                {nestRewardsMenuOpen ? (
+                  <div className="nest-rewards-options">
+                    <button
+                      type="button"
+                      onClick={openDailyReward}
+                      className={dailyInfo?.canClaim ? "claimable" : ""}
+                    >
+                      <span>🎁 Ежедневный бонус</span>
+                      <b>{dailyInfo?.canClaim ? "ЗАБРАТЬ" : "ОТКРЫТЬ"}</b>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={openTasks}
+                      className={
+                        tasks.some((task) => task.claimable)
+                          ? "claimable"
+                          : ""
+                      }
+                    >
+                      <span>✅ Задания</span>
+                      <b>
+                        {tasks.some((task) => task.claimable)
+                          ? "ЗАБРАТЬ"
+                          : "ОТКРЫТЬ"}
+                      </b>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={openAchievements}
+                      className={
+                        achievements.some(
+                          (achievement) => achievement.claimable,
+                        )
+                          ? "claimable"
+                          : ""
+                      }
+                    >
+                      <span>🏅 Достижения</span>
+                      <b>
+                        {achievements.some(
+                          (achievement) => achievement.claimable,
+                        )
+                          ? "ЗАБРАТЬ"
+                          : "ОТКРЫТЬ"}
+                      </b>
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             <div className="stats-grid">
@@ -5966,9 +6057,11 @@ export default function GameApp() {
           </div>
         )}
 
-        {tab === "menu" && (
+        {(tab === "menu" || dailyOpen || tasksOpen || achievementsOpen) && (
           <div
             className={`screen menu-art-screen${
+              tab !== "menu" ? " rewards-popup-host" : ""
+            }${
               walletHistoryOpen ||
               profileOpen ||
               withdrawalOpen ||
@@ -5981,62 +6074,60 @@ export default function GameApp() {
                 : ""
             }`}
           >
-            <div className="menu-art-heading">
-              <img
-                src="/assets/game/ui/nav/menu.webp"
-                alt=""
-                className="menu-heading-art"
-                draggable={false}
-                aria-hidden="true"
-              />
-              <div>
-                <span className="eyebrow">TOOLS</span>
-                <h2>Меню</h2>
-              </div>
-            </div>
+            {tab === "menu" ? (
+              <>
+                <div className="menu-art-heading">
+                  <img
+                    src="/assets/game/ui/nav/menu.webp"
+                    alt=""
+                    className="menu-heading-art"
+                    draggable={false}
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <span className="eyebrow">TOOLS</span>
+                    <h2>Меню</h2>
+                  </div>
+                </div>
 
-            <div className="menu-list menu-art-grid">
-              <button onClick={openProfile}>
-                <span>Мой профиль</span>
-                <b>СТАТИСТИКА</b>
-              </button>
+                <div className="menu-list menu-art-grid">
+                  <button onClick={openProfile}>
+                    <span>Мой профиль</span>
+                    <b>СТАТИСТИКА</b>
+                  </button>
 
-              <button onClick={openWalletHistory}>
-                <span>История баланса</span>
-                <b>ПОПОЛНЕНИЯ / ВЫВОДЫ</b>
-              </button>
+                  <button onClick={openWalletHistory}>
+                    <span>История баланса</span>
+                    <b>ПОПОЛНЕНИЯ / ВЫВОДЫ</b>
+                  </button>
 
-              <button onClick={openDnaWithdrawal}>
-                <span>Вывод DNA</span>
-                <b>USDT</b>
-              </button>
+                  <button onClick={openDnaWithdrawal}>
+                    <span>Вывод DNA</span>
+                    <b>USDT</b>
+                  </button>
 
-              <button onClick={() => { closeMenuPopups(); setLevelsOpen(true); }}>
-                <span>Уровни динозавров</span>
-                <b>Lv.1–16</b>
-              </button>
+                  <button
+                    onClick={() => {
+                      closeMenuPopups();
+                      setLevelsOpen(true);
+                    }}
+                  >
+                    <span>Уровни динозавров</span>
+                    <b>Lv.1–16</b>
+                  </button>
 
-              <button onClick={() => { closeMenuPopups(); setProfitPlanOpen(true); }}>
-                <span>Profit Plan</span>
-                <b>МОЯ ФЕРМА</b>
-              </button>
-
-              <button onClick={openDailyReward} className={dailyInfo?.canClaim ? "menu-art-claimable" : ""}>
-                <span>Ежедневный бонус</span>
-                <b>{dailyInfo?.canClaim ? "ЗАБРАТЬ" : "ОТКРЫТЬ"}</b>
-              </button>
-
-              <button onClick={openTasks} className={tasks.some((task) => task.claimable) ? "menu-art-claimable" : ""}>
-                <span>Задания</span>
-                <b>{tasks.some((task) => task.claimable) ? "ЗАБРАТЬ" : "ОТКРЫТЬ"}</b>
-              </button>
-
-              <button onClick={openAchievements} className={achievements.some((achievement) => achievement.claimable) ? "menu-art-claimable" : ""}>
-                <span>Достижения</span>
-                <b>{achievements.some((achievement) => achievement.claimable) ? "ЗАБРАТЬ" : "ОТКРЫТЬ"}</b>
-              </button>
-
-            </div>
+                  <button
+                    onClick={() => {
+                      closeMenuPopups();
+                      setProfitPlanOpen(true);
+                    }}
+                  >
+                    <span>Profit Plan</span>
+                    <b>МОЯ ФЕРМА</b>
+                  </button>
+                </div>
+              </>
+            ) : null}
 
             {walletHistoryOpen ? (
               <div className="form-card wallet-art-panel menu-popup-panel">
