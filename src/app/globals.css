@@ -5555,3 +5555,85 @@
     font-size:13px;
   }
 }
+
+/* =========================================================
+   GAME FARM HUB LAUNCHER — V10.12
+   Farm hub moved from Menu to Game. Visual-only placement;
+   Dinosaur Levels / Profit Plan callbacks stay unchanged.
+   ========================================================= */
+
+.game-farm-tools-card{
+  position:relative;
+  z-index:3;
+  width:100%;
+  min-height:60px;
+  margin:1px 0 0;
+  padding:10px 32px;
+  border:0;
+  border-radius:0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  background:
+    url("/assets/game/ui/panel.webp")
+    center / 108% 180%
+    no-repeat;
+  color:#ffeab3;
+  filter:drop-shadow(0 5px 5px rgba(0,0,0,.20));
+  box-shadow:none;
+  text-align:left;
+}
+
+.game-farm-tools-card > span{
+  color:#fff0bd;
+  font-size:15px;
+  font-weight:1000;
+  text-shadow:0 2px 0 rgba(72,34,16,.88),0 3px 4px rgba(0,0,0,.25);
+}
+
+.game-farm-tools-card > b{
+  min-width:112px;
+  min-height:31px;
+  padding:7px 12px 6px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(225,255,139,.42);
+  border-radius:999px;
+  background:
+    radial-gradient(circle at 50% 0,rgba(246,255,174,.30),transparent 48%),
+    linear-gradient(180deg,#76a72a,#426d1d);
+  color:#f4ffd4;
+  font-size:9px;
+  font-weight:1000;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 3px 0 rgba(37,47,14,.48);
+  text-shadow:0 1px 2px rgba(0,0,0,.35);
+}
+
+.game-farm-tools-card:active{
+  transform:translateY(2px) scale(.99);
+  filter:brightness(.94) drop-shadow(0 3px 4px rgba(0,0,0,.18));
+}
+
+@media(max-width:430px){
+  .game-farm-tools-card{
+    min-height:55px;
+    padding-left:27px;
+    padding-right:27px;
+  }
+
+  .game-farm-tools-card > span{
+    font-size:13px;
+  }
+
+  .game-farm-tools-card > b{
+    min-width:102px;
+    font-size:8px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .game-farm-tools-card{
+    transition:none !important;
+  }
+}
