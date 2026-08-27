@@ -1022,6 +1022,7 @@ export default function GameApp() {
   const [minimumLoading, setMinimumLoading] = useState(false);
   const [activeDeposit, setActiveDeposit] = useState<DepositItem | null>(null);
   const [depositConfirmationOpen, setDepositConfirmationOpen] = useState(false);
+  const autoOpenDepositMethodRef = useRef<string | null>(null);
   const [isCreatingDeposit, setIsCreatingDeposit] = useState(false);
   const [isCheckingDeposit, setIsCheckingDeposit] = useState(false);
   const [dinoCatalog, setDinoCatalog] = useState<DinoCatalogItem[]>([]);
@@ -2115,6 +2116,27 @@ export default function GameApp() {
         );
       } finally {
         setMinimumLoading(false);
+
+        if (
+          autoOpenDepositMethodRef.current ===
+          methodCode
+        ) {
+          autoOpenDepositMethodRef.current =
+            null;
+
+          if (
+            !isCreatingDeposit &&
+            depositConfig &&
+            depositPreview.amountUsd >=
+              depositConfig.minUsd &&
+            depositPreview.amountUsd <=
+              depositConfig.maxUsd &&
+            !depositTelegramRequired &&
+            depositProviderConfigured
+          ) {
+            setDepositConfirmationOpen(true);
+          }
+        }
       }
     };
 
@@ -2136,22 +2158,6 @@ export default function GameApp() {
     shopSection,
     depositMethodCode,
   ]);
-
-  const openDepositConfirmation = () => {
-    if (
-      isCreatingDeposit ||
-      !depositPreview.valid ||
-      !depositMethodCode ||
-      depositTelegramRequired ||
-      !depositProviderConfigured
-    ) {
-      return;
-    }
-
-    setDepositConfirmationOpen(
-      true,
-    );
-  };
 
   const confirmCreateDeposit = async () => {
     if (
@@ -5018,6 +5024,35 @@ export default function GameApp() {
                                 depositTelegramRequired
                               }
                               onClick={() => {
+                                autoOpenDepositMethodRef.current =
+                                  method.code;
+
+                                if (
+                                  depositMethodCode ===
+                                    method.code &&
+                                  !minimumLoading
+                                ) {
+                                  autoOpenDepositMethodRef.current =
+                                    null;
+
+                                  if (
+                                    !isCreatingDeposit &&
+                                    depositConfig &&
+                                    depositPreview.amountUsd >=
+                                      depositConfig.minUsd &&
+                                    depositPreview.amountUsd <=
+                                      depositConfig.maxUsd &&
+                                    !depositTelegramRequired &&
+                                    depositProviderConfigured
+                                  ) {
+                                    setDepositConfirmationOpen(
+                                      true,
+                                    );
+                                  }
+
+                                  return;
+                                }
+
                                 setSelectedMethodMinimumUsd(
                                   null,
                                 );
@@ -5065,30 +5100,6 @@ export default function GameApp() {
                       )}
                     </div>
 
-                    <button
-                      className="primary"
-                      disabled={
-                        !depositPreview.valid ||
-                        !depositMethodCode ||
-                        isCreatingDeposit ||
-                        depositTelegramRequired ||
-                        !depositProviderConfigured
-                      }
-                      onClick={
-                        openDepositConfirmation
-                      }
-                      style={{
-                        width: "100%",
-                        minWidth: 0,
-                        maxWidth: "none",
-                        boxSizing: "border-box",
-                        marginTop: 12,
-                      }}
-                    >
-                      {isCreatingDeposit
-                        ? "⏳ СОЗДАЁМ ПЛАТЁЖ..."
-                        : "ПРОДОЛЖИТЬ К ОПЛАТЕ"}
-                    </button>
                   </div>
                 ) : null}
 
