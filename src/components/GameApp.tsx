@@ -6058,15 +6058,6 @@ export default function GameApp() {
                 <b>{achievements.some((achievement) => achievement.claimable) ? "ЗАБРАТЬ" : "ОТКРЫТЬ"}</b>
               </button>
 
-              <button onClick={() => setToast("Рулетка отключена до server-side реализации")} className="menu-art-disabled">
-                <span>Рулетка</span>
-                <b>OFF</b>
-              </button>
-
-              <button onClick={() => window.location.reload()}>
-                <span>Перезагрузить данные</span>
-                <b>NEON</b>
-              </button>
             </div>
 
             {walletHistoryOpen ? (
