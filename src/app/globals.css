@@ -5153,3 +5153,178 @@
     min-height:47px;
   }
 }
+
+/* =========================================================
+   NEST ONE-SCREEN COMPACT LAYOUT — V10.9
+   Keeps approved background / nest / eggs untouched.
+   Compacts only controls and summary cards on phone screens.
+   ========================================================= */
+
+@media(max-width:430px){
+  .app-shell:has(.nest-screen) .content{
+    padding-top:8px !important;
+    padding-bottom:2px !important;
+  }
+
+  .nest-screen{
+    gap:7px !important;
+  }
+
+  .nest-screen .hero-card{
+    min-height:0 !important;
+    padding-bottom:10px !important;
+  }
+
+  /* Keep the main collect CTA large and easy to understand. */
+  .nest-screen .hero-card > .primary{
+    width:min(312px,94%) !important;
+    min-height:58px !important;
+    margin:0 auto 7px !important;
+    font-size:15px !important;
+  }
+
+  /* Upgrade + Rewards share one row, saving vertical space. */
+  .nest-screen .hero-card > .coin-button{
+    display:inline-flex !important;
+    vertical-align:top !important;
+    width:calc(50% - 7px) !important;
+    min-height:50px !important;
+    margin:4px 3px 6px !important;
+    padding:7px 18px !important;
+    font-size:11px !important;
+    line-height:1.05 !important;
+  }
+
+  .nest-rewards-launcher{
+    display:inline-block !important;
+    vertical-align:top !important;
+    width:calc(50% - 7px) !important;
+    margin:4px 3px 6px !important;
+  }
+
+  .nest-rewards-toggle.coin-button{
+    width:100% !important;
+    min-height:50px !important;
+    margin:0 !important;
+    padding:8px 12px !important;
+    border-radius:999px !important;
+  }
+
+  .nest-rewards-toggle > span{
+    font-size:12px !important;
+  }
+
+  .nest-rewards-toggle > b{
+    width:24px !important;
+    height:24px !important;
+    font-size:9px !important;
+  }
+
+  /* The three reward choices float above the Nest instead of pushing
+     the whole page downward. */
+  .nest-rewards-options{
+    position:absolute !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:calc(100% + 9px) !important;
+    width:min(300px,92vw) !important;
+    margin:0 0 0 auto !important;
+    z-index:40 !important;
+  }
+
+  /* Compact the lower production summary without removing any data. */
+  .nest-screen > .stats-grid{
+    gap:6px !important;
+    margin-top:0 !important;
+  }
+
+  .nest-screen > .stats-grid .stat-card{
+    min-height:66px !important;
+    padding:8px 5px !important;
+    gap:2px !important;
+    border-radius:16px !important;
+    justify-content:center !important;
+  }
+
+  .nest-screen > .stats-grid .stat-card span{
+    font-size:9px !important;
+    line-height:1.05 !important;
+  }
+
+  .nest-screen > .stats-grid .stat-card strong{
+    font-size:16px !important;
+    line-height:1.05 !important;
+  }
+
+  .nest-screen > .stats-grid .stat-card small{
+    font-size:8px !important;
+    line-height:1 !important;
+  }
+}
+
+/* Extra-tight Telegram WebViews: compact only UI panels, never the art. */
+@media(max-width:430px) and (max-height:780px){
+  .app-shell:has(.nest-screen) .content{
+    padding-top:4px !important;
+  }
+
+  .nest-screen{
+    gap:5px !important;
+  }
+
+  .nest-info-art{
+    width:min(300px,92%) !important;
+    height:158px !important;
+    margin:-12px auto -10px !important;
+  }
+
+  .nest-info-content h1{
+    font-size:20px !important;
+  }
+
+  .nest-info-content > p{
+    font-size:12px !important;
+  }
+
+  .nest-info-content .rate{
+    padding:3px 10px !important;
+    font-size:9px !important;
+  }
+
+  .nest-screen .hero-card > .primary{
+    min-height:54px !important;
+    margin-bottom:5px !important;
+    font-size:14px !important;
+  }
+
+  .nest-screen .hero-card > .coin-button,
+  .nest-rewards-toggle.coin-button{
+    min-height:46px !important;
+  }
+
+  .nest-screen > .stats-grid .stat-card{
+    min-height:59px !important;
+    padding:6px 4px !important;
+  }
+
+  .nest-screen > .stats-grid .stat-card strong{
+    font-size:15px !important;
+  }
+}
+
+@media(max-width:370px){
+  .nest-screen .hero-card > .coin-button{
+    padding-left:12px !important;
+    padding-right:12px !important;
+    font-size:10px !important;
+  }
+
+  .nest-rewards-toggle.coin-button{
+    padding-left:10px !important;
+    padding-right:10px !important;
+  }
+
+  .nest-rewards-toggle > span{
+    font-size:11px !important;
+  }
+}
