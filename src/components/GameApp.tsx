@@ -1037,6 +1037,7 @@ export default function GameApp() {
   const [minimumLoading, setMinimumLoading] = useState(false);
   const [activeDeposit, setActiveDeposit] = useState<DepositItem | null>(null);
   const [depositConfirmationOpen, setDepositConfirmationOpen] = useState(false);
+  const [depositMethodPickerOpen, setDepositMethodPickerOpen] = useState(false);
   const autoOpenDepositMethodRef = useRef<string | null>(null);
   const [isCreatingDeposit, setIsCreatingDeposit] = useState(false);
   const [isCheckingDeposit, setIsCheckingDeposit] = useState(false);
@@ -5044,7 +5045,7 @@ export default function GameApp() {
                       width: "100%",
                       maxWidth: "100%",
                       boxSizing: "border-box",
-                      overflow: "hidden",
+                      overflow: "visible",
                     }}
                   >
                     <strong
@@ -5054,164 +5055,293 @@ export default function GameApp() {
                         marginBottom: 10,
                       }}
                     >
-                      Выберите криптовалюту
+                      Монета и сеть
                     </strong>
 
-                    {depositMethodCode ? (
-                      <div
-                        style={{
-                          marginBottom: 10,
-                          padding: "9px 11px",
-                          borderRadius: 12,
-                          background:
-                            "rgba(255,255,255,.04)",
-                          fontSize: 12,
-                          lineHeight: 1.45,
-                        }}
-                      >
-                        {minimumLoading ? (
-                          <span>
-                            ⏳ Проверяем минимум
-                            выбранной сети...
-                          </span>
-                        ) : selectedMethodMinimumUsd !==
-                          null ? (
-                          <span>
-                            Минимум для{" "}
-                            <b>
-                              {depositMethods.find(
-                                (method) =>
-                                  method.code ===
-                                  depositMethodCode,
-                              )?.label ??
-                                depositMethodCode}
-                            </b>
-                            : примерно{" "}
-                            <b>
-                              $
-                              {selectedMethodMinimumUsd.toFixed(
-                                2,
-                              )}
-                            </b>
-                          </span>
-                        ) : (
-                          <span
-                            style={{
-                              opacity: .7,
-                            }}
-                          >
-                            Минимум будет окончательно
-                            проверен сервером при
-                            создании платежа.
-                          </span>
-                        )}
-                      </div>
-                    ) : null}
-
-                    <div
+                    <button
+                      type="button"
+                      className="coin-button"
+                      disabled={
+                        depositTelegramRequired ||
+                        !depositProviderConfigured
+                      }
+                      onClick={() =>
+                        setDepositMethodPickerOpen(true)
+                      }
                       style={{
-                        display: "grid",
-                        gap: 7,
-                        marginTop: 10,
+                        width: "100%",
+                        minHeight: 62,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 12,
+                        padding: "12px 14px",
+                        textAlign: "left",
                       }}
                     >
-                      {depositMethods.map(
-                        (method) => {
-                          const selected =
-                            depositMethodCode ===
-                            method.code;
+                      <span
+                        style={{
+                          display: "grid",
+                          gap: 3,
+                          minWidth: 0,
+                        }}
+                      >
+                        <b
+                          style={{
+                            fontSize: 16,
+                            overflowWrap: "anywhere",
+                          }}
+                        >
+                          {depositMethods.find(
+                            (method) =>
+                              method.code ===
+                              depositMethodCode,
+                          )?.label ??
+                            "Выбрать монету и сеть"}
+                        </b>
 
-                          return (
-                            <button
-                              key={
-                                method.code
-                              }
-                              className={
-                                selected
-                                  ? "primary"
-                                  : "coin-button"
-                              }
-                              disabled={
-                                !method.available ||
-                                depositTelegramRequired
-                              }
-                              onClick={() => {
-                                autoOpenDepositMethodRef.current =
-                                  method.code;
+                        {depositMethodCode ? (
+                          <small
+                            style={{
+                              opacity: .72,
+                            }}
+                          >
+                            {minimumLoading
+                              ? "Проверяем минимум сети..."
+                              : selectedMethodMinimumUsd !==
+                                  null
+                                ? `Минимум ≈ $${selectedMethodMinimumUsd.toFixed(
+                                    2,
+                                  )}`
+                                : "Нажмите, чтобы выбрать другую сеть"}
+                          </small>
+                        ) : (
+                          <small
+                            style={{
+                              opacity: .72,
+                            }}
+                          >
+                            Нажмите, чтобы открыть список
+                          </small>
+                        )}
+                      </span>
 
-                                if (
-                                  depositMethodCode ===
-                                    method.code &&
-                                  !minimumLoading
-                                ) {
-                                  autoOpenDepositMethodRef.current =
-                                    null;
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          flex: "0 0 auto",
+                          fontSize: 22,
+                        }}
+                      >
+                        ›
+                      </span>
+                    </button>
+                  </div>
+                ) : null}
 
+                {depositMethodPickerOpen ? (
+                  <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Выбор монеты и сети"
+                    style={{
+                      position: "fixed",
+                      inset: 0,
+                      zIndex: 1800,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: 16,
+                      background: "rgba(0,0,0,.76)",
+                      backdropFilter: "blur(7px)",
+                    }}
+                    onClick={() =>
+                      setDepositMethodPickerOpen(false)
+                    }
+                  >
+                    <div
+                      className="glass"
+                      onClick={(event) =>
+                        event.stopPropagation()
+                      }
+                      style={{
+                        width: "min(460px, 100%)",
+                        maxHeight:
+                          "min(78dvh, 720px)",
+                        overflowY: "auto",
+                        borderRadius: 26,
+                        padding: 16,
+                        background:
+                          "rgba(8,45,31,.97)",
+                        border:
+                          "1px solid rgba(165,242,81,.35)",
+                        boxShadow:
+                          "0 24px 70px rgba(0,0,0,.55)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent:
+                            "space-between",
+                          gap: 12,
+                          marginBottom: 12,
+                        }}
+                      >
+                        <div>
+                          <div
+                            className="eyebrow"
+                            style={{
+                              marginBottom: 4,
+                            }}
+                          >
+                            ПОПОЛНЕНИЕ
+                          </div>
+                          <h2
+                            style={{
+                              margin: 0,
+                              fontSize: 24,
+                            }}
+                          >
+                            Выберите монету и сеть
+                          </h2>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="coin-button"
+                          onClick={() =>
+                            setDepositMethodPickerOpen(
+                              false,
+                            )
+                          }
+                          aria-label="Закрыть"
+                          style={{
+                            flex: "0 0 auto",
+                            width: 48,
+                            height: 48,
+                            padding: 0,
+                            display: "grid",
+                            placeItems: "center",
+                            fontSize: 28,
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gap: 8,
+                        }}
+                      >
+                        {depositMethods.map(
+                          (method) => {
+                            const selected =
+                              depositMethodCode ===
+                              method.code;
+
+                            return (
+                              <button
+                                key={method.code}
+                                type="button"
+                                className={
+                                  selected
+                                    ? "primary"
+                                    : "coin-button"
+                                }
+                                disabled={
+                                  !method.available ||
+                                  depositTelegramRequired
+                                }
+                                onClick={() => {
                                   if (
-                                    !isCreatingDeposit &&
-                                    depositConfig &&
-                                    depositPreview.amountUsd >=
-                                      depositConfig.minUsd &&
-                                    depositPreview.amountUsd <=
-                                      depositConfig.maxUsd &&
-                                    !depositTelegramRequired &&
-                                    depositProviderConfigured
+                                    !method.available ||
+                                    depositTelegramRequired
                                   ) {
-                                    setDepositConfirmationOpen(
-                                      true,
-                                    );
+                                    return;
                                   }
 
-                                  return;
-                                }
+                                  setDepositMethodPickerOpen(
+                                    false,
+                                  );
+                                  autoOpenDepositMethodRef.current =
+                                    method.code;
 
-                                setSelectedMethodMinimumUsd(
-                                  null,
-                                );
-                                setDepositMethodCode(
-                                  method.code,
-                                );
-                              }}
-                              style={{
-                                width: "100%",
-                                minWidth: 0,
-                                maxWidth: "none",
-                                minHeight: 52,
-                                boxSizing: "border-box",
-                                display: "flex",
-                                flexDirection: "row",
-                                alignItems:
-                                  "center",
-                                justifyContent:
-                                  "space-between",
-                                gap: 10,
-                                padding: "12px 14px",
-                                margin: 0,
-                                textAlign: "left",
-                                whiteSpace: "normal",
-                                opacity:
-                                  method.available
+                                  if (
+                                    depositMethodCode ===
+                                      method.code &&
+                                    !minimumLoading
+                                  ) {
+                                    autoOpenDepositMethodRef.current =
+                                      null;
+
+                                    if (
+                                      !isCreatingDeposit &&
+                                      depositConfig &&
+                                      depositPreview.amountUsd >=
+                                        depositConfig.minUsd &&
+                                      depositPreview.amountUsd <=
+                                        depositConfig.maxUsd &&
+                                      !depositTelegramRequired &&
+                                      depositProviderConfigured
+                                    ) {
+                                      setDepositConfirmationOpen(
+                                        true,
+                                      );
+                                    }
+
+                                    return;
+                                  }
+
+                                  setSelectedMethodMinimumUsd(
+                                    null,
+                                  );
+                                  setDepositMethodCode(
+                                    method.code,
+                                  );
+                                }}
+                                style={{
+                                  width: "100%",
+                                  minWidth: 0,
+                                  maxWidth: "none",
+                                  minHeight: 56,
+                                  boxSizing:
+                                    "border-box",
+                                  display: "flex",
+                                  flexDirection: "row",
+                                  alignItems: "center",
+                                  justifyContent:
+                                    "space-between",
+                                  gap: 10,
+                                  padding: "12px 14px",
+                                  margin: 0,
+                                  textAlign: "left",
+                                  whiteSpace: "normal",
+                                  opacity: method.available
                                     ? 1
                                     : .45,
-                              }}
-                            >
-                              <span>
-                                {method.label}
-                              </span>
+                                }}
+                              >
+                                <span>
+                                  {method.label}
+                                </span>
 
-                              <small>
-                                {method.available
-                                  ? selected
-                                    ? "✓"
-                                    : ""
-                                  : "недоступно"}
-                              </small>
-                            </button>
-                          );
-                        },
-                      )}
+                                <small>
+                                  {method.available
+                                    ? selected
+                                      ? "✓"
+                                      : ""
+                                    : "недоступно"}
+                                </small>
+                              </button>
+                            );
+                          },
+                        )}
+                      </div>
                     </div>
-
                   </div>
                 ) : null}
 
