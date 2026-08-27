@@ -3947,6 +3947,9 @@ export default function GameApp() {
       setProfileOpen(false);
       setWalletHistoryOpen(false);
       setWithdrawalOpen(false);
+    }
+
+    if (tab !== "game") {
       setLevelsOpen(false);
       setProfitPlanOpen(false);
       setFarmToolsMenuOpen(false);
@@ -4630,6 +4633,18 @@ export default function GameApp() {
               <strong>Общее производство</strong>
               <span>{formatNumber(eggsPerHour, 0)} яиц / час</span>
             </div>
+
+            <button
+              type="button"
+              className="game-farm-tools-card"
+              onClick={() => {
+                closeMenuPopups();
+                setFarmToolsMenuOpen(true);
+              }}
+            >
+              <span>Ферма</span>
+              <b>Lv.1–16 · Profit</b>
+            </button>
           </div>
         )}
 
@@ -6060,7 +6075,15 @@ export default function GameApp() {
           </div>
         )}
 
-        {(tab === "menu" || dailyOpen || tasksOpen || achievementsOpen) && (
+        {(
+          tab === "menu" ||
+          farmToolsMenuOpen ||
+          levelsOpen ||
+          profitPlanOpen ||
+          dailyOpen ||
+          tasksOpen ||
+          achievementsOpen
+        ) && (
           <div
             className={`screen menu-art-screen${
               tab !== "menu" ? " rewards-popup-host" : ""
@@ -6110,15 +6133,6 @@ export default function GameApp() {
                     <b>USDT</b>
                   </button>
 
-                  <button
-                    onClick={() => {
-                      closeMenuPopups();
-                      setFarmToolsMenuOpen(true);
-                    }}
-                  >
-                    <span>Ферма</span>
-                    <b>Lv.1–16 · Profit</b>
-                  </button>
                 </div>
               </>
             ) : null}
