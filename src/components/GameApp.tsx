@@ -9,6 +9,15 @@ import {
   MAX_DINOSAUR_LEVEL,
   NEST_UPGRADE_TIERS,
 } from "@/lib/game-config";
+import {
+  LANGUAGES,
+  type LanguageCode,
+  isLanguageCode,
+  localeFor,
+  localizedAchievement,
+  localizedTask,
+  tr,
+} from "@/lib/i18n";
 
 type Tab = "nest" | "game" | "shop" | "friends" | "menu";
 type Slot = number | null;
@@ -297,11 +306,12 @@ type WalletHistorySummary = {
 
 function withdrawalStatusMeta(
   status: string,
-  note?: string | null,
+  note: string | null | undefined,
+  language: LanguageCode,
 ) {
   if (status === "PENDING") {
     return {
-      label: "Ожидает проверки",
+      label: tr(language, "status.pendingReview"),
       icon: "⏳",
       background: "rgba(255, 193, 7, .14)",
       border: "rgba(255, 193, 7, .30)",
@@ -311,7 +321,7 @@ function withdrawalStatusMeta(
 
   if (status === "APPROVED") {
     return {
-      label: "Одобрено",
+      label: tr(language, "status.approved"),
       icon: "✅",
       background: "rgba(84, 180, 255, .14)",
       border: "rgba(84, 180, 255, .30)",
@@ -321,7 +331,7 @@ function withdrawalStatusMeta(
 
   if (status === "PAID") {
     return {
-      label: "Оплачено",
+      label: tr(language, "status.paid"),
       icon: "💸",
       background: "rgba(129, 230, 96, .14)",
       border: "rgba(129, 230, 96, .30)",
@@ -336,8 +346,8 @@ function withdrawalStatusMeta(
 
     return {
       label: canceledByPlayer
-        ? "Отменено · DNA возвращена"
-        : "Отклонено · DNA возвращена",
+        ? tr(language, "status.canceledRefunded")
+        : tr(language, "status.rejectedRefunded"),
       icon: "↩️",
       background:
         "rgba(255, 92, 108, .14)",
@@ -356,14 +366,14 @@ function withdrawalStatusMeta(
   };
 }
 
-function formatWithdrawalDate(value: string) {
+function formatWithdrawalDate(value: string, language: LanguageCode) {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return "Дата неизвестна";
+    return tr(language, "dateUnknown");
   }
 
-  return new Intl.DateTimeFormat("ru-RU", {
+  return new Intl.DateTimeFormat(localeFor(language), {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -381,6 +391,7 @@ function shortWallet(value: string) {
 function walletOperationStatus(
   type: "DEPOSIT" | "WITHDRAWAL",
   status: string,
+  language: LanguageCode,
 ) {
   const normalized =
     status.toUpperCase();
@@ -389,7 +400,7 @@ function walletOperationStatus(
     if (normalized === "FINISHED") {
       return {
         icon: "✅",
-        label: "Зачислено",
+        label: tr(language, "status.credited"),
         color: "#a8f58e",
       };
     }
@@ -400,7 +411,7 @@ function walletOperationStatus(
     ) {
       return {
         icon: "❌",
-        label: "Ошибка",
+        label: tr(language, "status.error"),
         color: "#ffabb4",
       };
     }
@@ -408,7 +419,7 @@ function walletOperationStatus(
     if (normalized === "EXPIRED") {
       return {
         icon: "⌛",
-        label: "Истёк",
+        label: tr(language, "status.expired"),
         color: "#ffcf8e",
       };
     }
@@ -416,7 +427,7 @@ function walletOperationStatus(
     if (normalized === "REFUNDED") {
       return {
         icon: "↩️",
-        label: "Возвращено",
+        label: tr(language, "status.refunded"),
         color: "#ffcf8e",
       };
     }
@@ -426,13 +437,13 @@ function walletOperationStatus(
       label:
         normalized ===
         "PARTIALLY_PAID"
-          ? "Частично оплачено"
+          ? tr(language, "status.partial")
           : normalized ===
               "CONFIRMING" ||
             normalized ===
               "CONFIRMED"
-            ? "Подтверждается"
-            : "Ожидает оплату",
+            ? tr(language, "status.confirming")
+            : tr(language, "status.waitingPayment"),
       color: "#ffd76a",
     };
   }
@@ -440,7 +451,7 @@ function walletOperationStatus(
   if (normalized === "PAID") {
     return {
       icon: "✅",
-      label: "Выплачено",
+      label: tr(language, "status.paid"),
       color: "#a8f58e",
     };
   }
@@ -448,7 +459,7 @@ function walletOperationStatus(
   if (normalized === "APPROVED") {
     return {
       icon: "🔄",
-      label: "Одобрено",
+      label: tr(language, "status.approved"),
       color: "#9bd8ff",
     };
   }
@@ -456,14 +467,14 @@ function walletOperationStatus(
   if (normalized === "REJECTED") {
     return {
       icon: "❌",
-      label: "Отклонено",
+      label: tr(language, "status.rejected"),
       color: "#ffabb4",
     };
   }
 
   return {
     icon: "⏳",
-    label: "На проверке",
+    label: tr(language, "status.review"),
     color: "#ffd76a",
   };
 }
@@ -536,14 +547,14 @@ function depositStatusMeta(status: string) {
   };
 }
 
-function formatDepositDate(value: string) {
+function formatDepositDate(value: string, language: LanguageCode) {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return "Дата неизвестна";
+    return tr(language, "dateUnknown");
   }
 
-  return new Intl.DateTimeFormat("ru-RU", {
+  return new Intl.DateTimeFormat(localeFor(language), {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -552,13 +563,13 @@ function formatDepositDate(value: string) {
   }).format(date);
 }
 
-function formatDailyRemaining(nextClaimAt: string | null) {
-  if (!nextClaimAt) return "Доступен сейчас";
+function formatDailyRemaining(nextClaimAt: string | null, language: LanguageCode) {
+  if (!nextClaimAt) return tr(language, "daily.availableNow");
 
   const remaining = new Date(nextClaimAt).getTime() - Date.now();
 
   if (!Number.isFinite(remaining) || remaining <= 0) {
-    return "Доступен сейчас";
+    return tr(language, "daily.availableNow");
   }
 
   const hours = Math.floor(remaining / (60 * 60 * 1000));
@@ -567,10 +578,10 @@ function formatDailyRemaining(nextClaimAt: string | null) {
   );
 
   if (hours <= 0) {
-    return `Через ${minutes} мин`;
+    return tr(language, "daily.inMinutes", { minutes });
   }
 
-  return `Через ${hours} ч ${minutes} мин`;
+  return tr(language, "daily.inHours", { hours, minutes });
 }
 
 const EMPTY_BOARD: Slot[] = Array(16).fill(null);
@@ -601,6 +612,10 @@ function getTelegramWebApp(): TelegramWebApp | undefined {
 
 export default function GameApp() {
   const [tab, setTab] = useState<Tab>("nest");
+  const [uiLanguage, setUiLanguage] = useState<LanguageCode>("ru");
+  const [languageReady, setLanguageReady] = useState(false);
+  const t = (key: string, vars?: Record<string, string | number>) =>
+    tr(uiLanguage, key, vars);
   const [state, setState] = useState<SaveState>(INITIAL_STATE);
   const [selected, setSelected] = useState<number | null>(null);
   const [toast, setToast] = useState("Загрузка данных фермы...");
@@ -799,6 +814,19 @@ export default function GameApp() {
       paybackDays,
     };
   }, [state.board]);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem("dino-ui-language");
+    if (isLanguageCode(stored)) {
+      setUiLanguage(stored);
+    }
+    setLanguageReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!languageReady) return;
+    window.localStorage.setItem("dino-ui-language", uiLanguage);
+  }, [languageReady, uiLanguage]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2346,7 +2374,7 @@ export default function GameApp() {
   const loadWalletHistory = async () => {
     if (authMode !== "telegram") {
       setToast(
-        "История баланса доступна только через Telegram.",
+        t("only.wallet"),
       );
       return;
     }
@@ -2379,7 +2407,7 @@ export default function GameApp() {
         throw new Error(
           data.message ||
             data.error ||
-            "Не удалось загрузить историю баланса",
+            t("action.walletLoadError"),
         );
       }
 
@@ -2409,7 +2437,7 @@ export default function GameApp() {
       setToast(
         error instanceof Error
           ? error.message
-          : "Ошибка загрузки истории баланса",
+          : t("action.walletLoadError"),
       );
     }
   };
@@ -2417,7 +2445,7 @@ export default function GameApp() {
   const openWalletHistory = () => {
     if (authMode !== "telegram") {
       setToast(
-        "История баланса доступна только через Telegram.",
+        t("only.wallet"),
       );
       return;
     }
@@ -2428,7 +2456,7 @@ export default function GameApp() {
 
   const loadProfile = async () => {
     if (authMode !== "telegram") {
-      setToast("Профиль доступен только через Telegram.");
+      setToast(t("only.profile"));
       return;
     }
 
@@ -2457,7 +2485,7 @@ export default function GameApp() {
         !data.balance
       ) {
         throw new Error(
-          data.message || data.error || "Не удалось загрузить профиль",
+          data.message || data.error || t("action.profileLoadError"),
         );
       }
 
@@ -2474,14 +2502,14 @@ export default function GameApp() {
       setToast(
         error instanceof Error
           ? error.message
-          : "Ошибка загрузки профиля",
+          : t("action.profileLoadError"),
       );
     }
   };
 
   const openProfile = () => {
     if (authMode !== "telegram") {
-      setToast("Профиль доступен только через Telegram.");
+      setToast(t("only.profile"));
       return;
     }
 
@@ -2492,7 +2520,7 @@ export default function GameApp() {
   const loadAchievements = async () => {
     if (authMode !== "telegram") {
       setToast(
-        "Достижения доступны только через Telegram.",
+        t("only.ach"),
       );
       return;
     }
@@ -2519,7 +2547,7 @@ export default function GameApp() {
         throw new Error(
           data.message ||
             data.error ||
-            "Не удалось загрузить достижения",
+            t("action.achLoadError"),
         );
       }
 
@@ -2545,7 +2573,7 @@ export default function GameApp() {
       setToast(
         error instanceof Error
           ? error.message
-          : "Ошибка загрузки достижений",
+          : t("action.achLoadError"),
       );
     }
   };
@@ -2553,7 +2581,7 @@ export default function GameApp() {
   const openAchievements = () => {
     if (authMode !== "telegram") {
       setToast(
-        "Достижения доступны только через Telegram.",
+        t("only.ach"),
       );
       return;
     }
@@ -2573,7 +2601,7 @@ export default function GameApp() {
     }
 
     setClaimingAchievementCode(achievement.code);
-    setToast("Получаем награду за достижение...");
+    setToast(t("action.claimAch"));
 
     try {
       const response = await fetch(
@@ -2605,7 +2633,7 @@ export default function GameApp() {
         throw new Error(
           data.message ||
             data.error ||
-            "Не удалось получить награду",
+            t("action.claimError"),
         );
       }
 
@@ -2616,10 +2644,12 @@ export default function GameApp() {
       }));
 
       setToast(
-        `🏅 Достижение получено: +${formatNumber(
-          data.rewardCoins ?? achievement.rewardCoins,
-          0,
-        )} Coins`,
+        t("action.achClaimed", {
+          coins: formatNumber(
+            data.rewardCoins ?? achievement.rewardCoins,
+            0,
+          ),
+        }),
       );
 
       await loadAchievements();
@@ -2631,7 +2661,7 @@ export default function GameApp() {
       setToast(
         error instanceof Error
           ? error.message
-          : "Ошибка получения достижения",
+          : t("action.claimError"),
       );
     } finally {
       setClaimingAchievementCode(null);
@@ -2640,7 +2670,7 @@ export default function GameApp() {
 
   const loadTasks = async () => {
     if (authMode !== "telegram") {
-      setToast("Задания доступны только через Telegram.");
+      setToast(t("only.tasks"));
       return;
     }
 
@@ -2662,7 +2692,7 @@ export default function GameApp() {
 
       if (!response.ok || !data.ok) {
         throw new Error(
-          data.message || data.error || "Не удалось загрузить задания",
+          data.message || data.error || t("action.tasksLoadError"),
         );
       }
 
@@ -2678,14 +2708,14 @@ export default function GameApp() {
       setToast(
         error instanceof Error
           ? error.message
-          : "Ошибка загрузки заданий",
+          : t("action.tasksLoadError"),
       );
     }
   };
 
   const openTasks = () => {
     if (authMode !== "telegram") {
-      setToast("Задания доступны только через Telegram.");
+      setToast(t("only.tasks"));
       return;
     }
 
@@ -2697,7 +2727,7 @@ export default function GameApp() {
     if (claimingTaskCode || !task.claimable) return;
 
     setClaimingTaskCode(task.code);
-    setToast("Получаем награду за задание...");
+    setToast(t("action.claimTask"));
 
     try {
       const response = await fetch("/api/tasks", {
@@ -2718,7 +2748,7 @@ export default function GameApp() {
 
       if (!response.ok || !data.ok) {
         throw new Error(
-          data.message || data.error || "Не удалось получить награду",
+          data.message || data.error || t("action.claimError"),
         );
       }
 
@@ -2728,10 +2758,12 @@ export default function GameApp() {
       }));
 
       setToast(
-        `✅ Задание выполнено: +${formatNumber(
-          data.rewardCoins ?? task.rewardCoins,
-          0,
-        )} Coins`,
+        t("action.taskClaimed", {
+          coins: formatNumber(
+            data.rewardCoins ?? task.rewardCoins,
+            0,
+          ),
+        }),
       );
 
       await loadTasks();
@@ -2740,7 +2772,7 @@ export default function GameApp() {
       setToast(
         error instanceof Error
           ? error.message
-          : "Ошибка получения награды",
+          : t("action.claimError"),
       );
     } finally {
       setClaimingTaskCode(null);
@@ -2749,7 +2781,7 @@ export default function GameApp() {
 
   const loadDailyReward = async () => {
     if (authMode !== "telegram") {
-      setToast("Ежедневный бонус доступен только через Telegram.");
+      setToast(t("only.daily"));
       return;
     }
 
@@ -2769,7 +2801,7 @@ export default function GameApp() {
 
       if (!response.ok || !data.ok) {
         throw new Error(
-          data.message || data.error || "Не удалось загрузить ежедневный бонус",
+          data.message || data.error || t("action.dailyLoadError"),
         );
       }
 
@@ -2785,14 +2817,14 @@ export default function GameApp() {
       setToast(
         error instanceof Error
           ? error.message
-          : "Ошибка загрузки ежедневного бонуса",
+          : t("action.dailyLoadError"),
       );
     }
   };
 
   const openDailyReward = () => {
     if (authMode !== "telegram") {
-      setToast("Ежедневный бонус доступен только через Telegram.");
+      setToast(t("only.daily"));
       return;
     }
 
@@ -2804,7 +2836,7 @@ export default function GameApp() {
     if (isClaimingDaily) return;
 
     setIsClaimingDaily(true);
-    setToast("Получаем ежедневный бонус...");
+    setToast(t("action.claimDaily"));
 
     try {
       const response = await fetch("/api/daily-reward", {
@@ -2822,7 +2854,7 @@ export default function GameApp() {
 
       if (!response.ok || !data.ok) {
         throw new Error(
-          data.message || data.error || "Не удалось получить бонус",
+          data.message || data.error || t("action.dailyClaimError"),
         );
       }
 
@@ -2833,14 +2865,16 @@ export default function GameApp() {
       }));
 
       setToast(
-        `🎁 Ежедневный бонус: +${formatNumber(data.claimedCoins ?? 0, 0)} Coins`,
+        t("action.dailyClaimed", {
+          coins: formatNumber(data.claimedCoins ?? 0, 0),
+        }),
       );
     } catch (error) {
       console.error("Failed to claim daily reward", error);
       setToast(
         error instanceof Error
           ? error.message
-          : "Ошибка получения ежедневного бонуса",
+          : t("action.dailyClaimError"),
       );
 
       void loadDailyReward();
@@ -2855,7 +2889,7 @@ export default function GameApp() {
     if (authMode !== "telegram") {
       if (!silent) {
         setToast(
-          "Вывод доступен только при входе через Telegram.",
+          t("only.withdraw"),
         );
       }
       return;
@@ -2898,7 +2932,7 @@ export default function GameApp() {
         throw new Error(
           data.message ||
             data.error ||
-            "Не удалось загрузить вывод",
+            t("action.withdrawLoadError"),
         );
       }
 
@@ -2927,6 +2961,7 @@ export default function GameApp() {
               withdrawalStatusMeta(
                 item.status,
                 item.note,
+                uiLanguage,
               );
 
             if (
@@ -2934,16 +2969,16 @@ export default function GameApp() {
               "APPROVED"
             ) {
               setToast(
-                "🔄 Ваша заявка на вывод DNA одобрена.",
+                t("action.withdrawApproved"),
               );
             } else if (
               item.status ===
               "PAID"
             ) {
               setToast(
-                `✅ Выплата отправлена: ${item.usdtAmount.toFixed(
-                  8,
-                )} USDT`,
+                t("action.withdrawPaid", {
+                  usdt: item.usdtAmount.toFixed(8),
+                }),
               );
             } else if (
               item.status ===
@@ -2952,12 +2987,12 @@ export default function GameApp() {
               setToast(
                 item.note ===
                 "CANCELED_BY_PLAYER"
-                  ? "↩️ Заявка отменена."
-                  : "↩️ Заявка отклонена. DNA возвращена на баланс.",
+                  ? t("action.withdrawCanceled")
+                  : t("action.withdrawRejected"),
               );
             } else {
               setToast(
-                `${meta.icon} Статус вывода: ${meta.label}`,
+                t("action.withdrawStatus", { status: meta.label }),
               );
             }
           }
@@ -3013,7 +3048,7 @@ export default function GameApp() {
         setToast(
           error instanceof Error
             ? error.message
-            : "Ошибка загрузки вывода",
+            : t("action.withdrawLoadError"),
         );
       }
     }
@@ -3021,7 +3056,7 @@ export default function GameApp() {
 
   const openDnaWithdrawal = () => {
     if (authMode !== "telegram") {
-      setToast("Вывод DNA доступен только при входе через Telegram.");
+      setToast(t("only.withdraw"));
       return;
     }
 
@@ -3036,33 +3071,31 @@ export default function GameApp() {
 
     if (!Number.isFinite(dnaAmount) || dnaAmount < withdrawalConfig.minDna) {
       setToast(
-        `Минимальная сумма вывода — ${formatNumber(
-          withdrawalConfig.minDna,
-          0,
-        )} DNA (${withdrawalConfig.minUsdt.toFixed(
-          2,
-        )} USDT).`,
+        t("action.minWithdraw", {
+          dna: formatNumber(withdrawalConfig.minDna, 0),
+          usdt: withdrawalConfig.minUsdt.toFixed(2),
+        }),
       );
       return;
     }
 
     if (dnaAmount > state.dna) {
-      setToast("Недостаточно DNA для вывода.");
+      setToast(t("action.notEnoughDna"));
       return;
     }
 
     if (!withdrawNetwork.trim()) {
-      setToast("Укажите сеть USDT.");
+      setToast(t("action.networkRequired"));
       return;
     }
 
     if (!withdrawWallet.trim()) {
-      setToast("Укажите адрес USDT-кошелька.");
+      setToast(t("action.walletRequired"));
       return;
     }
 
     setIsSubmittingWithdrawal(true);
-    setToast("Создаём заявку на вывод...");
+    setToast(t("action.creatingWithdraw"));
 
     try {
       const requestKey =
@@ -3092,7 +3125,7 @@ export default function GameApp() {
       };
 
       if (!response.ok || !data.ok || !data.withdrawal) {
-        throw new Error(data.message || data.error || "Не удалось создать заявку");
+        throw new Error(data.message || data.error || t("action.createWithdrawError"));
       }
 
       setState((previous) => ({
@@ -3107,16 +3140,14 @@ export default function GameApp() {
 
       setWithdrawDna(String(withdrawalConfig.minDna));
       setToast(
-        `Заявка создана: ${formatNumber(
-          data.withdrawal.dnaAmount,
-          0,
-        )} DNA → ${data.withdrawal.usdtAmount.toFixed(
-          8,
-        )} USDT к получению.`,
+        t("action.withdrawCreated", {
+          dna: formatNumber(data.withdrawal.dnaAmount, 0),
+          usdt: data.withdrawal.usdtAmount.toFixed(8),
+        }),
       );
     } catch (error) {
       console.error("Failed to submit withdrawal", error);
-      setToast(error instanceof Error ? error.message : "Ошибка создания заявки");
+      setToast(error instanceof Error ? error.message : t("action.createWithdrawError"));
     } finally {
       setIsSubmittingWithdrawal(false);
     }
@@ -3134,10 +3165,9 @@ export default function GameApp() {
 
     const confirmed =
       window.confirm(
-        `Отменить заявку на ${formatNumber(
-          item.dnaAmount,
-          4,
-        )} DNA?\n\nЗарезервированная DNA будет возвращена на игровой баланс.`,
+        t("action.cancelConfirm", {
+          dna: formatNumber(item.dnaAmount, 4),
+        }),
       );
 
     if (!confirmed) {
@@ -3186,7 +3216,7 @@ export default function GameApp() {
         throw new Error(
           data.message ||
             data.error ||
-            "Не удалось отменить заявку",
+            t("action.cancelWithdrawError"),
         );
       }
 
@@ -3217,10 +3247,9 @@ export default function GameApp() {
       }));
 
       setToast(
-        `↩️ Заявка отменена. ${formatNumber(
-          data.withdrawal.dnaAmount,
-          4,
-        )} DNA возвращено на баланс.`,
+        t("action.withdrawCanceledAmount", {
+          dna: formatNumber(data.withdrawal.dnaAmount, 4),
+        }),
       );
     } catch (error) {
       console.error(
@@ -3231,7 +3260,7 @@ export default function GameApp() {
       setToast(
         error instanceof Error
           ? error.message
-          : "Ошибка отмены заявки",
+          : t("action.cancelWithdrawError"),
       );
 
       void loadWithdrawals();
@@ -5263,555 +5292,169 @@ export default function GameApp() {
                 draggable={false}
                 aria-hidden="true"
               />
-              <div>
+              <div className="menu-art-heading-copy">
                 <span className="eyebrow">TOOLS</span>
-                <h2>Меню</h2>
+                <h2>{t("menu.title")}</h2>
               </div>
+              <label className="menu-language-select">
+                <span>{t("language")}</span>
+                <select
+                  value={uiLanguage}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    if (isLanguageCode(next)) setUiLanguage(next);
+                  }}
+                >
+                  {LANGUAGES.map((item) => (
+                    <option key={item.code} value={item.code}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
 
             <div className="menu-list menu-art-grid">
               <button onClick={openProfile}>
-                <span>Мой профиль</span>
-                <b>СТАТИСТИКА</b>
+                <span>{t("menu.profile")}</span>
+                <b>{t("menu.stats")}</b>
               </button>
 
               <button onClick={openWalletHistory}>
-                <span>История баланса</span>
-                <b>ПОПОЛНЕНИЯ / ВЫВОДЫ</b>
+                <span>{t("menu.wallet")}</span>
+                <b>{t("menu.moneyHistory")}</b>
               </button>
 
               <button onClick={openDnaWithdrawal}>
-                <span>Вывод DNA</span>
+                <span>{t("menu.withdraw")}</span>
                 <b>USDT</b>
               </button>
 
               <button onClick={() => setLevelsOpen((value) => !value)}>
-                <span>Уровни динозавров</span>
+                <span>{t("menu.levels")}</span>
                 <b>Lv.1–16</b>
               </button>
 
               <button onClick={() => setProfitPlanOpen((value) => !value)}>
-                <span>Profit Plan</span>
-                <b>МОЯ ФЕРМА</b>
+                <span>{t("menu.profit")}</span>
+                <b>{t("menu.myFarm")}</b>
               </button>
 
               <button onClick={openDailyReward} className={dailyInfo?.canClaim ? "menu-art-claimable" : ""}>
-                <span>Ежедневный бонус</span>
-                <b>{dailyInfo?.canClaim ? "ЗАБРАТЬ" : "ОТКРЫТЬ"}</b>
+                <span>{t("menu.daily")}</span>
+                <b>{dailyInfo?.canClaim ? t("claim") : t("open")}</b>
               </button>
 
               <button onClick={openTasks} className={tasks.some((task) => task.claimable) ? "menu-art-claimable" : ""}>
-                <span>Задания</span>
-                <b>{tasks.some((task) => task.claimable) ? "ЗАБРАТЬ" : "ОТКРЫТЬ"}</b>
+                <span>{t("menu.tasks")}</span>
+                <b>{tasks.some((task) => task.claimable) ? t("claim") : t("open")}</b>
               </button>
 
               <button onClick={openAchievements} className={achievements.some((achievement) => achievement.claimable) ? "menu-art-claimable" : ""}>
-                <span>Достижения</span>
-                <b>{achievements.some((achievement) => achievement.claimable) ? "ЗАБРАТЬ" : "ОТКРЫТЬ"}</b>
+                <span>{t("menu.achievements")}</span>
+                <b>{achievements.some((achievement) => achievement.claimable) ? t("claim") : t("open")}</b>
               </button>
 
-              <button onClick={() => setToast("Рулетка отключена до server-side реализации")} className="menu-art-disabled">
-                <span>Рулетка</span>
+              <button onClick={() => setToast(t("menu.rouletteOff"))} className="menu-art-disabled">
+                <span>{t("menu.roulette")}</span>
                 <b>OFF</b>
               </button>
 
               <button onClick={() => window.location.reload()}>
-                <span>Перезагрузить данные</span>
+                <span>{t("menu.reload")}</span>
                 <b>NEON</b>
               </button>
             </div>
 
             {walletHistoryOpen ? (
-              <div
-                className="form-card"
-                style={{
-                  marginTop: 16,
-                  borderRadius: 20,
-                  background: "#10281e",
-                  border:
-                    "1px solid rgba(255,255,255,.08)",
-                  padding: 14,
-                  width: "100%",
-                  minWidth: 0,
-                  boxSizing:
-                    "border-box",
-                }}
-              >
-                <div
-                  className="section-head"
-                  style={{
-                    width: "100%",
-                    minWidth: 0,
-                    alignItems: "center",
-                  }}
-                >
+              <div className="form-card wallet-art-panel">
+                <div className="wallet-art-head">
                   <div>
-                    <span className="eyebrow">
-                      WALLET HISTORY
-                    </span>
-                    <h2>
-                      💰 История баланса
-                    </h2>
+                    <span className="eyebrow">WALLET HISTORY</span>
+                    <h2>{t("wallet.title")}</h2>
                   </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 6,
-                      flex:
-                        "0 0 auto",
-                    }}
-                  >
-                    <button
-                      className="coin-button"
-                      onClick={() =>
-                        void loadWalletHistory()
-                      }
-                    >
-                      ↻
-                    </button>
-
-                    <button
-                      className="coin-button"
-                      onClick={() =>
-                        setWalletHistoryOpen(
-                          false,
-                        )
-                      }
-                    >
-                      ✕
-                    </button>
+                  <div className="wallet-art-actions">
+                    <button className="coin-button" onClick={() => void loadWalletHistory()} aria-label={t("wallet.title")}>↻</button>
+                    <button className="coin-button" onClick={() => setWalletHistoryOpen(false)} aria-label={t("wallet.title")}>×</button>
                   </div>
                 </div>
 
-                {walletHistoryStatus ===
-                  "loading" ||
-                walletHistoryStatus ===
-                  "idle" ? (
-                  <p>
-                    Загружаем операции...
-                  </p>
-                ) : walletHistoryStatus ===
-                  "error" ? (
-                  <>
-                    <p>
-                      Не удалось загрузить
-                      историю.
-                    </p>
-                    <button
-                      className="primary"
-                      onClick={() =>
-                        void loadWalletHistory()
-                      }
-                    >
-                      ПОВТОРИТЬ
-                    </button>
-                  </>
+                {walletHistoryStatus === "loading" || walletHistoryStatus === "idle" ? (
+                  <div className="wallet-art-message">{t("wallet.loading")}</div>
+                ) : walletHistoryStatus === "error" ? (
+                  <div className="wallet-art-message wallet-art-error">
+                    <strong>{t("wallet.error")}</strong>
+                    <button className="primary" onClick={() => void loadWalletHistory()}>{t("retry")}</button>
+                  </div>
                 ) : (
                   <>
                     {walletHistorySummary ? (
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns:
-                            "repeat(2, minmax(0, 1fr))",
-                          gap: 8,
-                          marginTop: 10,
-                        }}
-                      >
-                        <div
-                          style={{
-                            minWidth: 0,
-                            padding: 11,
-                            borderRadius: 14,
-                            background:
-                              "rgba(167,243,72,.08)",
-                          }}
-                        >
-                          <small
-                            style={{
-                              opacity: .65,
-                            }}
-                          >
-                            Пополнено
-                          </small>
-
-                          <strong
-                            style={{
-                              display:
-                                "block",
-                              marginTop: 4,
-                              fontSize: 16,
-                            }}
-                          >
-                            $
-                            {walletHistorySummary.depositedUsd.toFixed(
-                              2,
-                            )}
-                          </strong>
-
-                          <small>
-                            +
-                            {formatNumber(
-                              walletHistorySummary.creditedCoins,
-                              0,
-                            )}{" "}
-                            Coins
-                          </small>
-                        </div>
-
-                        <div
-                          style={{
-                            minWidth: 0,
-                            padding: 11,
-                            borderRadius: 14,
-                            background:
-                              "rgba(255,255,255,.04)",
-                          }}
-                        >
-                          <small
-                            style={{
-                              opacity: .65,
-                            }}
-                          >
-                            Выплачено
-                          </small>
-
-                          <strong
-                            style={{
-                              display:
-                                "block",
-                              marginTop: 4,
-                              fontSize: 16,
-                            }}
-                          >
-                            {walletHistorySummary.paidUsdt.toFixed(
-                              8,
-                            )}{" "}
-                            USDT
-                          </strong>
-
-                          <small>
-                            {formatNumber(
-                              walletHistorySummary.paidDna,
-                              2,
-                            )}{" "}
-                            DNA
-                          </small>
-                        </div>
+                      <div className="wallet-art-summary">
+                        <article>
+                          <small>{t("wallet.deposited")}</small>
+                          <strong>${walletHistorySummary.depositedUsd.toFixed(2)}</strong>
+                          <span>+{formatNumber(walletHistorySummary.creditedCoins, 0)} Coins</span>
+                        </article>
+                        <article>
+                          <small>{t("wallet.paid")}</small>
+                          <strong>{walletHistorySummary.paidUsdt.toFixed(8)} USDT</strong>
+                          <span>{formatNumber(walletHistorySummary.paidDna, 2)} DNA</span>
+                        </article>
                       </div>
                     ) : null}
 
-                    {walletHistorySummary &&
-                    walletHistorySummary.bonusCoins >
-                      0 ? (
-                      <div
-                        style={{
-                          marginTop: 8,
-                          padding: 10,
-                          borderRadius: 12,
-                          background:
-                            "rgba(255,215,106,.08)",
-                          fontSize: 13,
-                        }}
-                      >
-                        🎁 Получено бонусных
-                        Coins:{" "}
-                        <b>
-                          {formatNumber(
-                            walletHistorySummary.bonusCoins,
-                            0,
-                          )}
-                        </b>
+                    {walletHistorySummary && walletHistorySummary.bonusCoins > 0 ? (
+                      <div className="wallet-art-bonus">
+                        <span>{t("wallet.bonusCoins")}</span>
+                        <b>+{formatNumber(walletHistorySummary.bonusCoins, 0)}</b>
                       </div>
                     ) : null}
 
-                    {walletHistory.length ===
-                    0 ? (
-                      <div
-                        className="card"
-                        style={{
-                          display:
-                            "block",
-                          marginTop: 12,
-                        }}
-                      >
-                        <strong>
-                          Операций пока нет
-                        </strong>
-                        <p>
-                          Здесь появятся
-                          пополнения Coins и
-                          заявки на вывод DNA.
-                        </p>
+                    {walletHistory.length === 0 ? (
+                      <div className="card wallet-art-empty">
+                        <strong>{t("wallet.noOps")}</strong>
+                        <p>{t("wallet.noOpsDesc")}</p>
                       </div>
                     ) : (
-                      <div
-                        style={{
-                          display: "grid",
-                          gap: 8,
-                          marginTop: 12,
-                        }}
-                      >
-                        {walletHistory.map(
-                          (item) => {
-                            const meta =
-                              walletOperationStatus(
-                                item.type,
-                                item.status,
-                              );
-
-                            return (
-                              <div
-                                key={`${item.type}-${item.id}`}
-                                style={{
-                                  minWidth:
-                                    0,
-                                  padding:
-                                    12,
-                                  borderRadius:
-                                    14,
-                                  background:
-                                    "rgba(255,255,255,.04)",
-                                  border:
-                                    "1px solid rgba(255,255,255,.07)",
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    display:
-                                      "flex",
-                                    alignItems:
-                                      "flex-start",
-                                    justifyContent:
-                                      "space-between",
-                                    gap: 10,
-                                  }}
-                                >
-                                  <div
-                                    style={{
-                                      minWidth:
-                                        0,
-                                    }}
-                                  >
-                                    <strong
-                                      style={{
-                                        display:
-                                          "block",
-                                      }}
-                                    >
-                                      {item.type ===
-                                      "DEPOSIT"
-                                        ? "💳 Пополнение Coins"
-                                        : "🧬 Вывод DNA"}
-                                    </strong>
-
-                                    <small
-                                      style={{
-                                        display:
-                                          "block",
-                                        marginTop:
-                                          3,
-                                        opacity:
-                                          .62,
-                                      }}
-                                    >
-                                      {formatDepositDate(
-                                        item.createdAt,
-                                      )}
-                                    </small>
-                                  </div>
-
-                                  <b
-                                    style={{
-                                      color:
-                                        meta.color,
-                                      fontSize:
-                                        12,
-                                      textAlign:
-                                        "right",
-                                      whiteSpace:
-                                        "nowrap",
-                                    }}
-                                  >
-                                    {meta.icon}{" "}
-                                    {meta.label}
-                                  </b>
+                      <div className="wallet-art-list">
+                        {walletHistory.map((item) => {
+                          const meta = walletOperationStatus(item.type, item.status, uiLanguage);
+                          return (
+                            <article key={`${item.type}-${item.id}`} className="wallet-art-operation">
+                              <div className="wallet-art-operation-head">
+                                <div>
+                                  <strong>{item.type === "DEPOSIT" ? t("wallet.deposit") : t("wallet.withdraw")}</strong>
+                                  <small>{formatDepositDate(item.createdAt, uiLanguage)}</small>
                                 </div>
-
-                                {item.type ===
-                                  "DEPOSIT" &&
-                                item.deposit ? (
-                                  <div
-                                    style={{
-                                      marginTop:
-                                        10,
-                                      display:
-                                        "grid",
-                                      gridTemplateColumns:
-                                        "repeat(2, minmax(0, 1fr))",
-                                      gap: 7,
-                                    }}
-                                  >
-                                    <div>
-                                      <small
-                                        style={{
-                                          opacity:
-                                            .6,
-                                        }}
-                                      >
-                                        Сумма
-                                      </small>
-                                      <div>
-                                        <b>
-                                          $
-                                          {item.deposit.usdAmount.toFixed(
-                                            2,
-                                          )}
-                                        </b>
-                                      </div>
-                                    </div>
-
-                                    <div>
-                                      <small
-                                        style={{
-                                          opacity:
-                                            .6,
-                                        }}
-                                      >
-                                        Coins
-                                      </small>
-                                      <div>
-                                        <b>
-                                          {item.deposit.creditedCoins >
-                                          0
-                                            ? `+${formatNumber(
-                                                item.deposit.creditedCoins,
-                                                0,
-                                              )}`
-                                            : formatNumber(
-                                                item.deposit.baseCoins,
-                                                0,
-                                              )}
-                                        </b>
-                                      </div>
-                                    </div>
-
-                                    {item.deposit.bonusCoins >
-                                    0 ? (
-                                      <div
-                                        style={{
-                                          gridColumn:
-                                            "1 / -1",
-                                        }}
-                                      >
-                                        <small
-                                          style={{
-                                            opacity:
-                                              .6,
-                                          }}
-                                        >
-                                          Бонус
-                                        </small>
-                                        <div>
-                                          🎁 +
-                                          {formatNumber(
-                                            item.deposit.bonusCoins,
-                                            0,
-                                          )}{" "}
-                                          Coins (
-                                          {
-                                            item
-                                              .deposit
-                                              .bonusPercent
-                                          }
-                                          %)
-                                        </div>
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                ) : null}
-
-                                {item.type ===
-                                  "WITHDRAWAL" &&
-                                item.withdrawal ? (
-                                  <div
-                                    style={{
-                                      marginTop:
-                                        10,
-                                      display:
-                                        "grid",
-                                      gridTemplateColumns:
-                                        "repeat(2, minmax(0, 1fr))",
-                                      gap: 7,
-                                    }}
-                                  >
-                                    <div>
-                                      <small
-                                        style={{
-                                          opacity:
-                                            .6,
-                                        }}
-                                      >
-                                        DNA
-                                      </small>
-                                      <div>
-                                        <b>
-                                          {formatNumber(
-                                            item.withdrawal.dnaAmount,
-                                            2,
-                                          )}
-                                        </b>
-                                      </div>
-                                    </div>
-
-                                    <div>
-                                      <small
-                                        style={{
-                                          opacity:
-                                            .6,
-                                        }}
-                                      >
-                                        К выплате
-                                      </small>
-                                      <div>
-                                        <b>
-                                          {item.withdrawal.usdtAmount.toFixed(
-                                            8,
-                                          )}{" "}
-                                          USDT
-                                        </b>
-                                      </div>
-                                    </div>
-
-                                    <div
-                                      style={{
-                                        gridColumn:
-                                          "1 / -1",
-                                      }}
-                                    >
-                                      <small
-                                        style={{
-                                          opacity:
-                                            .6,
-                                        }}
-                                      >
-                                        Сеть
-                                      </small>
-                                      <div>
-                                        {
-                                          item
-                                            .withdrawal
-                                            .network
-                                        }
-                                      </div>
-                                    </div>
-                                  </div>
-                                ) : null}
+                                <b className="wallet-art-status" style={{ color: meta.color }}>{meta.label}</b>
                               </div>
-                            );
-                          },
-                        )}
+
+                              {item.type === "DEPOSIT" && item.deposit ? (
+                                <div className="wallet-art-operation-grid">
+                                  <div><small>{t("wallet.amount")}</small><b>${item.deposit.usdAmount.toFixed(2)}</b></div>
+                                  <div>
+                                    <small>Coins</small>
+                                    <b>{item.deposit.creditedCoins > 0 ? `+${formatNumber(item.deposit.creditedCoins, 0)}` : formatNumber(item.deposit.baseCoins, 0)}</b>
+                                  </div>
+                                  {item.deposit.bonusCoins > 0 ? (
+                                    <div className="wallet-art-wide">
+                                      <small>{t("wallet.bonus")}</small>
+                                      <b>+{formatNumber(item.deposit.bonusCoins, 0)} Coins ({item.deposit.bonusPercent}%)</b>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              ) : null}
+
+                              {item.type === "WITHDRAWAL" && item.withdrawal ? (
+                                <div className="wallet-art-operation-grid">
+                                  <div><small>DNA</small><b>{formatNumber(item.withdrawal.dnaAmount, 2)}</b></div>
+                                  <div><small>{t("wallet.toPay")}</small><b>{item.withdrawal.usdtAmount.toFixed(8)} USDT</b></div>
+                                  <div className="wallet-art-wide"><small>{t("wallet.network")}</small><b>{item.withdrawal.network}</b></div>
+                                </div>
+                              ) : null}
+                            </article>
+                          );
+                        })}
                       </div>
                     )}
                   </>
@@ -5821,7 +5464,7 @@ export default function GameApp() {
 
             {profileOpen ? (
               <div
-                className="form-card"
+                className="form-card profile-art-panel"
                 style={{
                   marginTop: 16,
                   borderRadius: 20,
@@ -5833,7 +5476,7 @@ export default function GameApp() {
                 }}
               >
                 <div
-                  className="section-head"
+                  className="section-head profile-art-head"
                   style={{
                     width: "100%",
                     minWidth: 0,
@@ -5842,7 +5485,7 @@ export default function GameApp() {
                 >
                   <div>
                     <span className="eyebrow">PLAYER PROFILE</span>
-                    <h2>👤 Мой профиль</h2>
+                    <h2>{t("profile.title")}</h2>
                   </div>
 
                   <div
@@ -5869,20 +5512,21 @@ export default function GameApp() {
 
                 {profileStatus === "loading" ||
                 profileStatus === "idle" ? (
-                  <p>Загружаем профиль...</p>
+                  <p>{t("profile.loading")}</p>
                 ) : profileStatus === "error" ? (
                   <>
-                    <p>Не удалось загрузить профиль.</p>
+                    <p>{t("profile.error")}</p>
                     <button
                       className="primary"
                       onClick={() => void loadProfile()}
                     >
-                      ПОВТОРИТЬ
+                      {t("retry")}
                     </button>
                   </>
                 ) : profile ? (
                   <>
                     <div
+                      className="profile-player-card"
                       style={{
                         padding: 12,
                         marginTop: 8,
@@ -5906,7 +5550,7 @@ export default function GameApp() {
                           .join(" ") ||
                           (profile.player.username
                             ? `@${profile.player.username}`
-                            : "Игрок")}
+                            : t("profile.player"))}
                       </strong>
 
                       {profile.player.username ? (
@@ -5928,14 +5572,16 @@ export default function GameApp() {
                           opacity: .62,
                         }}
                       >
-                        В игре с{" "}
-                        {new Date(
-                          profile.player.createdAt,
-                        ).toLocaleDateString("ru-RU")}
+                        {t("profile.inGameSince", {
+                          date: new Date(profile.player.createdAt).toLocaleDateString(
+                            localeFor(uiLanguage),
+                          ),
+                        })}
                       </small>
                     </div>
 
                     <div
+                      className="profile-stats-grid"
                       style={{
                         display: "grid",
                         gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
@@ -5959,22 +5605,22 @@ export default function GameApp() {
                           ),
                         },
                         {
-                          label: "Динозавров",
+                          label: t("profile.dinos"),
                           value: profile.farm.dinosaurCount,
                         },
                         {
-                          label: "Макс. уровень",
+                          label: t("profile.maxLevel"),
                           value: `Lv.${profile.farm.maxLevel}`,
                         },
                         {
-                          label: "Coins / день",
+                          label: t("profile.coinsDay"),
                           value: formatNumber(
                             profile.farm.dailyCoins,
                             2,
                           ),
                         },
                         {
-                          label: "DNA / день",
+                          label: t("profile.dnaDay"),
                           value: formatNumber(
                             profile.farm.dailyDna,
                             2,
@@ -5983,6 +5629,7 @@ export default function GameApp() {
                       ].map((item) => (
                         <div
                           key={item.label}
+                          className="profile-stat-card"
                           style={{
                             padding: 10,
                             borderRadius: 12,
@@ -6007,6 +5654,7 @@ export default function GameApp() {
                     </div>
 
                     <div
+                      className="profile-detail-card profile-farm-card"
                       style={{
                         marginTop: 10,
                         padding: 12,
@@ -6014,7 +5662,7 @@ export default function GameApp() {
                         background: "rgba(255,255,255,.04)",
                       }}
                     >
-                      <strong>🌱 Ферма</strong>
+                      <strong>{t("profile.farm")}</strong>
 
                       <div
                         style={{
@@ -6031,14 +5679,14 @@ export default function GameApp() {
                           }}
                         >
                           <small style={{ opacity: .66 }}>
-                            Производство
+                            {t("profile.production")}
                           </small>
                           <strong>
                             {formatNumber(
                               profile.farm.eggsPerHour,
                               2,
                             )}{" "}
-                            яиц/ч
+                            {t("profile.eggsHour")}
                           </strong>
                         </div>
 
@@ -6050,7 +5698,7 @@ export default function GameApp() {
                           }}
                         >
                           <small style={{ opacity: .66 }}>
-                            Собрано яиц всего
+                            {t("profile.totalEggs")}
                           </small>
                           <strong>
                             {formatNumber(
@@ -6068,7 +5716,7 @@ export default function GameApp() {
                           }}
                         >
                           <small style={{ opacity: .66 }}>
-                            Вместимость гнезда
+                            {t("profile.nestCapacity")}
                           </small>
                           <strong>
                             {formatNumber(
@@ -6086,7 +5734,7 @@ export default function GameApp() {
                           }}
                         >
                           <small style={{ opacity: .66 }}>
-                            Экв. стоимость фермы
+                            {t("profile.farmCost")}
                           </small>
                           <strong>
                             {formatNumber(
@@ -6101,6 +5749,7 @@ export default function GameApp() {
                     </div>
 
                     <div
+                      className="profile-detail-card profile-progress-card"
                       style={{
                         marginTop: 10,
                         padding: 12,
@@ -6108,7 +5757,7 @@ export default function GameApp() {
                         background: "rgba(255,255,255,.04)",
                       }}
                     >
-                      <strong>🏅 Прогресс</strong>
+                      <strong>{t("profile.progress")}</strong>
 
                       <div
                         style={{
@@ -6121,7 +5770,7 @@ export default function GameApp() {
                       >
                         <div>
                           <small style={{ opacity: .62 }}>
-                            Заданий выполнено
+                            {t("profile.tasksCompleted")}
                           </small>
                           <strong
                             style={{
@@ -6149,7 +5798,7 @@ export default function GameApp() {
 
                         <div>
                           <small style={{ opacity: .62 }}>
-                            Daily получено
+                            {t("profile.dailyClaims")}
                           </small>
                           <strong
                             style={{
@@ -6163,7 +5812,7 @@ export default function GameApp() {
 
                         <div>
                           <small style={{ opacity: .62 }}>
-                            Coins из Daily
+                            {t("profile.dailyCoins")}
                           </small>
                           <strong
                             style={{
@@ -6181,6 +5830,7 @@ export default function GameApp() {
                     </div>
 
                     <div
+                      className="profile-summary-grid"
                       style={{
                         marginTop: 10,
                         display: "grid",
@@ -6190,13 +5840,14 @@ export default function GameApp() {
                       }}
                     >
                       <div
+                        className="profile-summary-card"
                         style={{
                           padding: 12,
                           borderRadius: 14,
                           background: "rgba(255,255,255,.04)",
                         }}
                       >
-                        <strong>👥 Рефералы</strong>
+                        <strong>{t("profile.referrals")}</strong>
                         <div
                           style={{
                             marginTop: 8,
@@ -6207,7 +5858,7 @@ export default function GameApp() {
                           {profile.referrals.invited}
                         </div>
                         <small style={{ opacity: .64 }}>
-                          приглашено ·{" "}
+                          {t("profile.invited")} ·{" "}
                           {formatNumber(
                             profile.referrals.coinsEarned,
                             0,
@@ -6217,13 +5868,14 @@ export default function GameApp() {
                       </div>
 
                       <div
+                        className="profile-summary-card"
                         style={{
                           padding: 12,
                           borderRadius: 14,
                           background: "rgba(255,255,255,.04)",
                         }}
                       >
-                        <strong>💸 Выплаты</strong>
+                        <strong>{t("profile.payouts")}</strong>
                         <div
                           style={{
                             marginTop: 8,
@@ -6234,7 +5886,7 @@ export default function GameApp() {
                           {profile.withdrawals.paid}
                         </div>
                         <small style={{ opacity: .64 }}>
-                          оплачено ·{" "}
+                          {t("profile.paid")} ·{" "}
                           {profile.withdrawals.paidUsdt.toFixed(8)}{" "}
                           USDT
                         </small>
@@ -6242,6 +5894,7 @@ export default function GameApp() {
                     </div>
 
                     <div
+                      className="profile-detail-card profile-collection-card"
                       style={{
                         marginTop: 10,
                         padding: 12,
@@ -6249,7 +5902,7 @@ export default function GameApp() {
                         background: "rgba(255,255,255,.04)",
                       }}
                     >
-                      <strong>🦖 Коллекция</strong>
+                      <strong>{t("profile.collection")}</strong>
 
                       <div
                         style={{
@@ -6264,6 +5917,7 @@ export default function GameApp() {
                             count > 0 ? (
                               <span
                                 key={index}
+                                className="profile-level-chip"
                                 style={{
                                   padding: "7px 9px",
                                   borderRadius: 999,
@@ -6287,614 +5941,245 @@ export default function GameApp() {
             ) : null}
 
             {profitPlanOpen ? (
-              <div
-                className="form-card"
-                style={{
-                  marginTop: 16,
-                  borderRadius: 20,
-                  background: "#10281e",
-                  border: "1px solid rgba(255,255,255,.08)",
-                  padding: 14,
-                  width: "100%",
-                  minWidth: 0,
-                }}
-              >
-                <div
-                  className="section-head"
-                  style={{
-                    width: "100%",
-                    minWidth: 0,
-                    alignItems: "center",
-                  }}
-                >
+              <div className="form-card profit-art-panel">
+                <div className="profit-art-head">
                   <div>
-                    <span className="eyebrow">PROFIT PLAN</span>
-                    <h2>📊 Моя ферма</h2>
+                    <span className="eyebrow">FARM ANALYTICS</span>
+                    <h2>{t("profit.title")}</h2>
                   </div>
 
                   <button
                     className="coin-button"
                     onClick={() => setProfitPlanOpen(false)}
-                    style={{ flex: "0 0 auto" }}
+                    aria-label={t("profit.title")}
                   >
-                    ✕
+                    ×
                   </button>
                 </div>
 
-                {profitPlan.totalDinosaurs === 0 ? (
-                  <div
-                    style={{
-                      padding: 14,
-                      marginTop: 8,
-                      borderRadius: 14,
-                      background: "rgba(255,255,255,.04)",
-                    }}
-                  >
-                    <strong>На доске пока нет динозавров</strong>
-                    <p
-                      style={{
-                        margin: "6px 0 0",
-                        opacity: .68,
-                        fontSize: 12,
-                        lineHeight: 1.45,
-                      }}
-                    >
-                      Добавьте динозавров на ферму, и здесь появится
-                      персональный расчёт доходности.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                        gap: 8,
-                        width: "100%",
-                        marginTop: 8,
-                      }}
-                    >
-                      <div
-                        style={{
-                          padding: 12,
-                          borderRadius: 14,
-                          background: "rgba(255,255,255,.05)",
-                          minWidth: 0,
-                        }}
-                      >
-                        <small style={{ opacity: .64 }}>
-                          Динозавров
-                        </small>
-                        <strong
-                          style={{
-                            display: "block",
-                            marginTop: 3,
-                            fontSize: 22,
-                          }}
-                        >
-                          {profitPlan.totalDinosaurs}
-                        </strong>
-                      </div>
+                <div className="profit-art-intro">
+                  {t("profit.intro")}
+                </div>
 
-                      <div
-                        style={{
-                          padding: 12,
-                          borderRadius: 14,
-                          background: "rgba(255,255,255,.05)",
-                          minWidth: 0,
-                        }}
-                      >
-                        <small style={{ opacity: .64 }}>
-                          Производство
-                        </small>
-                        <strong
-                          style={{
-                            display: "block",
-                            marginTop: 3,
-                            fontSize: 17,
-                            overflowWrap: "anywhere",
-                          }}
-                        >
-                          {formatNumber(eggsPerHour, 2)} яиц/ч
-                        </strong>
-                      </div>
+                <div className="profit-art-summary">
+                  <article>
+                    <small>{t("profit.dinos")}</small>
+                    <strong>{profitPlan.totalDinosaurs}</strong>
+                    <span>{t("profit.onFarm")}</span>
+                  </article>
 
-                      <div
-                        style={{
-                          padding: 12,
-                          borderRadius: 14,
-                          background: "rgba(255,255,255,.05)",
-                          minWidth: 0,
-                        }}
-                      >
-                        <small style={{ opacity: .64 }}>
-                          Coins / день
-                        </small>
-                        <strong
-                          style={{
-                            display: "block",
-                            marginTop: 3,
-                            fontSize: 19,
-                          }}
-                        >
-                          {formatNumber(profitPlan.dailyCoins, 2)}
-                        </strong>
-                      </div>
+                  <article>
+                    <small>{t("profit.coinsDay")}</small>
+                    <strong>{formatNumber(profitPlan.dailyCoins, 2)}</strong>
+                    <span>{t("profit.currentIncome")}</span>
+                  </article>
 
-                      <div
-                        style={{
-                          padding: 12,
-                          borderRadius: 14,
-                          background: "rgba(255,255,255,.05)",
-                          minWidth: 0,
-                        }}
-                      >
-                        <small style={{ opacity: .64 }}>
-                          DNA / день
-                        </small>
-                        <strong
-                          style={{
-                            display: "block",
-                            marginTop: 3,
-                            fontSize: 19,
-                          }}
-                        >
-                          {formatNumber(profitPlan.dailyDna, 2)}
-                        </strong>
-                      </div>
-                    </div>
+                  <article>
+                    <small>{t("profit.dnaDay")}</small>
+                    <strong>{formatNumber(profitPlan.dailyDna, 2)}</strong>
+                    <span>{t("profit.currentIncome")}</span>
+                  </article>
 
-                    <div
-                      style={{
-                        marginTop: 12,
-                        display: "grid",
-                        gap: 8,
-                        width: "100%",
-                      }}
-                    >
-                      {[
-                        { label: "1 день", days: 1 },
-                        { label: "30 дней", days: 30 },
-                        { label: "180 дней", days: 180 },
-                        { label: "1 год", days: 365 },
-                      ].map((period) => {
-                        const coins =
-                          profitPlan.dailyCoins * period.days;
-                        const dna =
-                          profitPlan.dailyDna * period.days;
+                  <article>
+                    <small>{t("profit.farmCost")}</small>
+                    <strong>
+                      {formatNumber(profitPlan.equivalentCostCoins, 0)}
+                    </strong>
+                    <span>Coins</span>
+                  </article>
+                </div>
 
-                        return (
-                          <article
-                            key={period.days}
-                            style={{
-                              width: "100%",
-                              minWidth: 0,
-                              padding: 11,
-                              borderRadius: 14,
-                              border:
-                                "1px solid rgba(255,255,255,.07)",
-                              background:
-                                "rgba(255,255,255,.035)",
-                            }}
-                          >
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                gap: 10,
-                              }}
-                            >
-                              <strong>{period.label}</strong>
-                              <small style={{ opacity: .55 }}>
-                                без реинвестирования
-                              </small>
-                            </div>
+                <div className="profit-art-payback">
+                  <small>{t("profit.paybackTitle")}</small>
+                  <strong>
+                    {profitPlan.dailyCoins > 0
+                      ? t("levels.paybackDays", { days: formatNumber(profitPlan.paybackDays, 0) })
+                      : t("profit.noIncome")}
+                  </strong>
+                </div>
 
-                            <div
-                              style={{
-                                marginTop: 8,
-                                display: "grid",
-                                gridTemplateColumns:
-                                  "repeat(2, minmax(0, 1fr))",
-                                gap: 7,
-                              }}
-                            >
-                              <div
-                                style={{
-                                  padding: "8px 9px",
-                                  borderRadius: 10,
-                                  background:
-                                    "rgba(255,255,255,.04)",
-                                  minWidth: 0,
-                                }}
-                              >
-                                <small style={{ opacity: .62 }}>
-                                  Coins
-                                </small>
-                                <strong
-                                  style={{
-                                    display: "block",
-                                    marginTop: 2,
-                                    overflowWrap: "anywhere",
-                                  }}
-                                >
-                                  {formatNumber(coins, 2)}
-                                </strong>
-                              </div>
-
-                              <div
-                                style={{
-                                  padding: "8px 9px",
-                                  borderRadius: 10,
-                                  background:
-                                    "rgba(255,255,255,.04)",
-                                  minWidth: 0,
-                                }}
-                              >
-                                <small style={{ opacity: .62 }}>
-                                  DNA
-                                </small>
-                                <strong
-                                  style={{
-                                    display: "block",
-                                    marginTop: 2,
-                                    overflowWrap: "anywhere",
-                                  }}
-                                >
-                                  {formatNumber(dna, 2)}
-                                </strong>
-                              </div>
-                            </div>
-                          </article>
-                        );
-                      })}
-                    </div>
-
-                    <div
-                      style={{
-                        marginTop: 12,
-                        padding: 12,
-                        borderRadius: 14,
-                        background: "rgba(255,255,255,.04)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: 10,
-                          alignItems: "baseline",
-                        }}
-                      >
-                        <span
-                          style={{
-                            opacity: .68,
-                            fontSize: 12,
-                          }}
-                        >
-                          Теоретическая стоимость фермы
-                        </span>
-                        <strong>
-                          {formatNumber(
-                            profitPlan.equivalentCostCoins,
-                            0,
-                          )}{" "}
-                          Coins
-                        </strong>
-                      </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: 10,
-                          alignItems: "baseline",
-                          marginTop: 7,
-                        }}
-                      >
-                        <span
-                          style={{
-                            opacity: .68,
-                            fontSize: 12,
-                          }}
-                        >
-                          Coins-окупаемость
-                        </span>
-                        <strong>
-                          ≈{" "}
-                          {formatNumber(
-                            profitPlan.paybackDays,
-                            0,
-                          )}{" "}
-                          дней
-                        </strong>
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        marginTop: 12,
-                        padding: 12,
-                        borderRadius: 14,
-                        background: "rgba(255,255,255,.04)",
-                      }}
-                    >
-                      <strong
-                        style={{
-                          display: "block",
-                          marginBottom: 8,
-                        }}
-                      >
-                        Состав фермы
+                <div className="profit-art-periods">
+                  {[
+                    { label: t("levels.day1"), days: 1 },
+                    { label: t("levels.day30"), days: 30 },
+                    { label: t("levels.day180"), days: 180 },
+                    { label: t("levels.year"), days: 365 },
+                  ].map((period) => (
+                    <article key={period.days}>
+                      <small>{period.label}</small>
+                      <strong>
+                        {formatNumber(profitPlan.dailyCoins * period.days, 2)}
                       </strong>
+                      <span>Coins</span>
+                      <b>
+                        {formatNumber(profitPlan.dailyDna * period.days, 2)} DNA
+                      </b>
+                    </article>
+                  ))}
+                </div>
 
-                      <div
-                        style={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 6,
-                        }}
-                      >
-                        {profitPlan.levelCounts.map(
-                          (count, index) =>
-                            count > 0 ? (
-                              <span
-                                key={index}
-                                style={{
-                                  padding: "7px 9px",
-                                  borderRadius: 999,
-                                  background:
-                                    "rgba(167,243,72,.10)",
-                                  border:
-                                    "1px solid rgba(167,243,72,.20)",
-                                  fontSize: 12,
-                                  fontWeight: 800,
-                                }}
-                              >
-                                🦖 Lv.{index + 1} × {count}
-                              </span>
-                            ) : null,
-                        )}
-                      </div>
+                <div className="profit-art-composition">
+                  <div className="profit-art-subhead">
+                    <span className="eyebrow">CURRENT FARM</span>
+                    <h3>{t("profit.currentFarm")}</h3>
+                  </div>
+
+                  {profitPlan.totalDinosaurs > 0 ? (
+                    <div className="profit-art-levels">
+                      {profitPlan.levelCounts.map(
+                        (count, index) =>
+                          count > 0 ? (
+                            <article key={index}>
+                              <div className="profit-art-dino-wrap">
+                                <img
+                                  src={
+                                    (index + 1) % 3 === 1
+                                      ? "/assets/game/dinosaurs/trex.webp"
+                                      : (index + 1) % 3 === 2
+                                        ? "/assets/game/dinosaurs/triceratops.webp"
+                                        : "/assets/game/dinosaurs/stegosaurus.webp"
+                                  }
+                                  alt=""
+                                  className="profit-art-dino"
+                                  draggable={false}
+                                  aria-hidden="true"
+                                />
+                                <b>Lv.{index + 1}</b>
+                              </div>
+
+                              <div>
+                                <strong>× {count}</strong>
+                                <small>
+                                  {formatNumber(
+                                    dinosaurs[index].dailyCoins * count,
+                                    2,
+                                  )} Coins / {t("levels.day1")}
+                                </small>
+                                <small>
+                                  {formatNumber(
+                                    dinosaurs[index].dailyDna * count,
+                                    2,
+                                  )} DNA / {t("levels.day1")}
+                                </small>
+                              </div>
+                            </article>
+                          ) : null,
+                      )}
                     </div>
+                  ) : (
+                    <div className="profit-art-empty">
+                      {t("profit.empty")}
+                    </div>
+                  )}
+                </div>
 
-                    <small
-                      style={{
-                        display: "block",
-                        marginTop: 10,
-                        opacity: .58,
-                        lineHeight: 1.45,
-                      }}
-                    >
-                      Это расчёт по текущему составу вашей фермы и
-                      установленной игровой экономике. Он не учитывает
-                      будущие покупки, merge, задания, ежедневные бонусы
-                      и реферальные награды. При заполненном гнезде
-                      производство перестаёт накапливаться до сбора.
-                    </small>
-                  </>
-                )}
+                <div className="profit-art-note">
+                  {t("profit.note")}
+                </div>
               </div>
             ) : null}
 
             {levelsOpen ? (
-              <div
-                className="form-card"
-                style={{
-                  marginTop: 16,
-                  borderRadius: 20,
-                  background: "#10281e",
-                  border: "1px solid rgba(255,255,255,.08)",
-                  padding: 14,
-                  width: "100%",
-                  minWidth: 0,
-                }}
-              >
-                <div
-                  className="section-head"
-                  style={{
-                    width: "100%",
-                    minWidth: 0,
-                    alignItems: "center",
-                  }}
-                >
+              <div className="form-card levels-art-panel">
+                <div className="levels-art-head">
                   <div>
                     <span className="eyebrow">DINO ECONOMY</span>
-                    <h2>📈 Lv.1–Lv.{MAX_DINOSAUR_LEVEL}</h2>
+                    <h2>{t("levels.title", { max: MAX_DINOSAUR_LEVEL })}</h2>
                   </div>
 
                   <button
                     className="coin-button"
                     onClick={() => setLevelsOpen(false)}
-                    style={{ flex: "0 0 auto" }}
+                    aria-label={t("menu.levels")}
                   >
-                    ✕
+                    ×
                   </button>
                 </div>
 
-                <p
-                  style={{
-                    margin: "4px 0 12px",
-                    opacity: .72,
-                    fontSize: 12,
-                    lineHeight: 1.45,
-                  }}
-                >
-                  Два одинаковых динозавра объединяются в один следующего
-                  уровня. Merge оплачивается Coins. Комиссия подобрана так,
-                  чтобы окупаемость уровней оставалась контролируемой.
-                </p>
+                <div className="levels-art-intro">
+                  {t("levels.intro")}
+                </div>
 
-                <div
-                  style={{
-                    display: "grid",
-                    gap: 7,
-                    width: "100%",
-                    minWidth: 0,
-                  }}
-                >
+                <div className="levels-art-list">
                   {dinosaurs.map((dino) => {
                     const periods = [
-                      { label: "1 день", days: 1 },
-                      { label: "30 дней", days: 30 },
-                      { label: "180 дней", days: 180 },
-                      { label: "1 год", days: 365 },
+                      { label: t("levels.day1"), days: 1 },
+                      { label: t("levels.day30"), days: 30 },
+                      { label: t("levels.day180"), days: 180 },
+                      { label: t("levels.year"), days: 365 },
                     ] as const;
+
+                    const unlocked = dino.level <= dinoUnlockedLevel;
 
                     return (
                       <article
                         key={dino.level}
-                        style={{
-                          width: "100%",
-                          minWidth: 0,
-                          padding: 11,
-                          borderRadius: 14,
-                          border:
-                            dino.level === MAX_DINOSAUR_LEVEL
-                              ? "1px solid rgba(167,243,72,.45)"
-                              : "1px solid rgba(255,255,255,.07)",
-                          background:
-                            dino.level === MAX_DINOSAUR_LEVEL
-                              ? "rgba(167,243,72,.08)"
-                              : "rgba(255,255,255,.035)",
-                        }}
+                        className={`levels-art-card ${
+                          unlocked ? "levels-art-unlocked" : "levels-art-locked"
+                        } ${
+                          dino.level === MAX_DINOSAUR_LEVEL
+                            ? "levels-art-max"
+                            : ""
+                        }`}
                       >
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            gap: 10,
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 9,
-                              minWidth: 0,
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: 46,
-                                height: 46,
-                                flex: "0 0 auto",
-                                borderRadius: 13,
-                                display: "grid",
-                                placeItems: "center",
-                                background: "rgba(255,255,255,.05)",
-                              }}
-                            >
-                              <div style={{ textAlign: "center" }}>
-                                <div style={{ fontSize: 17 }}>🦖</div>
-                                <strong style={{ fontSize: 10 }}>
-                                  Lv.{dino.level}
-                                </strong>
-                              </div>
-                            </div>
-
-                            <div style={{ minWidth: 0 }}>
-                              <strong
-                                style={{
-                                  display: "block",
-                                  fontSize: 15,
-                                }}
-                              >
-                                {formatNumber(dino.dailyCoins, 2)} Coins +{" "}
-                                {formatNumber(dino.dailyDna, 2)} DNA
-                              </strong>
-                              <small style={{ opacity: .62 }}>
-                                в сутки · {formatNumber(dino.eggsPerHour, 2)} яиц/ч
-                              </small>
-                            </div>
+                        <div className="levels-art-card-head">
+                          <div className="levels-art-dino-wrap">
+                            <img
+                              src={
+                                dino.level % 3 === 1
+                                  ? "/assets/game/dinosaurs/trex.webp"
+                                  : dino.level % 3 === 2
+                                    ? "/assets/game/dinosaurs/triceratops.webp"
+                                    : "/assets/game/dinosaurs/stegosaurus.webp"
+                              }
+                              alt=""
+                              className="levels-art-dino"
+                              draggable={false}
+                              aria-hidden="true"
+                            />
+                            <b>Lv.{dino.level}</b>
                           </div>
+
+                          <div className="levels-art-income">
+                            <strong>
+                              {formatNumber(dino.dailyCoins, 2)} Coins
+                            </strong>
+                            <strong>
+                              {formatNumber(dino.dailyDna, 2)} DNA
+                            </strong>
+                            <small>
+                              {t("levels.perDay", { eggs: formatNumber(dino.eggsPerHour, 2) })}
+                            </small>
+                          </div>
+
+                          <span className="levels-art-state">
+                            {unlocked ? t("levels.open") : t("levels.locked")}
+                          </span>
                         </div>
 
-                        <div
-                          style={{
-                            marginTop: 9,
-                            display: "grid",
-                            gridTemplateColumns:
-                              "repeat(2, minmax(0, 1fr))",
-                            gap: 6,
-                          }}
-                        >
+                        <div className="levels-art-periods">
                           {periods.map((period) => {
                             const amount =
                               dino.dailyCoins * period.days;
 
                             return (
-                              <div
-                                key={period.days}
-                                style={{
-                                  padding: "8px 9px",
-                                  borderRadius: 10,
-                                  background: "rgba(255,255,255,.04)",
-                                  minWidth: 0,
-                                }}
-                              >
-                                <small
-                                  style={{
-                                    display: "block",
-                                    opacity: .60,
-                                  }}
-                                >
-                                  {period.label}
-                                </small>
-                                <strong
-                                  style={{
-                                    display: "block",
-                                    marginTop: 2,
-                                    fontSize: 13,
-                                    overflowWrap: "anywhere",
-                                  }}
-                                >
-                                  {formatNumber(amount, 2)}
-                                </strong>
-                                <small style={{ opacity: .72 }}>
-                                  Coins + столько же DNA
-                                </small>
+                              <div key={period.days}>
+                                <small>{period.label}</small>
+                                <strong>{formatNumber(amount, 2)}</strong>
+                                <span>{t("levels.sameDna")}</span>
                               </div>
                             );
                           })}
                         </div>
 
-                        <div
-                          style={{
-                            marginTop: 8,
-                            display: "grid",
-                            gridTemplateColumns:
-                              "repeat(2, minmax(0, 1fr))",
-                            gap: 6,
-                          }}
-                        >
-                          <div
-                            style={{
-                              padding: "8px 9px",
-                              borderRadius: 10,
-                              background: "rgba(255,255,255,.04)",
-                              minWidth: 0,
-                            }}
-                          >
-                            <small
-                              style={{
-                                display: "block",
-                                opacity: .60,
-                              }}
-                            >
+                        <div className="levels-art-economy">
+                          <div>
+                            <small>
                               {dino.level === 1
-                                ? "Цена Lv.1"
-                                : "Merge комиссия"}
+                                ? t("levels.priceLv1")
+                                : t("levels.mergeFee")}
                             </small>
-                            <strong
-                              style={{
-                                display: "block",
-                                marginTop: 2,
-                                fontSize: 13,
-                              }}
-                            >
+                            <strong>
                               {formatNumber(
                                 dino.level === 1
                                   ? gameConfig.levelOnePriceCoins
@@ -6905,72 +6190,42 @@ export default function GameApp() {
                             </strong>
                           </div>
 
-                          <div
-                            style={{
-                              padding: "8px 9px",
-                              borderRadius: 10,
-                              background: "rgba(255,255,255,.04)",
-                              minWidth: 0,
-                            }}
-                          >
-                            <small
-                              style={{
-                                display: "block",
-                                opacity: .60,
-                              }}
-                            >
-                              Окупаемость
-                            </small>
-                            <strong
-                              style={{
-                                display: "block",
-                                marginTop: 2,
-                                fontSize: 13,
-                              }}
-                            >
-                              ≈ {formatNumber(dino.paybackDays, 0)} дней
+                          <div>
+                            <small>{t("levels.payback")}</small>
+                            <strong>
+                              {t("levels.paybackDays", { days: formatNumber(dino.paybackDays, 0) })}
                             </strong>
                           </div>
                         </div>
 
-                        <small
-                          style={{
-                            display: "block",
-                            marginTop: 7,
-                            opacity: .56,
-                            lineHeight: 1.4,
-                          }}
-                        >
-                          Полная экв. стоимость:{" "}
-                          {formatNumber(
-                            dino.equivalentCostCoins,
-                            0,
-                          )} Coins · для merge:{" "}
-                          {formatNumber(
-                            dino.levelOneCopies,
-                            0,
-                          )} × Lv.1
-                        </small>
+                        <div className="levels-art-equivalent">
+                          <span>
+                            {t("levels.equivCost")} {" "}
+                            <b>
+                              {formatNumber(
+                                dino.equivalentCostCoins,
+                                0,
+                              )} Coins
+                            </b>
+                          </span>
+
+                          <span>
+                            {t("levels.forMerge")} {" "}
+                            <b>
+                              {formatNumber(
+                                dino.levelOneCopies,
+                                0,
+                              )} × Lv.1
+                            </b>
+                          </span>
+                        </div>
                       </article>
                     );
                   })}
                 </div>
 
-                <div
-                  style={{
-                    marginTop: 12,
-                    padding: 10,
-                    borderRadius: 12,
-                    background: "rgba(255,255,255,.04)",
-                  }}
-                >
-                  <small style={{ lineHeight: 1.45, opacity: .68 }}>
-                    Расчёты за 30, 180 и 365 дней сделаны без реинвестирования.
-                    «Окупаемость» = полная стоимость получения уровня ÷ его
-                    Coins-доход за день. DNA, задания, ежедневные бонусы и
-                    рефералы в окупаемость не включены. При переполненном
-                    гнезде новые яйца не накапливаются до следующего сбора.
-                  </small>
+                <div className="levels-art-note">
+                  {t("levels.note")}
                 </div>
               </div>
             ) : null}
@@ -7000,7 +6255,7 @@ export default function GameApp() {
                     <span className="eyebrow">
                       ACHIEVEMENTS
                     </span>
-                    <h2>🏅 Достижения</h2>
+                    <h2>{t("ach.title")}</h2>
                   </div>
 
                   <div
@@ -7032,23 +6287,21 @@ export default function GameApp() {
 
                 {achievementsStatus === "loading" ||
                 achievementsStatus === "idle" ? (
-                  <p>Загружаем достижения...</p>
+                  <p>{t("ach.loading")}</p>
                 ) : achievementsStatus === "error" ? (
                   <>
-                    <p>
-                      Не удалось загрузить достижения.
-                    </p>
+                    <p>{t("ach.error")}</p>
                     <button
                       className="primary"
                       onClick={() =>
                         void loadAchievements()
                       }
                     >
-                      ПОВТОРИТЬ
+                      {t("retry")}
                     </button>
                   </>
                 ) : achievements.length === 0 ? (
-                  <p>Достижений пока нет.</p>
+                  <p>{t("ach.empty")}</p>
                 ) : (
                   <>
                     <div
@@ -7070,7 +6323,7 @@ export default function GameApp() {
                         }}
                       >
                         <small style={{ opacity: .62 }}>
-                          Получено
+                          {t("ach.received")}
                         </small>
                         <strong
                           style={{
@@ -7098,7 +6351,7 @@ export default function GameApp() {
                         }}
                       >
                         <small style={{ opacity: .62 }}>
-                          Можно забрать
+                          {t("ach.canClaim")}
                         </small>
                         <strong
                           style={{
@@ -7127,6 +6380,12 @@ export default function GameApp() {
                     >
                       {achievements.map(
                         (achievement) => {
+                          const copy = localizedAchievement(
+                            uiLanguage,
+                            achievement.code,
+                            achievement.title,
+                            achievement.description,
+                          );
                           const percent = Math.max(
                             0,
                             Math.min(
@@ -7183,7 +6442,7 @@ export default function GameApp() {
                                     }}
                                   >
                                     {achievement.icon}{" "}
-                                    {achievement.title}
+                                    {copy.title}
                                   </strong>
 
                                   <small
@@ -7194,9 +6453,7 @@ export default function GameApp() {
                                       lineHeight: 1.4,
                                     }}
                                   >
-                                    {
-                                      achievement.description
-                                    }
+                                    {copy.description}
                                   </small>
                                 </div>
 
@@ -7278,7 +6535,7 @@ export default function GameApp() {
                                       fontSize: 12,
                                     }}
                                   >
-                                    ✓ ПОЛУЧЕНО
+                                    ✓ {t("claimed")}
                                   </strong>
                                 ) : achievement.claimable ? (
                                   <button
@@ -7295,7 +6552,7 @@ export default function GameApp() {
                                     {claimingAchievementCode ===
                                     achievement.code
                                       ? "⏳"
-                                      : "ЗАБРАТЬ"}
+                                      : t("claim")}
                                   </button>
                                 ) : (
                                   <small
@@ -7303,7 +6560,7 @@ export default function GameApp() {
                                       opacity: .55,
                                     }}
                                   >
-                                    В процессе
+                                    {t("inProgress")}
                                   </small>
                                 )}
                               </div>
@@ -7321,10 +6578,7 @@ export default function GameApp() {
                         marginTop: 10,
                       }}
                     >
-                      Каждая награда выдаётся только
-                      один раз. Условия проверяются на
-                      сервере. Достижения начисляют только
-                      Coins — DNA здесь не выдаётся.
+                      {t("ach.note")}
                     </small>
                   </>
                 )}
@@ -7354,7 +6608,7 @@ export default function GameApp() {
                 >
                   <div>
                     <span className="eyebrow">MISSIONS</span>
-                    <h2>✅ Задания</h2>
+                    <h2>{t("tasks.title")}</h2>
                   </div>
 
                   <div
@@ -7380,19 +6634,19 @@ export default function GameApp() {
                 </div>
 
                 {tasksStatus === "loading" || tasksStatus === "idle" ? (
-                  <p>Загружаем задания...</p>
+                  <p>{t("tasks.loading")}</p>
                 ) : tasksStatus === "error" ? (
                   <>
-                    <p>Не удалось загрузить задания.</p>
+                    <p>{t("tasks.error")}</p>
                     <button
                       className="primary"
                       onClick={() => void loadTasks()}
                     >
-                      ПОВТОРИТЬ
+                      {t("retry")}
                     </button>
                   </>
                 ) : tasks.length === 0 ? (
-                  <p>Заданий пока нет.</p>
+                  <p>{t("tasks.empty")}</p>
                 ) : (
                   <div
                     style={{
@@ -7403,6 +6657,12 @@ export default function GameApp() {
                     }}
                   >
                     {tasks.map((task) => {
+                      const copy = localizedTask(
+                        uiLanguage,
+                        task.code,
+                        task.title,
+                        task.description,
+                      );
                       const percent = Math.max(
                         0,
                         Math.min(
@@ -7445,7 +6705,7 @@ export default function GameApp() {
                                   lineHeight: 1.3,
                                 }}
                               >
-                                {task.icon} {task.title}
+                                {task.icon} {copy.title}
                               </strong>
                               <small
                                 style={{
@@ -7455,7 +6715,7 @@ export default function GameApp() {
                                   lineHeight: 1.4,
                                 }}
                               >
-                                {task.description}
+                                {copy.description}
                               </small>
                             </div>
 
@@ -7519,7 +6779,7 @@ export default function GameApp() {
                                   fontSize: 12,
                                 }}
                               >
-                                ✓ ПОЛУЧЕНО
+                                ✓ {t("claimed")}
                               </strong>
                             ) : task.claimable ? (
                               <button
@@ -7529,11 +6789,11 @@ export default function GameApp() {
                               >
                                 {claimingTaskCode === task.code
                                   ? "⏳"
-                                  : "ЗАБРАТЬ"}
+                                  : t("claim")}
                               </button>
                             ) : (
                               <small style={{ opacity: .55 }}>
-                                В процессе
+                                {t("inProgress")}
                               </small>
                             )}
                           </div>
@@ -7549,8 +6809,7 @@ export default function GameApp() {
                         marginTop: 2,
                       }}
                     >
-                      Награды за задания выдаются только в Coins. DNA за
-                      задания не начисляется.
+                      {t("tasks.note")}
                     </small>
                   </div>
                 )}
@@ -7576,7 +6835,7 @@ export default function GameApp() {
                 >
                   <div>
                     <span className="eyebrow">DAILY REWARD</span>
-                    <h2>🎁 Ежедневный бонус</h2>
+                    <h2>{t("daily.title")}</h2>
                   </div>
 
                   <button
@@ -7589,15 +6848,15 @@ export default function GameApp() {
                 </div>
 
                 {dailyStatus === "loading" || dailyStatus === "idle" ? (
-                  <p>Загружаем ежедневный бонус...</p>
+                  <p>{t("daily.loading")}</p>
                 ) : dailyStatus === "error" ? (
                   <>
-                    <p>Не удалось загрузить бонус.</p>
+                    <p>{t("daily.error")}</p>
                     <button
                       className="primary"
                       onClick={() => void loadDailyReward()}
                     >
-                      ПОВТОРИТЬ
+                      {t("retry")}
                     </button>
                   </>
                 ) : dailyInfo ? (
@@ -7619,7 +6878,7 @@ export default function GameApp() {
                         }}
                       >
                         <small style={{ opacity: .68 }}>
-                          Следующая награда
+                          {t("daily.nextReward")}
                         </small>
                         <div
                           style={{
@@ -7641,7 +6900,7 @@ export default function GameApp() {
                         }}
                       >
                         <small style={{ opacity: .68 }}>
-                          Серия
+                          {t("daily.streak")}
                         </small>
                         <div
                           style={{
@@ -7654,8 +6913,8 @@ export default function GameApp() {
                         </div>
                         <small>
                           {dailyInfo.canClaim
-                            ? "Можно забрать"
-                            : formatDailyRemaining(dailyInfo.nextClaimAt)}
+                            ? t("daily.canClaim")
+                            : formatDailyRemaining(dailyInfo.nextClaimAt, uiLanguage)}
                         </small>
                       </div>
                     </div>
@@ -7701,7 +6960,7 @@ export default function GameApp() {
                                 fontSize: 9,
                               }}
                             >
-                              Д{day}
+                              {t("daily.dayShort", { day })}
                             </small>
                             <strong
                               style={{
@@ -7726,9 +6985,7 @@ export default function GameApp() {
                         lineHeight: 1.45,
                       }}
                     >
-                      Награда выдаётся только в Coins. Новый бонус доступен
-                      через 24 часа. Если пропустить более 48 часов, серия
-                      начинается с первого дня.
+                      {t("daily.note")}
                     </p>
 
                     <button
@@ -7740,15 +6997,12 @@ export default function GameApp() {
                       style={{ marginTop: 12 }}
                     >
                       {isClaimingDaily
-                        ? "⏳ ПОЛУЧАЕМ..."
+                        ? t("daily.claiming")
                         : dailyInfo.canClaim
-                          ? `🎁 ЗАБРАТЬ +${formatNumber(
-                              dailyInfo.nextRewardCoins,
-                              0,
-                            )} COINS`
-                          : `⏱ ${formatDailyRemaining(
-                              dailyInfo.nextClaimAt,
-                            )}`}
+                          ? t("daily.claimWith", {
+                              coins: formatNumber(dailyInfo.nextRewardCoins, 0),
+                            })
+                          : `⏱ ${formatDailyRemaining(dailyInfo.nextClaimAt, uiLanguage)}`}
                     </button>
 
                     <small
@@ -7758,8 +7012,10 @@ export default function GameApp() {
                         opacity: .65,
                       }}
                     >
-                      Всего получено: {dailyInfo.totalClaims} бонусов ·{" "}
-                      {formatNumber(dailyInfo.totalCoins, 0)} Coins
+                      {t("daily.total", {
+                        claims: dailyInfo.totalClaims,
+                        coins: formatNumber(dailyInfo.totalCoins, 0),
+                      })}
                     </small>
                   </>
                 ) : null}
@@ -7767,450 +7023,257 @@ export default function GameApp() {
             ) : null}
 
             {withdrawalOpen ? (
-              <div
-                className="form-card"
-                style={{
-                  marginTop: 16,
-                  borderRadius: 20,
-                  background: "#10281e",
-                  border: "1px solid rgba(255,255,255,.08)",
-                  padding: 14,
-                  width: "100%",
-                  minWidth: 0,
-                }}
-              >
-                <div className="section-head" style={{ width: "100%", minWidth: 0 }}>
+              <div className="form-card withdraw-art-panel">
+                <div className="withdraw-art-head">
                   <div>
                     <span className="eyebrow">WITHDRAWAL</span>
-                    <h2>DNA → USDT</h2>
+                    <h2>{t("withdraw.title")}</h2>
                   </div>
+
                   <button
                     className="coin-button"
                     onClick={() => setWithdrawalOpen(false)}
-                    style={{ flex: "0 0 auto" }}
+                    aria-label={t("withdraw.title")}
                   >
-                    ✕
+                    ×
                   </button>
                 </div>
 
-                {withdrawalStatus === "loading" || withdrawalStatus === "idle" ? (
-                  <p>Загружаем параметры вывода...</p>
+                {withdrawalStatus === "loading" ||
+                withdrawalStatus === "idle" ? (
+                  <div className="withdraw-art-message">
+                    {t("withdraw.loading")}
+                  </div>
                 ) : withdrawalStatus === "error" ? (
-                  <>
-                    <p>Не удалось загрузить заявки.</p>
-                    <button className="primary" onClick={() => void loadWithdrawals()}>
-                      ПОВТОРИТЬ
+                  <div className="withdraw-art-message withdraw-art-error">
+                    <strong>{t("withdraw.error")}</strong>
+                    <button
+                      className="primary"
+                      onClick={() => void loadWithdrawals()}
+                    >
+                      {t("retry")}
                     </button>
-                  </>
+                  </div>
                 ) : withdrawalConfig ? (
                   <>
-                    <p>
-                      Курс: <strong>1 DNA = {withdrawalConfig.usdtPerDna.toFixed(4)} USDT</strong>
-                    </p>
-                    <p>
-                      Минимальный вывод:{" "}
-                      <strong>
-                        {formatNumber(
-                          withdrawalConfig.minDna,
-                          0,
-                        )}{" "}
-                        DNA ={" "}
-                        {withdrawalConfig.minUsdt.toFixed(
-                          2,
-                        )}{" "}
-                        USDT
-                      </strong>
-                    </p>
+                    <div className="withdraw-art-summary">
+                      <article>
+                        <small>{t("withdraw.available")}</small>
+                        <strong>{formatNumber(state.dna, 4)} DNA</strong>
+                        <span>
+                          {(state.dna * withdrawalConfig.usdtPerDna).toFixed(8)} USDT
+                        </span>
+                      </article>
 
-                    <div
-                      style={{
-                        margin:
-                          "8px 0 10px",
-                        padding: 10,
-                        borderRadius: 12,
-                        background:
-                          "rgba(167,243,72,.08)",
-                        border:
-                          "1px solid rgba(167,243,72,.18)",
-                        fontSize: 13,
-                        lineHeight: 1.45,
-                      }}
-                    >
-                      ✅ Сетевая комиссия
-                      оплачивается проектом.
-                      Игрок получает полностью
-                      указанную сумму USDT.
+                      <article>
+                        <small>{t("withdraw.minimum")}</small>
+                        <strong>
+                          {formatNumber(withdrawalConfig.minDna, 0)} DNA
+                        </strong>
+                        <span>{withdrawalConfig.minUsdt.toFixed(2)} USDT</span>
+                      </article>
                     </div>
 
-                    <p>
-                      Доступно:{" "}
-                      <strong>
-                        {formatNumber(
-                          state.dna,
-                          4,
-                        )}{" "}
-                        DNA
-                      </strong>
-                    </p>
+                    <div className="withdraw-art-rate">
+                      <span>{t("withdraw.rate")}</span>
+                      <b>
+                        1 DNA = {withdrawalConfig.usdtPerDna.toFixed(4)} USDT
+                      </b>
+                    </div>
+
+                    <div className="withdraw-art-fee-note">
+                      <strong>{t("withdraw.feeTitle")}</strong>
+                      <span>
+                        {t("withdraw.feeDesc")}
+                      </span>
+                    </div>
 
                     {withdrawals.some(
                       (item) =>
-                        item.status ===
-                          "PENDING" ||
-                        item.status ===
-                          "APPROVED",
+                        item.status === "PENDING" ||
+                        item.status === "APPROVED",
                     ) ? (
-                      <p
-                        className="hint"
-                        style={{
-                          marginTop: 6,
-                        }}
-                      >
-                        🔄 Статус активной
-                        заявки обновляется
-                        автоматически примерно
-                        каждые 15 секунд.
-                      </p>
+                      <div className="withdraw-art-auto-status">
+                        {t("withdraw.autoStatus")}
+                      </div>
                     ) : null}
 
-                    <label style={{ display: "grid", gap: 6, marginTop: 12, width: "100%", minWidth: 0 }}>
-                      <span>Количество DNA</span>
-                      <input
-                        type="number"
-                        min={withdrawalConfig.minDna}
-                        step="0.0001"
-                        value={withdrawDna}
-                        onChange={(event) => setWithdrawDna(event.target.value)}
-                        style={{ width: "100%", minWidth: 0, padding: 12, borderRadius: 12 }}
-                      />
-                    </label>
+                    <div className="withdraw-art-form">
+                      <label>
+                        <span>{t("withdraw.amountDna")}</span>
+                        <input
+                          type="number"
+                          min={withdrawalConfig.minDna}
+                          step="0.0001"
+                          value={withdrawDna}
+                          onChange={(event) => setWithdrawDna(event.target.value)}
+                        />
+                      </label>
 
-                    <label style={{ display: "grid", gap: 6, marginTop: 12, width: "100%", minWidth: 0 }}>
-                      <span>Сеть USDT</span>
-                      <input
-                        type="text"
-                        value={withdrawNetwork}
-                        onChange={(event) => setWithdrawNetwork(event.target.value)}
-                        placeholder="Например: TON / TRC20 / BEP20"
-                        maxLength={32}
-                        style={{ width: "100%", minWidth: 0, padding: 12, borderRadius: 12 }}
-                      />
-                    </label>
+                      <label>
+                        <span>{t("withdraw.network")}</span>
+                        <input
+                          type="text"
+                          value={withdrawNetwork}
+                          onChange={(event) => setWithdrawNetwork(event.target.value)}
+                          placeholder={t("withdraw.networkPlaceholder")}
+                          maxLength={32}
+                        />
+                      </label>
 
-                    <label style={{ display: "grid", gap: 6, marginTop: 12, width: "100%", minWidth: 0 }}>
-                      <span>Адрес USDT-кошелька</span>
-                      <input
-                        type="text"
-                        value={withdrawWallet}
-                        onChange={(event) => setWithdrawWallet(event.target.value)}
-                        placeholder="Введите адрес кошелька"
-                        maxLength={180}
-                        autoComplete="off"
-                        style={{ width: "100%", minWidth: 0, padding: 12, borderRadius: 12 }}
-                      />
-                    </label>
+                      <label>
+                        <span>{t("withdraw.wallet")}</span>
+                        <input
+                          type="text"
+                          value={withdrawWallet}
+                          onChange={(event) => setWithdrawWallet(event.target.value)}
+                          placeholder={t("withdraw.walletPlaceholder")}
+                          maxLength={180}
+                          autoComplete="off"
+                        />
+                      </label>
+                    </div>
 
-                    <div
-                      className="card"
-                      style={{
-                        marginTop: 12,
-                        width: "100%",
-                        minWidth: 0,
-                        flexDirection: "column",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      <strong>К получению</strong>
-                      <p style={{ margin: "4px 0", fontSize: 22, fontWeight: 900 }}>
-                        {withdrawalPreview.toFixed(8)} USDT
-                      </p>
-                      <small style={{ lineHeight: 1.4 }}>
-                        Это сумма, которую игрок должен получить на кошелёк.
-                        Сетевая комиссия оплачивается проектом отдельно.
-                        DNA резервируется сразу после создания заявки.
-                      </small>
+                    <div className="withdraw-art-preview">
+                      <small>{t("withdraw.receive")}</small>
+                      <strong>{withdrawalPreview.toFixed(8)} USDT</strong>
+                      <span>
+                        {t("withdraw.reserveNote")}
+                      </span>
                     </div>
 
                     <button
-                      className="primary"
+                      className="primary withdraw-art-submit"
                       onClick={submitWithdrawal}
                       disabled={isSubmittingWithdrawal}
                     >
                       {isSubmittingWithdrawal
-                        ? "⏳ СОЗДАЁМ..."
-                        : "💸 ЗАПРОСИТЬ ВЫПЛАТУ"}
+                        ? t("withdraw.submitting")
+                        : t("withdraw.submit")}
                     </button>
 
-                    <div
-                      style={{
-                        marginTop: 18,
-                        width: "100%",
-                        minWidth: 0,
-                      }}
-                    >
-                      <div
-                        className="section-head"
-                        style={{
-                          width: "100%",
-                          minWidth: 0,
-                          alignItems: "center",
-                          marginBottom: 10,
-                        }}
-                      >
+                    <div className="withdraw-art-history">
+                      <div className="withdraw-art-history-head">
                         <div>
                           <span className="eyebrow">HISTORY</span>
-                          <h3 style={{ margin: "2px 0 0" }}>История выплат</h3>
+                          <h3>{t("withdraw.history")}</h3>
                         </div>
 
                         <button
                           className="coin-button"
                           onClick={() => void loadWithdrawals()}
-                          disabled={false}
-                          style={{ flex: "0 0 auto" }}
+                          aria-label={t("withdraw.history")}
                         >
                           ↻
                         </button>
                       </div>
 
                       {withdrawals.length === 0 ? (
-                        <div
-                          className="card"
-                          style={{
-                            width: "100%",
-                            minWidth: 0,
-                            flexDirection: "column",
-                            alignItems: "flex-start",
-                          }}
-                        >
-                          <strong>Заявок пока нет</strong>
-                          <small style={{ lineHeight: 1.45 }}>
-                            После первого вывода заявка появится здесь вместе со статусом и суммой.
+                        <div className="card withdraw-art-empty">
+                          <strong>{t("withdraw.noRequests")}</strong>
+                          <small>
+                            {t("withdraw.noRequestsDesc")}
                           </small>
                         </div>
                       ) : (
-                        <div
-                          style={{
-                            display: "grid",
-                            gap: 10,
-                            width: "100%",
-                            minWidth: 0,
-                          }}
-                        >
+                        <div className="withdraw-art-list">
                           {withdrawals.slice(0, 12).map((item) => {
                             const status = withdrawalStatusMeta(
                               item.status,
                               item.note,
+                              uiLanguage,
                             );
 
                             return (
                               <article
                                 key={item.id}
-                                style={{
-                                  width: "100%",
-                                  minWidth: 0,
-                                  borderRadius: 16,
-                                  border: "1px solid rgba(255,255,255,.08)",
-                                  background: "rgba(5, 22, 15, .55)",
-                                  padding: 12,
-                                  overflow: "hidden",
-                                }}
+                                className="withdraw-art-item"
                               >
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "flex-start",
-                                    gap: 10,
-                                    width: "100%",
-                                  }}
-                                >
-                                  <div style={{ minWidth: 0 }}>
-                                    <div
-                                      style={{
-                                        fontSize: 18,
-                                        fontWeight: 900,
-                                        lineHeight: 1.2,
-                                      }}
-                                    >
+                                <div className="withdraw-art-item-top">
+                                  <div>
+                                    <strong>
                                       {item.usdtAmount.toFixed(8)} USDT
-                                    </div>
-                                    <small style={{ opacity: .72 }}>
+                                    </strong>
+                                    <small>
                                       {formatNumber(item.dnaAmount, 4)} DNA
                                     </small>
                                   </div>
 
                                   <span
+                                    className="withdraw-art-status"
                                     style={{
-                                      flex: "0 0 auto",
-                                      maxWidth: "58%",
-                                      padding: "6px 8px",
-                                      borderRadius: 999,
-                                      border: `1px solid ${status.border}`,
+                                      borderColor: status.border,
                                       background: status.background,
                                       color: status.color,
-                                      fontSize: 11,
-                                      fontWeight: 900,
-                                      lineHeight: 1.2,
-                                      textAlign: "center",
                                     }}
                                   >
-                                    {status.icon} {status.label}
+                                    {status.label}
                                   </span>
                                 </div>
 
-                                <div
-                                  style={{
-                                    marginTop: 10,
-                                    display: "grid",
-                                    gridTemplateColumns: "1fr 1fr",
-                                    gap: 8,
-                                    width: "100%",
-                                    minWidth: 0,
-                                  }}
-                                >
-                                  <div
-                                    style={{
-                                      padding: 9,
-                                      borderRadius: 12,
-                                      background: "rgba(255,255,255,.04)",
-                                      minWidth: 0,
-                                    }}
-                                  >
-                                    <small style={{ opacity: .65 }}>Сеть</small>
-                                    <div
-                                      style={{
-                                        marginTop: 3,
-                                        fontWeight: 800,
-                                        overflowWrap: "anywhere",
-                                      }}
-                                    >
-                                      {item.network}
-                                    </div>
+                                <div className="withdraw-art-item-grid">
+                                  <div>
+                                    <small>{t("wallet.network")}</small>
+                                    <b>{item.network}</b>
                                   </div>
 
-                                  <div
-                                    style={{
-                                      padding: 9,
-                                      borderRadius: 12,
-                                      background: "rgba(255,255,255,.04)",
-                                      minWidth: 0,
-                                    }}
-                                  >
-                                    <small style={{ opacity: .65 }}>Дата</small>
-                                    <div
-                                      style={{
-                                        marginTop: 3,
-                                        fontWeight: 700,
-                                        fontSize: 12,
-                                        lineHeight: 1.35,
-                                      }}
-                                    >
-                                      {formatWithdrawalDate(item.createdAt)}
-                                    </div>
+                                  <div>
+                                    <small>{t("withdraw.date")}</small>
+                                    <b>{formatWithdrawalDate(item.createdAt, uiLanguage)}</b>
                                   </div>
-                                </div>
 
-                                <div
-                                  style={{
-                                    marginTop: 8,
-                                    padding: 9,
-                                    borderRadius: 12,
-                                    background: "rgba(255,255,255,.04)",
-                                    minWidth: 0,
-                                  }}
-                                >
-                                  <small style={{ opacity: .65 }}>Кошелёк</small>
-                                  <div
-                                    style={{
-                                      marginTop: 3,
-                                      fontFamily: "monospace",
-                                      fontSize: 12,
-                                      overflowWrap: "anywhere",
-                                    }}
-                                  >
-                                    {shortWallet(item.walletAddress)}
+                                  <div className="withdraw-art-wallet">
+                                    <small>{t("withdraw.walletShort")}</small>
+                                    <b>{shortWallet(item.walletAddress)}</b>
                                   </div>
                                 </div>
 
                                 {item.status === "PENDING" ? (
-                                  <small
-                                    style={{
-                                      display: "block",
-                                      marginTop: 9,
-                                      opacity: .72,
-                                      lineHeight: 1.4,
-                                    }}
-                                  >
-                                    Заявка ожидает автоматической проверки и выплаты. DNA уже зарезервирована.
-                                  </small>
-                                ) : null}
+                                  <>
+                                    <small className="withdraw-art-note">
+                                      {t("withdraw.pendingNote")}
+                                    </small>
 
-                                {item.status === "PENDING" ? (
-                                  <button
-                                    className="coin-button"
-                                    disabled={
-                                      cancelingWithdrawalId !==
-                                      null
-                                    }
-                                    onClick={() =>
-                                      void cancelWithdrawal(
-                                        item,
-                                      )
-                                    }
-                                    style={{
-                                      width: "100%",
-                                      maxWidth: "none",
-                                      marginTop: 9,
-                                      borderColor:
-                                        "rgba(255,92,108,.34)",
-                                    }}
-                                  >
-                                    {cancelingWithdrawalId ===
-                                    item.id
-                                      ? "⏳ ОТМЕНЯЕМ..."
-                                      : "↩️ ОТМЕНИТЬ ЗАЯВКУ"}
-                                  </button>
+                                    <button
+                                      className="coin-button withdraw-art-cancel"
+                                      disabled={cancelingWithdrawalId !== null}
+                                      onClick={() =>
+                                        void cancelWithdrawal(item)
+                                      }
+                                    >
+                                      {cancelingWithdrawalId === item.id
+                                        ? t("withdraw.canceling")
+                                        : t("withdraw.cancel")}
+                                    </button>
+                                  </>
                                 ) : null}
 
                                 {item.status === "APPROVED" ? (
                                   <small
-                                    style={{
-                                      display: "block",
-                                      marginTop: 9,
-                                      color: status.color,
-                                      lineHeight: 1.4,
-                                    }}
+                                    className="withdraw-art-note"
+                                    style={{ color: status.color }}
                                   >
-                                    Заявка одобрена и ожидает отправки USDT.
+                                    {t("withdraw.approvedNote")}
                                   </small>
                                 ) : null}
 
                                 {item.status === "PAID" ? (
                                   <small
-                                    style={{
-                                      display: "block",
-                                      marginTop: 9,
-                                      color: status.color,
-                                      lineHeight: 1.4,
-                                    }}
+                                    className="withdraw-art-note"
+                                    style={{ color: status.color }}
                                   >
-                                    Выплата отмечена администратором как отправленная.
+                                    {t("withdraw.paidNote")}
                                   </small>
                                 ) : null}
 
                                 {item.status === "REJECTED" ? (
                                   <small
-                                    style={{
-                                      display: "block",
-                                      marginTop: 9,
-                                      color: status.color,
-                                      lineHeight: 1.4,
-                                    }}
+                                    className="withdraw-art-note"
+                                    style={{ color: status.color }}
                                   >
-                                    {item.note ===
-                                    "CANCELED_BY_PLAYER"
-                                      ? "Вы отменили эту заявку. Зарезервированная DNA возвращена на игровой баланс."
-                                      : "Заявка отклонена. Зарезервированная DNA возвращена на игровой баланс."}
+                                    {item.note === "CANCELED_BY_PLAYER"
+                                      ? t("withdraw.canceledRefund")
+                                      : t("withdraw.rejectedRefund")}
                                   </small>
                                 ) : null}
                               </article>
