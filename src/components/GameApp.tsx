@@ -1078,6 +1078,17 @@ export default function GameApp() {
   const [isSubmittingWithdrawal, setIsSubmittingWithdrawal] = useState(false);
   const [cancelingWithdrawalId, setCancelingWithdrawalId] = useState<string | null>(null);
   const withdrawalStatusRef = useRef<Record<string, string>>({});
+
+  const closeMenuPopups = () => {
+    setProfileOpen(false);
+    setWalletHistoryOpen(false);
+    setWithdrawalOpen(false);
+    setLevelsOpen(false);
+    setProfitPlanOpen(false);
+    setDailyOpen(false);
+    setTasksOpen(false);
+    setAchievementsOpen(false);
+  };
   const [language, setLanguage] = useState<LanguageCode>("ru");
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const appRootRef = useRef<HTMLElement | null>(null);
@@ -2999,6 +3010,7 @@ export default function GameApp() {
       return;
     }
 
+    closeMenuPopups();
     setWalletHistoryOpen(true);
     void loadWalletHistory();
   };
@@ -3062,6 +3074,7 @@ export default function GameApp() {
       return;
     }
 
+    closeMenuPopups();
     setProfileOpen(true);
     void loadProfile();
   };
@@ -3135,6 +3148,7 @@ export default function GameApp() {
       return;
     }
 
+    closeMenuPopups();
     setAchievementsOpen(true);
     void loadAchievements();
   };
@@ -3266,6 +3280,7 @@ export default function GameApp() {
       return;
     }
 
+    closeMenuPopups();
     setTasksOpen(true);
     void loadTasks();
   };
@@ -3373,6 +3388,7 @@ export default function GameApp() {
       return;
     }
 
+    closeMenuPopups();
     setDailyOpen(true);
     void loadDailyReward();
   };
@@ -3602,6 +3618,7 @@ export default function GameApp() {
       return;
     }
 
+    closeMenuPopups();
     setWithdrawalOpen(true);
     void loadWithdrawals();
   };
@@ -3899,6 +3916,19 @@ export default function GameApp() {
       .join("|"),
   ]);
 
+  useEffect(() => {
+    if (tab === "menu") return;
+
+    setProfileOpen(false);
+    setWalletHistoryOpen(false);
+    setWithdrawalOpen(false);
+    setLevelsOpen(false);
+    setProfitPlanOpen(false);
+    setDailyOpen(false);
+    setTasksOpen(false);
+    setAchievementsOpen(false);
+  }, [tab]);
+
   const withdrawalPreview = withdrawalConfig
     ? Math.max(0, Number(withdrawDna) || 0) * withdrawalConfig.usdtPerDna
     : 0;
@@ -3908,6 +3938,32 @@ export default function GameApp() {
 
   return (
     <main className="app-shell" ref={appRootRef}>
+      <style>{`
+        .menu-popup-panel {
+          position: fixed !important;
+          left: 50% !important;
+          top: 50% !important;
+          transform: translate(-50%, -50%) !important;
+          width: min(calc(100vw - 24px), 468px) !important;
+          max-height: calc(100dvh - 28px) !important;
+          margin: 0 !important;
+          overflow-y: auto !important;
+          overscroll-behavior: contain;
+          z-index: 100 !important;
+          padding-bottom: calc(18px + env(safe-area-inset-bottom)) !important;
+          box-shadow:
+            0 0 0 100vmax rgba(2, 12, 8, .76),
+            0 24px 70px rgba(0, 0, 0, .52) !important;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        @media (max-width: 430px) {
+          .menu-popup-panel {
+            width: calc(100vw - 16px) !important;
+            max-height: calc(100dvh - 16px) !important;
+          }
+        }
+      `}</style>
       <header className="hud glass">
         <div className="avatar">
           <img
@@ -6033,12 +6089,12 @@ export default function GameApp() {
                 <b>USDT</b>
               </button>
 
-              <button onClick={() => setLevelsOpen((value) => !value)}>
+              <button onClick={() => { closeMenuPopups(); setLevelsOpen(true); }}>
                 <span>Уровни динозавров</span>
                 <b>Lv.1–16</b>
               </button>
 
-              <button onClick={() => setProfitPlanOpen((value) => !value)}>
+              <button onClick={() => { closeMenuPopups(); setProfitPlanOpen(true); }}>
                 <span>Profit Plan</span>
                 <b>МОЯ ФЕРМА</b>
               </button>
@@ -6061,7 +6117,7 @@ export default function GameApp() {
             </div>
 
             {walletHistoryOpen ? (
-              <div className="form-card wallet-art-panel">
+              <div className="form-card wallet-art-panel menu-popup-panel">
                 <div className="wallet-art-head">
                   <div>
                     <span className="eyebrow">WALLET HISTORY</span>
@@ -6158,7 +6214,7 @@ export default function GameApp() {
 
             {profileOpen ? (
               <div
-                className="form-card profile-art-panel"
+                className="form-card profile-art-panel menu-popup-panel"
                 style={{
                   marginTop: 16,
                   borderRadius: 20,
@@ -6635,7 +6691,7 @@ export default function GameApp() {
 
             {profitPlanOpen ? (
               <div
-                className="form-card"
+                className="form-card menu-popup-panel"
                 style={{
                   marginTop: 16,
                   borderRadius: 20,
@@ -7026,7 +7082,7 @@ export default function GameApp() {
             ) : null}
 
             {levelsOpen ? (
-              <div className="form-card levels-art-panel">
+              <div className="form-card levels-art-panel menu-popup-panel">
                 <div className="levels-art-head">
                   <div>
                     <span className="eyebrow">DINO ECONOMY</span>
@@ -7184,7 +7240,7 @@ export default function GameApp() {
 
             {achievementsOpen ? (
               <div
-                className="form-card"
+                className="form-card menu-popup-panel"
                 style={{
                   marginTop: 16,
                   borderRadius: 20,
@@ -7540,7 +7596,7 @@ export default function GameApp() {
 
             {tasksOpen ? (
               <div
-                className="form-card"
+                className="form-card menu-popup-panel"
                 style={{
                   marginTop: 16,
                   borderRadius: 20,
@@ -7766,7 +7822,7 @@ export default function GameApp() {
 
             {dailyOpen ? (
               <div
-                className="form-card"
+                className="form-card menu-popup-panel"
                 style={{
                   marginTop: 16,
                   borderRadius: 20,
@@ -7974,7 +8030,7 @@ export default function GameApp() {
             ) : null}
 
             {withdrawalOpen ? (
-              <div className="form-card withdraw-art-panel">
+              <div className="form-card withdraw-art-panel menu-popup-panel">
                 <div className="withdraw-art-head">
                   <div>
                     <span className="eyebrow">WITHDRAWAL</span>
