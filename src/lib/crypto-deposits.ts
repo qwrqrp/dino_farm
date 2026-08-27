@@ -16,6 +16,9 @@ export const DEPOSIT_MIN_USD = 3;
 export const DEPOSIT_MAX_USD = 20_000;
 export const COINS_PER_USD = 10_000;
 export const FIRST_DEPOSIT_BONUS_PERCENT = 20;
+// UI estimate for the NOWPayments fee-paid-by-user flow.
+// The exact crypto amount is always taken from NOWPayments after payment creation.
+export const DEPOSIT_USER_FEE_PERCENT = 1;
 
 export type DepositMethod = {
   code: string;
@@ -474,6 +477,8 @@ export async function createProviderPayment(input: {
         price_currency: "usd",
         pay_currency:
           input.method.providerCurrency,
+        is_fixed_rate: true,
+        is_fee_paid_by_user: true,
         ipn_callback_url:
           input.callbackUrl,
         order_id: input.depositId,
@@ -716,8 +721,8 @@ export async function getMinimumUsdForMethod(
       new URLSearchParams({
         currency_from:
           method.providerCurrency,
-        is_fixed_rate: "False",
-        is_fee_paid_by_user: "False",
+        is_fixed_rate: "True",
+        is_fee_paid_by_user: "True",
       });
 
     const payoutCurrency =
