@@ -2148,26 +2148,19 @@ export default function GameApp() {
           );
         }
 
-        setSelectedMethodMinimumUsd(
+        const resolvedMinimumUsd =
           typeof data.minimumUsd ===
               "number" &&
             Number.isFinite(
               data.minimumUsd,
-            )
+            ) &&
+            data.minimumUsd > 0
             ? data.minimumUsd
-            : null,
-        );
-      } catch (error) {
-        console.error(
-          "Failed to load selected method minimum",
-          error,
-        );
+            : null;
 
         setSelectedMethodMinimumUsd(
-          null,
+          resolvedMinimumUsd,
         );
-      } finally {
-        setMinimumLoading(false);
 
         if (
           autoOpenDepositMethodRef.current ===
@@ -2177,18 +2170,35 @@ export default function GameApp() {
             null;
 
           if (
+            resolvedMinimumUsd !== null &&
             !isCreatingDeposit &&
             depositConfig &&
-            depositPreview.amountUsd >=
+            resolvedMinimumUsd >=
               depositConfig.minUsd &&
-            depositPreview.amountUsd <=
+            resolvedMinimumUsd <=
               depositConfig.maxUsd &&
             !depositTelegramRequired &&
             depositProviderConfigured
           ) {
+            setDepositAmount(
+              resolvedMinimumUsd.toFixed(2),
+            );
             setDepositConfirmationOpen(true);
           }
         }
+      } catch (error) {
+        console.error(
+          "Failed to load selected method minimum",
+          error,
+        );
+
+        setSelectedMethodMinimumUsd(
+          null,
+        );
+        autoOpenDepositMethodRef.current =
+          null;
+      } finally {
+        setMinimumLoading(false);
       }
     };
 
@@ -5275,21 +5285,27 @@ export default function GameApp() {
                                       method.code &&
                                     !minimumLoading
                                   ) {
-                                    autoOpenDepositMethodRef.current =
-                                      null;
-
                                     if (
-                                      !isCreatingDeposit &&
-                                      depositConfig &&
-                                      depositPreview.amountUsd >=
-                                        depositConfig.minUsd &&
-                                      depositPreview.amountUsd <=
-                                        depositConfig.maxUsd &&
-                                      !depositTelegramRequired &&
-                                      depositProviderConfigured
+                                      typeof selectedMethodMinimumUsd ===
+                                        "number" &&
+                                      Number.isFinite(
+                                        selectedMethodMinimumUsd,
+                                      ) &&
+                                      selectedMethodMinimumUsd > 0
                                     ) {
+                                      autoOpenDepositMethodRef.current =
+                                        null;
+                                      setDepositAmount(
+                                        selectedMethodMinimumUsd.toFixed(
+                                          2,
+                                        ),
+                                      );
                                       setDepositConfirmationOpen(
                                         true,
+                                      );
+                                    } else {
+                                      void loadSelectedMethodMinimum(
+                                        method.code,
                                       );
                                     }
 
@@ -5478,247 +5494,48 @@ export default function GameApp() {
                               (method) =>
                                 method.code ===
                                 depositMethodCode,
-                            )?.label
+                            )?.label ??
+                              depositMethodCode
                           }
                         </strong>
                       </div>
 
                       <div
                         style={{
-                          display: "grid",
-                          gridTemplateColumns:
-                            "repeat(2, minmax(0, 1fr))",
-                          gap: 8,
-                          marginTop: 8,
+                          marginTop: 10,
+                          padding: 16,
+                          borderRadius: 16,
+                          textAlign: "center",
+                          background:
+                            "rgba(167,243,72,.12)",
+                          border:
+                            "1px solid rgba(167,243,72,.22)",
                         }}
                       >
-                        <div
+                        <small
                           style={{
-                            minWidth: 0,
-                            padding: 12,
-                            borderRadius:
-                              14,
-                            background:
-                              "rgba(255,255,255,.04)",
+                            opacity: .7,
                           }}
                         >
-                          <small
-                            style={{
-                              opacity:
-                                .62,
-                            }}
-                          >
-                            Сумма
-                          </small>
-                          <strong
-                            style={{
-                              display:
-                                "block",
-                              marginTop:
-                                4,
-                            }}
-                          >
-                            $
-                            {depositPreview.amountUsd.toFixed(
-                              2,
-                            )}
-                          </strong>
-                        </div>
-
-                        <div
+                          Минимум сети
+                        </small>
+                        <strong
                           style={{
-                            minWidth: 0,
-                            padding: 12,
-                            borderRadius:
-                              14,
-                            background:
-                              "rgba(255,215,106,.07)",
+                            display: "block",
+                            marginTop: 5,
+                            fontSize: 28,
+                            color: "#dfff97",
                           }}
                         >
-                          <small
-                            style={{
-                              opacity:
-                                .62,
-                            }}
-                          >
-                            Минимум сети
-                          </small>
-                          <strong
-                            style={{
-                              display:
-                                "block",
-                              marginTop:
-                                4,
-                            }}
-                          >
-                            {depositPreview.networkMinimumUsd !== null
-                              ? `≈ $${depositPreview.networkMinimumUsd.toFixed(2)}`
-                              : "рассчитывается"}
-                          </strong>
-                        </div>
-
-                        <div
-                          style={{
-                            minWidth: 0,
-                            padding: 12,
-                            borderRadius:
-                              14,
-                            background:
-                              depositPreview.shortfallToMinimumUsd > 0
-                                ? "rgba(255,193,7,.10)"
-                                : "rgba(167,243,72,.12)",
-                            border:
-                              depositPreview.shortfallToMinimumUsd > 0
-                                ? "1px solid rgba(255,193,7,.22)"
-                                : "1px solid rgba(167,243,72,.20)",
-                          }}
-                        >
-                          <small
-                            style={{
-                              opacity:
-                                .7,
-                            }}
-                          >
-                            {depositPreview.shortfallToMinimumUsd > 0
-                              ? "Не хватает до минимума"
-                              : "Минимум соблюдён"}
-                          </small>
-                          <strong
-                            style={{
-                              display:
-                                "block",
-                              marginTop:
-                                4,
-                              fontSize: 18,
-                              color: "#dfff97",
-                            }}
-                          >
-                            {depositPreview.shortfallToMinimumUsd > 0
-                              ? `+$${depositPreview.shortfallToMinimumUsd.toFixed(2)}`
-                              : "✓"}
-                          </strong>
-                        </div>
-
-                        <div
-                          style={{
-                            minWidth: 0,
-                            padding: 12,
-                            borderRadius:
-                              14,
-                            background:
-                              "rgba(167,243,72,.08)",
-                          }}
-                        >
-                          <small
-                            style={{
-                              opacity:
-                                .62,
-                            }}
-                          >
-                            Получите
-                          </small>
-                          <strong
-                            style={{
-                              display:
-                                "block",
-                              marginTop:
-                                4,
-                            }}
-                          >
-                            {formatNumber(
-                              depositPreview.totalCoins,
-                              0,
-                            )}{" "}
-                            Coins
-                          </strong>
-                        </div>
+                          {depositPreview.networkMinimumUsd !== null
+                            ? `$${depositPreview.networkMinimumUsd.toFixed(2)}`
+                            : "—"}
+                        </strong>
                       </div>
-
-                      {depositPreview.shortfallToMinimumUsd > 0 ? (
-                        <div
-                          style={{
-                            marginTop: 8,
-                            padding: 12,
-                            borderRadius: 12,
-                            background:
-                              "rgba(255,193,7,.10)",
-                            border:
-                              "1px solid rgba(255,193,7,.20)",
-                            fontSize: 12,
-                            lineHeight: 1.5,
-                          }}
-                        >
-                          <strong>
-                            Для выбранной сети NOWPayments сейчас требует минимум.
-                          </strong>{" "}
-                          Указано ${depositPreview.amountUsd.toFixed(2)}, не хватает ${depositPreview.shortfallToMinimumUsd.toFixed(2)}.
-                          {" "}
-                          Это минимальный размер платежа, а не комиссия.
-                          <button
-                            type="button"
-                            className="coin-button"
-                            onClick={() => {
-                              if (depositPreview.networkMinimumUsd !== null) {
-                                setDepositAmount(
-                                  depositPreview.networkMinimumUsd.toFixed(2),
-                                );
-                              }
-                            }}
-                            style={{
-                              width: "100%",
-                              maxWidth: "none",
-                              marginTop: 10,
-                            }}
-                          >
-                            УСТАНОВИТЬ МИНИМУМ ${depositPreview.minimumTopUpUsd.toFixed(2)}
-                          </button>
-                        </div>
-                      ) : (
-                        <div
-                          style={{
-                            marginTop: 8,
-                            padding: 10,
-                            borderRadius: 12,
-                            background:
-                              "rgba(84,180,255,.07)",
-                            border:
-                              "1px solid rgba(84,180,255,.14)",
-                            fontSize: 11,
-                            lineHeight: 1.45,
-                            opacity: .82,
-                          }}
-                        >
-                          Минимум сети соблюдён. Точная комиссия NOWPayments будет включена в сумму оплаты после создания платежа. Комиссия вашего кошелька или биржи за отправку может списываться отдельно.
-                        </div>
-                      )}
-
-                      {depositPreview.bonusCoins >
-                      0 ? (
-                        <div
-                          style={{
-                            marginTop: 8,
-                            padding: 10,
-                            borderRadius:
-                              12,
-                            background:
-                              "rgba(255,215,106,.08)",
-                            fontSize: 13,
-                          }}
-                        >
-                          🎁 Включён бонус
-                          первого пополнения:
-                          +
-                          {formatNumber(
-                            depositPreview.bonusCoins,
-                            0,
-                          )}{" "}
-                          Coins
-                        </div>
-                      ) : null}
 
                       <div
                         style={{
-                          marginTop: 12,
+                          marginTop: 10,
                           padding: 13,
                           borderRadius: 14,
                           background:
@@ -5755,6 +5572,9 @@ export default function GameApp() {
                         className="primary"
                         disabled={
                           isCreatingDeposit ||
+                          minimumLoading ||
+                          depositPreview.networkMinimumUsd ===
+                            null ||
                           !depositPreview.valid
                         }
                         onClick={() =>
