@@ -807,6 +807,18 @@ const UI_TRANSLATION_ROWS = [
   ["Получите Lv.", "You get Lv.", "Отримаєте Lv.", "Riceverai Lv.", "Vous obtenez Lv.", "Obtendrás Lv.", "आपको Lv. मिलेगा", "Otrzymasz Lv.", "Du erhältst Lv.", "Lv. alacaksınız"],
   ["Комиссия", "Fee", "Комісія", "Commissione", "Frais", "Comisión", "शुल्क", "Opłata", "Gebühr", "Ücret"],
   ["Нужно на балансе", "Required balance", "Потрібно на балансі", "Saldo necessario", "Solde nécessaire", "Saldo necesario", "ज़रूरी बैलेंस", "Wymagane saldo", "Benötigtes Guthaben", "Gerekli bakiye"],
+  ["Минимум сети", "Network minimum", "Мінімум мережі", "Minimo rete", "Minimum réseau", "Mínimo de red", "नेटवर्क न्यूनतम", "Minimum sieci", "Netzwerkminimum", "Ağ minimumu"],
+  ["рассчитывается", "calculating", "розраховується", "in calcolo", "calcul en cours", "calculando", "गणना हो रही है", "obliczanie", "wird berechnet", "hesaplanıyor"],
+  ["Не хватает до минимума", "Short of minimum", "Не вистачає до мінімуму", "Manca al minimo", "Manque pour le minimum", "Falta para el mínimo", "न्यूनतम से कम", "Brakuje do minimum", "Fehlt bis zum Minimum", "Minimuma eksik"],
+  ["Минимум соблюдён", "Minimum met", "Мінімум дотримано", "Minimo raggiunto", "Minimum atteint", "Mínimo alcanzado", "न्यूनतम पूरा", "Minimum spełnione", "Minimum erfüllt", "Minimum karşılandı"],
+  ["Для выбранной сети NOWPayments сейчас требует минимум.", "NOWPayments currently requires a minimum for the selected network.", "NOWPayments зараз вимагає мінімум для вибраної мережі.", "NOWPayments richiede attualmente un minimo per la rete selezionata.", "NOWPayments exige actuellement un minimum pour le réseau sélectionné.", "NOWPayments exige actualmente un mínimo para la red seleccionada.", "NOWPayments अभी चुने गए नेटवर्क के लिए न्यूनतम राशि मांगता है।", "NOWPayments wymaga obecnie minimum dla wybranej sieci.", "NOWPayments verlangt derzeit ein Minimum für das gewählte Netzwerk.", "NOWPayments şu anda seçilen ağ için minimum tutar istiyor."],
+  ["Указано", "Entered", "Вказано", "Inserito", "Saisi", "Indicado", "दर्ज", "Wpisano", "Eingegeben", "Girilen"],
+  ["не хватает", "short by", "не вистачає", "mancano", "il manque", "faltan", "कम है", "brakuje", "es fehlen", "eksik"],
+  ["Это минимальный размер платежа, а не комиссия.", "This is the minimum payment amount, not a fee.", "Це мінімальний розмір платежу, а не комісія.", "Questo è l'importo minimo del pagamento, non una commissione.", "Il s'agit du montant minimum du paiement, pas de frais.", "Este es el importe mínimo del pago, no una comisión.", "यह न्यूनतम भुगतान राशि है, फीस नहीं।", "To minimalna kwota płatności, a nie opłata.", "Das ist der Mindestzahlungsbetrag, keine Gebühr.", "Bu minimum ödeme tutarıdır, komisyon değildir."],
+  ["УСТАНОВИТЬ МИНИМУМ", "SET MINIMUM", "ВСТАНОВИТИ МІНІМУМ", "IMPOSTA MINIMO", "DÉFINIR LE MINIMUM", "ESTABLECER MÍNIMO", "न्यूनतम सेट करें", "USTAW MINIMUM", "MINIMUM SETZEN", "MİNİMUMU AYARLA"],
+  ["Минимум сети соблюдён.", "Network minimum is met.", "Мінімум мережі дотримано.", "Il minimo di rete è rispettato.", "Le minimum du réseau est respecté.", "Se cumple el mínimo de la red.", "नेटवर्क न्यूनतम पूरा है।", "Minimum sieci jest spełnione.", "Das Netzwerkminimum ist erfüllt.", "Ağ minimumu karşılandı."],
+  ["Точная комиссия NOWPayments будет включена в сумму оплаты после создания платежа.", "The exact NOWPayments fee will be included in the payment amount after the payment is created.", "Точна комісія NOWPayments буде включена в суму оплати після створення платежу.", "La commissione esatta di NOWPayments sarà inclusa nell'importo da pagare dopo la creazione del pagamento.", "Les frais exacts de NOWPayments seront inclus dans le montant à payer après la création du paiement.", "La comisión exacta de NOWPayments se incluirá en el importe a pagar después de crear el pago.", "भुगतान बनने के बाद NOWPayments की सटीक फीस भुगतान राशि में शामिल होगी।", "Dokładna opłata NOWPayments zostanie doliczona do kwoty płatności po jej utworzeniu.", "Die genaue NOWPayments-Gebühr wird nach Erstellung der Zahlung in den Zahlbetrag einbezogen.", "Kesin NOWPayments ücreti ödeme oluşturulduktan sonra ödeme tutarına dahil edilir."],
+  ["Комиссия вашего кошелька или биржи за отправку может списываться отдельно.", "Your wallet or exchange may charge a separate sending fee.", "Ваш гаманець або біржа може окремо списати комісію за відправлення.", "Il wallet o l'exchange può addebitare separatamente una commissione di invio.", "Votre portefeuille ou plateforme peut facturer séparément des frais d'envoi.", "Tu wallet o exchange puede cobrar aparte una comisión de envío.", "आपका वॉलेट या एक्सचेंज भेजने की अलग फीस ले सकता है।", "Portfel lub giełda może osobno pobrać opłatę za wysyłkę.", "Wallet oder Börse können zusätzlich eine eigene Sendegebühr berechnen.", "Cüzdanınız veya borsanız ayrıca gönderim ücreti kesebilir."],
   ["Точная сумма в криптовалюте будет рассчитана NOWPayments после создания платежа. Комиссия вашего кошелька или биржи за отправку может списываться отдельно.", "The exact crypto amount will be calculated by NOWPayments after the payment is created. Your wallet or exchange may charge a separate sending fee.", "Точну суму в криптовалюті NOWPayments розрахує після створення платежу. Ваш гаманець або біржа може окремо списати комісію за відправлення.", "L’importo esatto in criptovaluta sarà calcolato da NOWPayments dopo la creazione del pagamento. Il wallet o l’exchange può addebitare separatamente una commissione di invio.", "Le montant exact en cryptomonnaie sera calculé par NOWPayments après la création du paiement. Votre portefeuille ou plateforme peut facturer séparément des frais d’envoi.", "NOWPayments calculará el importe exacto en criptomoneda después de crear el pago. Tu wallet o exchange puede cobrar aparte una comisión de envío.", "भुगतान बनने के बाद सटीक क्रिप्टो राशि NOWPayments द्वारा तय की जाएगी। आपका वॉलेट या एक्सचेंज भेजने की अलग फीस ले सकता है।", "Dokładna kwota w kryptowalucie zostanie obliczona przez NOWPayments po utworzeniu płatności. Portfel lub giełda może osobno pobrać opłatę za wysyłkę.", "Der genaue Kryptobetrag wird von NOWPayments nach Erstellung der Zahlung berechnet. Wallet oder Börse können zusätzlich eine eigene Sendegebühr berechnen.", "Kesin kripto tutarı ödeme oluşturulduktan sonra NOWPayments tarafından hesaplanır. Cüzdanınız veya borsanız ayrıca gönderim ücreti kesebilir."],
   ["Доступен сейчас", "Available now", "Доступний зараз", "Disponibile ora", "Disponible maintenant", "Disponible ahora", "अभी उपलब्ध", "Dostępne teraz", "Jetzt verfügbar", "Şimdi mevcut"],
   ["Ожидает проверки", "Pending review", "Очікує перевірки", "In attesa di verifica", "En attente de vérification", "Pendiente de revisión", "जाँच की प्रतीक्षा", "Oczekuje na weryfikację", "Wartet auf Prüfung", "Kontrol bekliyor"],
@@ -1258,29 +1270,36 @@ export default function GameApp() {
           (bonusPercent / 100),
       );
 
-    const userFeePercent =
-      depositConfig?.userFeePercent ?? 1;
+    const networkMinimumUsd =
+      typeof selectedMethodMinimumUsd === "number" &&
+      Number.isFinite(selectedMethodMinimumUsd) &&
+      selectedMethodMinimumUsd > 0
+        ? selectedMethodMinimumUsd
+        : null;
 
-    const estimatedFeeUsd =
-      amountUsd > 0
-        ? Math.ceil(
-            amountUsd * userFeePercent,
-          ) / 100
+    const shortfallToMinimumUsd =
+      networkMinimumUsd !== null
+        ? Math.max(
+            0,
+            Math.ceil(
+              (networkMinimumUsd - amountUsd) * 100,
+            ) / 100,
+          )
         : 0;
 
-    const estimatedRequiredBalanceUsd =
-      Math.ceil(
-        (amountUsd + estimatedFeeUsd) * 100,
-      ) / 100;
+    const minimumTopUpUsd =
+      networkMinimumUsd !== null
+        ? Math.max(amountUsd, networkMinimumUsd)
+        : amountUsd;
 
     return {
       amountUsd,
       baseCoins,
       bonusPercent,
       bonusCoins,
-      userFeePercent,
-      estimatedFeeUsd,
-      estimatedRequiredBalanceUsd,
+      networkMinimumUsd,
+      shortfallToMinimumUsd,
+      minimumTopUpUsd,
       totalCoins:
         baseCoins + bonusCoins,
       valid:
@@ -5320,7 +5339,7 @@ export default function GameApp() {
                                 .62,
                             }}
                           >
-                            Комиссия NOWPayments
+                            Минимум сети
                           </small>
                           <strong
                             style={{
@@ -5330,23 +5349,9 @@ export default function GameApp() {
                                 4,
                             }}
                           >
-                            ≈ $
-                            {depositPreview.estimatedFeeUsd.toFixed(
-                              2,
-                            )}
-                            {" "}
-                            <span
-                              style={{
-                                fontSize: 11,
-                                opacity: .7,
-                              }}
-                            >
-                              (≈
-                              {depositPreview.userFeePercent.toFixed(
-                                1,
-                              )}
-                              %)
-                            </span>
+                            {depositPreview.networkMinimumUsd !== null
+                              ? `≈ $${depositPreview.networkMinimumUsd.toFixed(2)}`
+                              : "рассчитывается"}
                           </strong>
                         </div>
 
@@ -5357,9 +5362,13 @@ export default function GameApp() {
                             borderRadius:
                               14,
                             background:
-                              "rgba(167,243,72,.12)",
+                              depositPreview.shortfallToMinimumUsd > 0
+                                ? "rgba(255,193,7,.10)"
+                                : "rgba(167,243,72,.12)",
                             border:
-                              "1px solid rgba(167,243,72,.20)",
+                              depositPreview.shortfallToMinimumUsd > 0
+                                ? "1px solid rgba(255,193,7,.22)"
+                                : "1px solid rgba(167,243,72,.20)",
                           }}
                         >
                           <small
@@ -5368,7 +5377,9 @@ export default function GameApp() {
                                 .7,
                             }}
                           >
-                            Нужно на балансе
+                            {depositPreview.shortfallToMinimumUsd > 0
+                              ? "Не хватает до минимума"
+                              : "Минимум соблюдён"}
                           </small>
                           <strong
                             style={{
@@ -5380,10 +5391,9 @@ export default function GameApp() {
                               color: "#dfff97",
                             }}
                           >
-                            ≈ $
-                            {depositPreview.estimatedRequiredBalanceUsd.toFixed(
-                              2,
-                            )}
+                            {depositPreview.shortfallToMinimumUsd > 0
+                              ? `+$${depositPreview.shortfallToMinimumUsd.toFixed(2)}`
+                              : "✓"}
                           </strong>
                         </div>
 
@@ -5422,22 +5432,63 @@ export default function GameApp() {
                         </div>
                       </div>
 
-                      <div
-                        style={{
-                          marginTop: 8,
-                          padding: 10,
-                          borderRadius: 12,
-                          background:
-                            "rgba(84,180,255,.07)",
-                          border:
-                            "1px solid rgba(84,180,255,.14)",
-                          fontSize: 11,
-                          lineHeight: 1.45,
-                          opacity: .82,
-                        }}
-                      >
-                        Точная сумма в криптовалюте будет рассчитана NOWPayments после создания платежа. Комиссия вашего кошелька или биржи за отправку может списываться отдельно.
-                      </div>
+                      {depositPreview.shortfallToMinimumUsd > 0 ? (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            padding: 12,
+                            borderRadius: 12,
+                            background:
+                              "rgba(255,193,7,.10)",
+                            border:
+                              "1px solid rgba(255,193,7,.20)",
+                            fontSize: 12,
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          <strong>
+                            Для выбранной сети NOWPayments сейчас требует минимум.
+                          </strong>{" "}
+                          Указано ${depositPreview.amountUsd.toFixed(2)}, не хватает ${depositPreview.shortfallToMinimumUsd.toFixed(2)}.
+                          {" "}
+                          Это минимальный размер платежа, а не комиссия.
+                          <button
+                            type="button"
+                            className="coin-button"
+                            onClick={() => {
+                              if (depositPreview.networkMinimumUsd !== null) {
+                                setDepositAmount(
+                                  depositPreview.networkMinimumUsd.toFixed(2),
+                                );
+                              }
+                            }}
+                            style={{
+                              width: "100%",
+                              maxWidth: "none",
+                              marginTop: 10,
+                            }}
+                          >
+                            УСТАНОВИТЬ МИНИМУМ ${depositPreview.minimumTopUpUsd.toFixed(2)}
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            padding: 10,
+                            borderRadius: 12,
+                            background:
+                              "rgba(84,180,255,.07)",
+                            border:
+                              "1px solid rgba(84,180,255,.14)",
+                            fontSize: 11,
+                            lineHeight: 1.45,
+                            opacity: .82,
+                          }}
+                        >
+                          Минимум сети соблюдён. Точная комиссия NOWPayments будет включена в сумму оплаты после создания платежа. Комиссия вашего кошелька или биржи за отправку может списываться отдельно.
+                        </div>
+                      )}
 
                       {depositPreview.bonusCoins >
                       0 ? (
@@ -5501,7 +5552,8 @@ export default function GameApp() {
                       <button
                         className="primary"
                         disabled={
-                          isCreatingDeposit
+                          isCreatingDeposit ||
+                          !depositPreview.valid
                         }
                         onClick={() =>
                           void confirmCreateDeposit()
