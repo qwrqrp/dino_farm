@@ -5436,3 +5436,122 @@
     transition:none !important;
   }
 }
+
+/* =========================================================
+   MENU FARM HUB — V10.11
+   Dinosaur Levels + Profit Plan grouped under one Menu card.
+   Visual/layout only; existing popup callbacks are preserved.
+   ========================================================= */
+
+.menu-farm-hub-panel{
+  gap:16px !important;
+  padding:18px !important;
+  border:1px solid rgba(255,211,119,.34) !important;
+  border-radius:26px !important;
+  background:
+    radial-gradient(circle at 50% -10%,rgba(255,224,151,.16),transparent 34%),
+    linear-gradient(180deg,#6f472b 0%,#472818 100%) !important;
+}
+
+.menu-farm-hub-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.menu-farm-hub-head h2{
+  margin:2px 0 0;
+  color:#fff1bf;
+  text-shadow:0 2px 0 rgba(65,31,16,.88),0 3px 5px rgba(0,0,0,.28);
+}
+
+.menu-farm-hub-head .coin-button{
+  flex:0 0 46px;
+  width:46px;
+  height:46px;
+  padding:0 !important;
+  display:grid;
+  place-items:center;
+  font-size:28px;
+  line-height:1;
+}
+
+.menu-farm-hub-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.menu-farm-hub-actions > button{
+  min-height:126px;
+  padding:18px 12px 14px;
+  border:1px solid rgba(255,205,111,.38);
+  border-radius:22px;
+  color:#fff4c9;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  background:
+    radial-gradient(circle at 50% 5%,rgba(255,226,160,.21),transparent 35%),
+    linear-gradient(180deg,#855a35 0%,#653f25 48%,#4b2b1a 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255,235,190,.18),
+    inset 0 -6px 12px rgba(34,15,7,.25),
+    0 6px 0 rgba(45,22,11,.48),
+    0 10px 16px rgba(0,0,0,.22);
+  text-align:center;
+}
+
+.menu-farm-hub-actions > button span{
+  font-size:15px;
+  line-height:1.18;
+  font-weight:950;
+  text-shadow:0 2px 0 rgba(70,31,13,.92),0 3px 5px rgba(0,0,0,.28);
+}
+
+.menu-farm-hub-actions > button b{
+  min-width:92px;
+  min-height:30px;
+  padding:7px 13px 6px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(225,255,139,.42);
+  border-radius:999px;
+  background:
+    radial-gradient(circle at 50% 0,rgba(246,255,174,.30),transparent 48%),
+    linear-gradient(180deg,#76a72a,#426d1d);
+  color:#f4ffd4;
+  font-size:9px;
+  font-weight:1000;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 3px 0 rgba(37,47,14,.48);
+}
+
+.menu-farm-hub-actions > button:active{
+  transform:translateY(3px) scale(.985);
+  box-shadow:
+    inset 0 2px 0 rgba(255,235,190,.14),
+    0 3px 0 rgba(45,22,11,.48),
+    0 6px 10px rgba(0,0,0,.20);
+}
+
+@media(max-width:370px){
+  .menu-farm-hub-panel{
+    padding:14px !important;
+  }
+
+  .menu-farm-hub-actions{
+    gap:9px;
+  }
+
+  .menu-farm-hub-actions > button{
+    min-height:112px;
+    padding:15px 8px 12px;
+  }
+
+  .menu-farm-hub-actions > button span{
+    font-size:13px;
+  }
+}
