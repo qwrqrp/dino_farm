@@ -6069,3 +6069,35 @@
     font-size:8px !important;
   }
 }
+
+/* =========================================================
+   FRIENDS BACKGROUND FULL HEIGHT — V10.17
+   Visual-only: keep the approved prehistoric artwork visible
+   through the whole Friends content area down to bottom nav.
+   ========================================================= */
+
+.friends-art-screen{
+  min-height:calc(
+    100dvh - 150px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+  ) !important;
+  align-content:start;
+  background-position:center 45% !important;
+  background-size:cover !important;
+  background-repeat:no-repeat !important;
+}
+
+@media(max-width:430px){
+  .friends-art-screen{
+    min-height:calc(
+      100dvh - 142px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+    ) !important;
+  }
+}
+
+@media(max-width:370px){
+  .friends-art-screen{
+    min-height:calc(
+      100dvh - 136px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+    ) !important;
+  }
+}
