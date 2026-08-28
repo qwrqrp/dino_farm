@@ -7535,3 +7535,229 @@ button,
     animation:none !important;
   }
 }
+
+/* =========================================================
+   STAGE 11H — NEW DINOSAUR DISCOVERY
+   UI-only celebration shown only when a merge creates a new
+   maximum level. No unlock/economy/API rules are changed.
+   ========================================================= */
+.new-dino-unlock-backdrop{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:260 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:
+    calc(18px + env(safe-area-inset-top))
+    16px
+    calc(88px + env(safe-area-inset-bottom)) !important;
+  background:rgba(3,15,10,.76) !important;
+  backdrop-filter:blur(7px) !important;
+  -webkit-backdrop-filter:blur(7px) !important;
+}
+
+.new-dino-unlock-modal{
+  position:relative !important;
+  isolation:isolate;
+  width:min(390px,100%) !important;
+  overflow:hidden !important;
+  padding:22px 20px 20px !important;
+  border:1px solid rgba(255,220,126,.48) !important;
+  border-radius:30px !important;
+  text-align:center !important;
+  background:
+    radial-gradient(circle at 50% 28%,rgba(222,255,111,.20),transparent 32%),
+    linear-gradient(180deg,#81542e 0%,#4c2c19 58%,#2b1a11 100%) !important;
+  box-shadow:
+    inset 0 2px 0 rgba(255,246,210,.17),
+    0 8px 0 rgba(55,29,13,.82),
+    0 28px 65px rgba(0,0,0,.54),
+    0 0 42px rgba(198,244,74,.12) !important;
+  animation:newDinoUnlockPop .32s cubic-bezier(.2,.85,.25,1.15) both;
+}
+
+.new-dino-unlock-rays{
+  position:absolute;
+  z-index:-1;
+  left:50%;
+  top:41%;
+  width:330px;
+  height:330px;
+  transform:translate(-50%,-50%);
+  opacity:.18;
+  background:repeating-conic-gradient(
+    from 0deg,
+    rgba(255,243,154,.85) 0deg 8deg,
+    transparent 8deg 21deg
+  );
+  mask-image:radial-gradient(circle,#000 0 46%,transparent 72%);
+  -webkit-mask-image:radial-gradient(circle,#000 0 46%,transparent 72%);
+  animation:newDinoUnlockSpin 13s linear infinite;
+  pointer-events:none;
+}
+
+.new-dino-unlock-modal > small{
+  display:block;
+  color:#d8ff72;
+  font-size:10px;
+  line-height:1.2;
+  font-weight:1000;
+  letter-spacing:.16em;
+  text-shadow:0 2px 2px rgba(0,0,0,.35);
+}
+
+.new-dino-unlock-modal > h2{
+  margin:5px 0 10px !important;
+  color:#fff1bf !important;
+  font-size:25px !important;
+  line-height:1.08 !important;
+  font-weight:1000 !important;
+  text-shadow:0 3px 0 rgba(71,34,14,.78),0 5px 8px rgba(0,0,0,.26) !important;
+}
+
+.new-dino-unlock-hero{
+  position:relative;
+  width:176px;
+  height:166px;
+  margin:0 auto 4px;
+  display:grid;
+  place-items:center;
+}
+
+.new-dino-unlock-aura{
+  position:absolute;
+  inset:16px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(201,255,81,.36),rgba(119,214,42,.12) 48%,transparent 72%);
+  filter:blur(2px);
+  animation:newDinoUnlockAura 1.8s ease-in-out infinite alternate;
+}
+
+.new-dino-unlock-hero img{
+  position:relative;
+  z-index:2;
+  width:145px;
+  height:132px;
+  object-fit:contain;
+  user-select:none;
+  pointer-events:none;
+  filter:drop-shadow(0 10px 7px rgba(0,0,0,.28));
+  animation:newDinoUnlockDino .7s cubic-bezier(.2,.9,.25,1.2) both;
+}
+
+.new-dino-unlock-hero strong{
+  position:absolute;
+  z-index:3;
+  left:50%;
+  bottom:1px;
+  transform:translateX(-50%);
+  min-width:76px;
+  padding:7px 14px;
+  border:1px solid rgba(255,224,123,.65);
+  border-radius:999px;
+  color:#fff1ba;
+  background:linear-gradient(180deg,#74411d,#42210f);
+  box-shadow:0 4px 0 rgba(40,20,9,.72),inset 0 1px 0 rgba(255,255,255,.15);
+  font-size:16px;
+  font-weight:1000;
+}
+
+.new-dino-unlock-modal > p{
+  max-width:315px;
+  margin:10px auto 12px !important;
+  color:#e7d8b6 !important;
+  font-size:13px !important;
+  line-height:1.42 !important;
+}
+
+.new-dino-unlock-income{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 14px;
+  padding:11px 13px;
+  border:1px solid rgba(216,255,109,.20);
+  border-radius:16px;
+  background:rgba(25,56,28,.55);
+  text-align:left;
+}
+
+.new-dino-unlock-income span{
+  color:#b7c7a8;
+  font-size:11px;
+}
+
+.new-dino-unlock-income b{
+  color:#eaff9c;
+  font-size:12px;
+  text-align:right;
+}
+
+.new-dino-unlock-continue{
+  width:100%;
+  min-height:54px;
+  border:1px solid rgba(225,255,133,.78);
+  border-radius:18px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.14),transparent 28%),
+    linear-gradient(180deg,#b8f44b,#69b821) !important;
+  color:#173a13;
+  font-size:14px;
+  font-weight:1000;
+  text-shadow:0 1px 0 rgba(255,255,255,.28);
+  box-shadow:0 6px 0 #477f18,0 12px 22px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.28);
+}
+
+.new-dino-unlock-continue:active{
+  transform:translateY(3px);
+  box-shadow:0 3px 0 #477f18,0 8px 15px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.20);
+}
+
+.new-dino-unlock-modal.dino-evolution-tier-3{
+  box-shadow:inset 0 2px 0 rgba(255,246,210,.17),0 8px 0 rgba(55,29,13,.82),0 28px 65px rgba(0,0,0,.54),0 0 42px rgba(89,208,255,.22) !important;
+}
+.new-dino-unlock-modal.dino-evolution-tier-4{
+  box-shadow:inset 0 2px 0 rgba(255,246,210,.17),0 8px 0 rgba(55,29,13,.82),0 28px 65px rgba(0,0,0,.54),0 0 45px rgba(206,105,255,.24) !important;
+}
+.new-dino-unlock-modal.dino-evolution-tier-5,
+.new-dino-unlock-modal.dino-evolution-max{
+  box-shadow:inset 0 2px 0 rgba(255,246,210,.17),0 8px 0 rgba(55,29,13,.82),0 28px 65px rgba(0,0,0,.54),0 0 50px rgba(255,217,76,.30) !important;
+}
+
+@keyframes newDinoUnlockPop{
+  from{opacity:0;transform:translateY(18px) scale(.88)}
+  to{opacity:1;transform:none}
+}
+@keyframes newDinoUnlockSpin{
+  to{transform:translate(-50%,-50%) rotate(360deg)}
+}
+@keyframes newDinoUnlockAura{
+  from{transform:scale(.94);opacity:.62}
+  to{transform:scale(1.08);opacity:1}
+}
+@keyframes newDinoUnlockDino{
+  0%{opacity:0;transform:translateY(30px) scale(.55) rotate(-4deg)}
+  62%{opacity:1;transform:translateY(-5px) scale(1.08) rotate(2deg)}
+  100%{opacity:1;transform:none}
+}
+
+@media(max-width:370px){
+  .new-dino-unlock-backdrop{
+    padding:calc(12px + env(safe-area-inset-top)) 12px calc(82px + env(safe-area-inset-bottom)) !important;
+  }
+  .new-dino-unlock-modal{padding:18px 15px 17px !important;border-radius:25px !important}
+  .new-dino-unlock-modal > h2{font-size:21px !important}
+  .new-dino-unlock-hero{width:154px;height:146px}
+  .new-dino-unlock-hero img{width:128px;height:115px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .new-dino-unlock-modal,
+  .new-dino-unlock-rays,
+  .new-dino-unlock-aura,
+  .new-dino-unlock-hero img{
+    animation:none !important;
+  }
+}
