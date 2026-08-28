@@ -611,6 +611,119 @@ const LANGUAGE_OPTIONS: ReadonlyArray<{ code: LanguageCode; short: string; label
   { code: "tr", short: "TR", label: "Türkçe" },
 ];
 
+const TUTORIAL_STORAGE_KEY = "dino-farm-tutorial-v1-complete";
+
+type TutorialStep = 0 | 1 | 2 | 3;
+
+type TutorialCopy = {
+  menuLabel: string;
+  replay: string;
+  skip: string;
+  next: string;
+  start: string;
+  openRewards: string;
+  stepLabel: string;
+  steps: readonly [
+    { title: string; body: string },
+    { title: string; body: string },
+    { title: string; body: string },
+    { title: string; body: string },
+  ];
+};
+
+const TUTORIAL_COPY: Record<LanguageCode, TutorialCopy> = {
+  ru: {
+    menuLabel: "Обучение", replay: "ПОВТОРИТЬ", skip: "Пропустить", next: "ДАЛЬШЕ", start: "В ИГРУ", openRewards: "ОТКРЫТЬ НАГРАДЫ", stepLabel: "Шаг",
+    steps: [
+      { title: "Добро пожаловать в DINO EGG FARM!", body: "Начнём с главной механики. Открой раздел «Игра»." },
+      { title: "Сделай первый merge", body: "Нажми на двух одинаковых динозавров и подтверди объединение. Так открываются новые уровни." },
+      { title: "Собери яйца", body: "Вернись в Гнездо и нажми «Собрать яйца». Ты получишь Coins и DNA." },
+      { title: "Открой награды", body: "Нажми «Награды». Там находятся ежедневный бонус, задания и достижения." },
+    ],
+  },
+  en: {
+    menuLabel: "Tutorial", replay: "REPLAY", skip: "Skip", next: "NEXT", start: "PLAY", openRewards: "OPEN REWARDS", stepLabel: "Step",
+    steps: [
+      { title: "Welcome to DINO EGG FARM!", body: "Start with the core mechanic. Open the Game tab." },
+      { title: "Make your first merge", body: "Tap two identical dinosaurs and confirm the merge. This unlocks new levels." },
+      { title: "Collect eggs", body: "Return to the Nest and tap Collect Eggs. You will receive Coins and DNA." },
+      { title: "Open rewards", body: "Tap Rewards to find the daily reward, tasks and achievements." },
+    ],
+  },
+  uk: {
+    menuLabel: "Навчання", replay: "ПОВТОРИТИ", skip: "Пропустити", next: "ДАЛІ", start: "ДО ГРИ", openRewards: "ВІДКРИТИ НАГОРОДИ", stepLabel: "Крок",
+    steps: [
+      { title: "Ласкаво просимо до DINO EGG FARM!", body: "Почнемо з головної механіки. Відкрий розділ «Гра»." },
+      { title: "Зроби перший merge", body: "Натисни на двох однакових динозаврів і підтвердь об’єднання. Так відкриваються нові рівні." },
+      { title: "Збери яйця", body: "Повернися до Гнізда та натисни «Зібрати яйця». Ти отримаєш Coins і DNA." },
+      { title: "Відкрий нагороди", body: "Натисни «Нагороди». Там є щоденний бонус, завдання та досягнення." },
+    ],
+  },
+  it: {
+    menuLabel: "Tutorial", replay: "RIPETI", skip: "Salta", next: "AVANTI", start: "GIOCA", openRewards: "APRI RICOMPENSE", stepLabel: "Passo",
+    steps: [
+      { title: "Benvenuto in DINO EGG FARM!", body: "Inizia dalla meccanica principale. Apri la sezione Gioco." },
+      { title: "Fai il primo merge", body: "Tocca due dinosauri identici e conferma la fusione. Così sblocchi nuovi livelli." },
+      { title: "Raccogli le uova", body: "Torna al Nido e premi Raccogli uova. Riceverai Coins e DNA." },
+      { title: "Apri le ricompense", body: "Premi Ricompense per trovare bonus giornaliero, missioni e obiettivi." },
+    ],
+  },
+  fr: {
+    menuLabel: "Tutoriel", replay: "REJOUER", skip: "Passer", next: "SUIVANT", start: "JOUER", openRewards: "OUVRIR RÉCOMPENSES", stepLabel: "Étape",
+    steps: [
+      { title: "Bienvenue dans DINO EGG FARM !", body: "Commence par la mécanique principale. Ouvre l’onglet Jeu." },
+      { title: "Fais ton premier merge", body: "Touche deux dinosaures identiques et confirme la fusion pour débloquer de nouveaux niveaux." },
+      { title: "Ramasse les œufs", body: "Retourne au Nid et appuie sur Ramasser les œufs. Tu recevras des Coins et de l’ADN." },
+      { title: "Ouvre les récompenses", body: "Appuie sur Récompenses pour voir le bonus quotidien, les tâches et les succès." },
+    ],
+  },
+  es: {
+    menuLabel: "Tutorial", replay: "REPETIR", skip: "Omitir", next: "SIGUIENTE", start: "JUGAR", openRewards: "ABRIR RECOMPENSAS", stepLabel: "Paso",
+    steps: [
+      { title: "¡Bienvenido a DINO EGG FARM!", body: "Empieza con la mecánica principal. Abre la pestaña Juego." },
+      { title: "Haz tu primer merge", body: "Toca dos dinosaurios iguales y confirma la fusión. Así desbloqueas nuevos niveles." },
+      { title: "Recoge huevos", body: "Vuelve al Nido y pulsa Recoger huevos. Recibirás Coins y DNA." },
+      { title: "Abre recompensas", body: "Pulsa Recompensas para ver el bono diario, tareas y logros." },
+    ],
+  },
+  hi: {
+    menuLabel: "ट्यूटोरियल", replay: "फिर चलाएँ", skip: "छोड़ें", next: "आगे", start: "खेलें", openRewards: "पुरस्कार खोलें", stepLabel: "चरण",
+    steps: [
+      { title: "DINO EGG FARM में स्वागत है!", body: "मुख्य मैकेनिक से शुरू करें। गेम टैब खोलें।" },
+      { title: "पहला merge करें", body: "दो समान डायनासोर पर टैप करें और merge की पुष्टि करें। इससे नए स्तर खुलते हैं।" },
+      { title: "अंडे इकट्ठा करें", body: "घोंसले पर लौटें और अंडे इकट्ठा करें दबाएँ। आपको Coins और DNA मिलेंगे।" },
+      { title: "पुरस्कार खोलें", body: "दैनिक पुरस्कार, टास्क और उपलब्धियाँ देखने के लिए पुरस्कार दबाएँ।" },
+    ],
+  },
+  pl: {
+    menuLabel: "Samouczek", replay: "POWTÓRZ", skip: "Pomiń", next: "DALEJ", start: "GRAJ", openRewards: "OTWÓRZ NAGRODY", stepLabel: "Krok",
+    steps: [
+      { title: "Witaj w DINO EGG FARM!", body: "Zacznij od głównej mechaniki. Otwórz zakładkę Gra." },
+      { title: "Zrób pierwszy merge", body: "Dotknij dwóch identycznych dinozaurów i potwierdź połączenie. Tak odblokujesz nowe poziomy." },
+      { title: "Zbierz jajka", body: "Wróć do Gniazda i naciśnij Zbierz jajka. Otrzymasz Coins i DNA." },
+      { title: "Otwórz nagrody", body: "Naciśnij Nagrody, aby zobaczyć bonus dzienny, zadania i osiągnięcia." },
+    ],
+  },
+  de: {
+    menuLabel: "Tutorial", replay: "WIEDERHOLEN", skip: "Überspringen", next: "WEITER", start: "SPIELEN", openRewards: "BELOHNUNGEN ÖFFNEN", stepLabel: "Schritt",
+    steps: [
+      { title: "Willkommen bei DINO EGG FARM!", body: "Starte mit der Kernmechanik. Öffne den Tab Spiel." },
+      { title: "Mache deinen ersten Merge", body: "Tippe zwei gleiche Dinosaurier an und bestätige den Merge. So schaltest du neue Level frei." },
+      { title: "Sammle Eier", body: "Kehre zum Nest zurück und tippe Eier sammeln. Du erhältst Coins und DNA." },
+      { title: "Öffne Belohnungen", body: "Tippe Belohnungen für Tagesbonus, Aufgaben und Erfolge." },
+    ],
+  },
+  tr: {
+    menuLabel: "Eğitim", replay: "TEKRARLA", skip: "Atla", next: "İLERİ", start: "OYNA", openRewards: "ÖDÜLLERİ AÇ", stepLabel: "Adım",
+    steps: [
+      { title: "DINO EGG FARM’a hoş geldin!", body: "Ana mekanikle başla. Oyun sekmesini aç." },
+      { title: "İlk merge işlemini yap", body: "İki aynı dinozora dokun ve birleştirmeyi onayla. Böylece yeni seviyeler açılır." },
+      { title: "Yumurtaları topla", body: "Yuvaya dön ve Yumurtaları topla düğmesine bas. Coins ve DNA kazanırsın." },
+      { title: "Ödülleri aç", body: "Günlük bonus, görevler ve başarılar için Ödüller düğmesine bas." },
+    ],
+  },
+};
+
 const LANGUAGE_COLUMN: Record<LanguageCode, number> = {
   ru: 0,
   en: 1,
@@ -1099,11 +1212,66 @@ export default function GameApp() {
   };
   const [language, setLanguage] = useState<LanguageCode>("ru");
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState<TutorialStep>(0);
+  const tutorialInitializedRef = useRef(false);
   const appRootRef = useRef<HTMLElement | null>(null);
   const originalUiTextRef = useRef(new WeakMap<Text, string>());
   const translatedUiTextRef = useRef(new WeakMap<Text, string>());
   const originalUiAttributeRef = useRef(new WeakMap<Element, Map<string, string>>());
   const translatedUiAttributeRef = useRef(new WeakMap<Element, Map<string, string>>());
+
+  const tutorialCopy = TUTORIAL_COPY[language];
+
+  const closeAllTutorialRelatedPopups = () => {
+    closeMenuPopups();
+    closeNestRewardPopups();
+    setNestRewardsMenuOpen(false);
+    setNestUpgradeOpen(false);
+    setDepositMethodPickerOpen(false);
+    setDepositConfirmationOpen(false);
+    setLanguageMenuOpen(false);
+  };
+
+  const startTutorial = () => {
+    closeAllTutorialRelatedPopups();
+    setTab("nest");
+    setTutorialStep(0);
+    setTutorialOpen(true);
+  };
+
+  const completeTutorial = (keepRewardsOpen = false) => {
+    window.localStorage.setItem(TUTORIAL_STORAGE_KEY, "1");
+    setTutorialOpen(false);
+    setTutorialStep(0);
+    if (!keepRewardsOpen) {
+      setNestRewardsMenuOpen(false);
+    }
+  };
+
+  const advanceTutorial = () => {
+    if (tutorialStep === 0) {
+      setTab("game");
+      setTutorialStep(1);
+      return;
+    }
+
+    if (tutorialStep === 1) {
+      setTab("nest");
+      setTutorialStep(2);
+      return;
+    }
+
+    if (tutorialStep === 2) {
+      setTab("nest");
+      setTutorialStep(3);
+      return;
+    }
+
+    setTab("nest");
+    setNestRewardsMenuOpen(true);
+    completeTutorial(true);
+  };
 
   useEffect(() => {
     const savedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
@@ -1111,6 +1279,24 @@ export default function GameApp() {
       setLanguage(savedLanguage);
     }
   }, []);
+
+  useEffect(() => {
+    if (tutorialInitializedRef.current || isLoading || loadError) return;
+
+    tutorialInitializedRef.current = true;
+    const completed = window.localStorage.getItem(TUTORIAL_STORAGE_KEY) === "1";
+    if (completed) return;
+
+    const maxLevel = state.board.reduce((highest, level) =>
+      typeof level === "number" ? Math.max(highest, level) : highest, 0);
+
+    // Auto-show only for a fresh farm. Existing progressed players are not interrupted.
+    if (maxLevel <= 1) {
+      setTutorialStep(0);
+      setTutorialOpen(true);
+      setTab("nest");
+    }
+  }, [isLoading, loadError, state.board]);
 
   useEffect(() => {
     window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
@@ -1624,6 +1810,10 @@ export default function GameApp() {
       setToast(
         `Собрано ${formatNumber(data.collectedEggs ?? 0, 0)} яиц: +${formatNumber(data.coinsReward ?? 0)} Coins и +${formatNumber(data.dnaReward ?? 0)} DNA ✓`,
       );
+
+      if (tutorialOpen && tutorialStep === 2) {
+        setTutorialStep(3);
+      }
     } catch (error) {
       console.error("Failed to collect eggs", error);
       setToast(error instanceof Error ? error.message : "Ошибка сбора яиц");
@@ -1939,6 +2129,11 @@ export default function GameApp() {
           0,
         )} Coins`,
       );
+
+      if (tutorialOpen && tutorialStep === 1) {
+        setTab("nest");
+        setTutorialStep(2);
+      }
     } catch (error) {
       console.error("Failed to merge dinosaur", error);
       setToast(error instanceof Error ? error.message : "Ошибка merge");
@@ -3971,7 +4166,7 @@ export default function GameApp() {
   const progress = Math.min(100, (state.eggs / Math.max(1, state.capacity)) * 100);
 
   return (
-    <main className="app-shell" ref={appRootRef}>
+    <main className={`app-shell${tutorialOpen ? " tutorial-running" : ""}`} ref={appRootRef}>
       <style>{`
         /* When a menu popup is open, lift the whole menu stacking context
            above the sticky HUD / language switcher / bottom navigation. */
@@ -4076,6 +4271,10 @@ export default function GameApp() {
               nestUpgradeOpen || dailyOpen || tasksOpen || achievementsOpen
                 ? " nest-popup-active"
                 : ""
+            }${
+              tutorialOpen && (tutorialStep === 2 || tutorialStep === 3)
+                ? " tutorial-screen-focus"
+                : ""
             }`}
           >
             <div className="hero-card">
@@ -4160,7 +4359,7 @@ export default function GameApp() {
                   </div>
                 </div>
               </div>
-              <button className="primary" onClick={collectEggs} disabled={isLoading || isCollecting || Boolean(loadError)}>{isCollecting ? "⏳ СОБИРАЕМ..." : "🥚 СОБРАТЬ ЯЙЦА"}</button>
+              <button className={`primary${tutorialOpen && tutorialStep === 2 ? " tutorial-target" : ""}`} onClick={collectEggs} disabled={isLoading || isCollecting || Boolean(loadError)}>{isCollecting ? "⏳ СОБИРАЕМ..." : "🥚 СОБРАТЬ ЯЙЦА"}</button>
               <button
                 className="coin-button"
                 onClick={openNestUpgrades}
@@ -4177,10 +4376,15 @@ export default function GameApp() {
               >
                 <button
                   type="button"
-                  className="coin-button nest-rewards-toggle"
-                  onClick={() =>
-                    setNestRewardsMenuOpen((open) => !open)
-                  }
+                  className={`coin-button nest-rewards-toggle${tutorialOpen && tutorialStep === 3 ? " tutorial-target" : ""}`}
+                  onClick={() => {
+                    if (tutorialOpen && tutorialStep === 3) {
+                      setNestRewardsMenuOpen(true);
+                      completeTutorial(true);
+                      return;
+                    }
+                    setNestRewardsMenuOpen((open) => !open);
+                  }}
                   disabled={isLoading || Boolean(loadError)}
                   aria-expanded={nestRewardsMenuOpen}
                 >
@@ -4592,7 +4796,7 @@ export default function GameApp() {
         )}
 
         {tab === "game" && (
-          <div className="screen game-board-screen">
+          <div className={`screen game-board-screen${tutorialOpen && tutorialStep === 1 ? " tutorial-screen-focus" : ""}`}>
             <div className="game-board-head">
               <div className="game-board-title">
                 <span className="eyebrow">MERGE FARM</span>
@@ -4625,7 +4829,7 @@ export default function GameApp() {
               Соединяй одинаковых динозавров и открывай новые уровни
             </p>
 
-            <div className="board game-art-board">
+            <div className={`board game-art-board${tutorialOpen && tutorialStep === 1 ? " tutorial-target tutorial-board-target" : ""}`}>
               {state.board.map((level, index) => (
                 <button
                   key={index}
@@ -6164,6 +6368,16 @@ export default function GameApp() {
                   </button>
 
                 </div>
+
+                <button
+                  type="button"
+                  className="menu-tutorial-replay"
+                  onClick={startTutorial}
+                  data-i18n-ignore="true"
+                >
+                  <span>🎓 {tutorialCopy.menuLabel}</span>
+                  <b>{tutorialCopy.replay}</b>
+                </button>
               </>
             ) : null}
 
@@ -8682,13 +8896,42 @@ export default function GameApp() {
         </div>
       ) : null}
 
+      {tutorialOpen ? (
+        <>
+          <div className="tutorial-dim" aria-hidden="true" />
+          <section
+            className={`tutorial-guide tutorial-step-${tutorialStep}`}
+            role="dialog"
+            aria-modal="false"
+            aria-label={tutorialCopy.steps[tutorialStep].title}
+            data-i18n-ignore="true"
+          >
+            <div className="tutorial-guide-topline">
+              <span>{tutorialCopy.stepLabel} {tutorialStep + 1}/4</span>
+              <button type="button" onClick={() => completeTutorial(false)}>
+                {tutorialCopy.skip}
+              </button>
+            </div>
+            <h2>{tutorialCopy.steps[tutorialStep].title}</h2>
+            <p>{tutorialCopy.steps[tutorialStep].body}</p>
+            <button type="button" className="tutorial-guide-cta" onClick={advanceTutorial}>
+              {tutorialStep === 0
+                ? tutorialCopy.start
+                : tutorialStep === 3
+                  ? tutorialCopy.openRewards
+                  : tutorialCopy.next}
+            </button>
+          </section>
+        </>
+      ) : null}
+
       {toast ? (
         <div className="toast" role="status">
           {toast}
         </div>
       ) : null}
 
-      <nav className="bottom-nav glass" aria-label="Главная навигация">
+      <nav className={`bottom-nav glass${tutorialOpen && tutorialStep === 0 ? " tutorial-nav-focus" : ""}`} aria-label="Главная навигация">
         {([
           ["nest", "/assets/game/ui/nav/nest.webp", "Гнездо"],
           ["game", "/assets/game/ui/nav/game.webp", "Игра"],
@@ -8698,8 +8941,13 @@ export default function GameApp() {
         ] as const).map(([key, iconSrc, label]) => (
           <button
             key={key}
-            className={tab === key ? "active" : ""}
-            onClick={() => setTab(key)}
+            className={`${tab === key ? "active" : ""}${tutorialOpen && tutorialStep === 0 && key === "game" ? " tutorial-target" : ""}`}
+            onClick={() => {
+              setTab(key);
+              if (tutorialOpen && tutorialStep === 0 && key === "game") {
+                setTutorialStep(1);
+              }
+            }}
           >
             <img
               src={iconSrc}
