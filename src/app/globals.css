@@ -7398,3 +7398,140 @@ button,
 .toast{
   display:none !important;
 }
+
+/* =========================================================
+   STAGE 11G — LIVING FARM / AMBIENT MICRO-ANIMATIONS
+   Visual-only. No economy, timers, API or gameplay changes.
+   Keeps the approved background / nest / dinosaur assets intact.
+   ========================================================= */
+
+/* Very soft moving sunlight over the existing prehistoric artwork. */
+.nest-screen .hero-card::after{
+  content:"" !important;
+  display:block !important;
+  position:absolute !important;
+  inset:0 !important;
+  z-index:1 !important;
+  pointer-events:none !important;
+  opacity:.12;
+  background:
+    radial-gradient(circle at 18% 20%,rgba(255,248,190,.30),transparent 17%),
+    radial-gradient(circle at 78% 34%,rgba(255,231,145,.18),transparent 21%),
+    linear-gradient(112deg,transparent 25%,rgba(255,255,220,.11) 46%,transparent 64%) !important;
+  mix-blend-mode:screen;
+  transform:translate3d(-1.5%,0,0) scale(1.025);
+  animation:dinoAmbientSunlight 10s ease-in-out infinite alternate;
+}
+
+/* Eggs feel alive without changing their position / fill scale. */
+.nest-art-eggs{
+  animation:dinoAmbientEggGlow 3.8s ease-in-out infinite;
+}
+
+/* Keep the existing collect animation stronger than the ambient glow. */
+.hero-card:has(.egg-flight-layer) .nest-art-eggs{
+  animation:approvedNestEggsReceive 1.15s ease both !important;
+}
+
+/* The real nest receives only a subtle shadow pulse. */
+.nest-art-base{
+  animation:dinoAmbientNestLight 5.6s ease-in-out infinite alternate;
+}
+
+/* Existing collecting state remains the stronger animation. */
+.nest-screen .hero-card:has(.primary:disabled) .nest-art-base,
+.hero-card:has(.egg-flight-layer) .nest-art-base{
+  animation:approvedNestReceiveEgg 1.15s ease both !important;
+}
+
+/* Main collect CTA gets a restrained "ready" glow, not a layout movement. */
+.nest-screen .hero-card > .primary:not(:disabled){
+  animation:dinoAmbientPrimaryGlow 3.1s ease-in-out infinite;
+}
+
+/* Secondary actions breathe more quietly. */
+.nest-screen .hero-card > .coin-button:not(:disabled),
+.nest-rewards-toggle.coin-button:not(:disabled){
+  animation:dinoAmbientSecondaryGlow 4.4s ease-in-out infinite;
+}
+
+/* Make active navigation feel gently alive without distracting the player. */
+.bottom-nav > button.active .bottom-nav-icon{
+  animation:dinoAmbientNavIdle 3.6s ease-in-out infinite;
+}
+
+@keyframes dinoAmbientSunlight{
+  0%{
+    opacity:.075;
+    transform:translate3d(-2.2%,-.4%,0) scale(1.02);
+  }
+  50%{opacity:.14}
+  100%{
+    opacity:.095;
+    transform:translate3d(2.2%,.6%,0) scale(1.035);
+  }
+}
+
+@keyframes dinoAmbientEggGlow{
+  0%,100%{
+    filter:
+      drop-shadow(0 7px 6px rgba(0,0,0,.18))
+      drop-shadow(0 0 0 rgba(255,234,111,0));
+  }
+  50%{
+    filter:
+      drop-shadow(0 7px 6px rgba(0,0,0,.18))
+      drop-shadow(0 0 10px rgba(255,228,105,.26));
+  }
+}
+
+@keyframes dinoAmbientNestLight{
+  0%{
+    filter:drop-shadow(0 14px 10px rgba(0,0,0,.25));
+  }
+  100%{
+    filter:
+      drop-shadow(0 14px 10px rgba(0,0,0,.25))
+      drop-shadow(0 0 7px rgba(255,220,117,.11));
+  }
+}
+
+@keyframes dinoAmbientPrimaryGlow{
+  0%,100%{filter:brightness(1) saturate(1)}
+  50%{filter:brightness(1.055) saturate(1.08) drop-shadow(0 0 6px rgba(191,255,61,.16))}
+}
+
+@keyframes dinoAmbientSecondaryGlow{
+  0%,100%{filter:saturate(.72) brightness(.92)}
+  50%{filter:saturate(.82) brightness(.98) drop-shadow(0 0 4px rgba(181,241,75,.10))}
+}
+
+@keyframes dinoAmbientNavIdle{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-1.5px) scale(1.025)}
+}
+
+/* Do not fight explicit press states. */
+.nest-screen .hero-card > .primary:not(:disabled):active,
+.nest-screen .hero-card > .coin-button:not(:disabled):active,
+.nest-rewards-toggle.coin-button:not(:disabled):active{
+  animation:none !important;
+}
+
+@media(max-width:430px){
+  .nest-screen .hero-card::after{
+    opacity:.10;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .nest-screen .hero-card::after,
+  .nest-art-eggs,
+  .nest-art-base,
+  .nest-screen .hero-card > .primary,
+  .nest-screen .hero-card > .coin-button,
+  .nest-rewards-toggle.coin-button,
+  .bottom-nav > button.active .bottom-nav-icon{
+    animation:none !important;
+  }
+}
