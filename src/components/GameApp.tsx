@@ -585,6 +585,34 @@ const INITIAL_STATE: SaveState = {
   lastTick: Date.now(),
 };
 
+function getDinoAsset(level: number) {
+  return level % 3 === 1
+    ? "/assets/game/dinosaurs/trex.webp"
+    : level % 3 === 2
+      ? "/assets/game/dinosaurs/triceratops.webp"
+      : "/assets/game/dinosaurs/stegosaurus.webp";
+}
+
+function getDinoEvolutionTier(level: number) {
+  if (level >= MAX_DINOSAUR_LEVEL) return 5;
+  if (level >= 13) return 4;
+  if (level >= 9) return 3;
+  if (level >= 5) return 2;
+  return 1;
+}
+
+function getDinoEvolutionMark(level: number) {
+  const tier = getDinoEvolutionTier(level);
+  return tier === 5 ? "★" : "◆".repeat(tier);
+}
+
+function getDinoEvolutionClass(level: number) {
+  const tier = getDinoEvolutionTier(level);
+  return `dino-evolution-tier-${tier}${
+    level >= MAX_DINOSAUR_LEVEL ? " dino-evolution-max" : ""
+  }`;
+}
+
 type TelegramWebApp = {
   initData?: string;
   ready?: () => void;
@@ -4887,6 +4915,8 @@ export default function GameApp() {
                   key={index}
                   className={`slot ${selected === index ? "selected" : ""}${
                     mergeFx?.slot === index ? " merge-fx-slot" : ""
+                  }${
+                    level ? ` dino-evolution-slot ${getDinoEvolutionClass(level)}` : ""
                   }`}
                   onClick={() => chooseSlot(index)}
                   aria-label={level ? `Динозавр уровня ${level}` : "Пустая клетка"}
@@ -4894,19 +4924,19 @@ export default function GameApp() {
                 >
                   {level ? (
                     <>
-                      <span className="dino">
+                      <span
+                        className={`dino dino-evolution ${getDinoEvolutionClass(level)}`}
+                      >
+                        <span className="dino-evolution-aura" aria-hidden="true" />
                         <img
-                          src={
-                            level % 3 === 1
-                              ? "/assets/game/dinosaurs/trex.webp"
-                              : level % 3 === 2
-                                ? "/assets/game/dinosaurs/triceratops.webp"
-                                : "/assets/game/dinosaurs/stegosaurus.webp"
-                          }
+                          src={getDinoAsset(level)}
                           alt=""
                           className="board-dino-art"
                           draggable={false}
                         />
+                        <span className="dino-evolution-mark" aria-hidden="true">
+                          {getDinoEvolutionMark(level)}
+                        </span>
                       </span>
                       <b>Lv.{level}</b>
                     </>
@@ -5092,20 +5122,20 @@ export default function GameApp() {
                           }
                         >
                           <span className="shop-dino-card-main">
-                            <span className="shop-dino-portrait">
+                            <span
+                              className={`shop-dino-portrait dino-evolution ${getDinoEvolutionClass(item.level)}`}
+                            >
+                              <span className="dino-evolution-aura" aria-hidden="true" />
                               <img
-                                src={
-                                  item.level % 3 === 1
-                                    ? "/assets/game/dinosaurs/trex.webp"
-                                    : item.level % 3 === 2
-                                      ? "/assets/game/dinosaurs/triceratops.webp"
-                                      : "/assets/game/dinosaurs/stegosaurus.webp"
-                                }
+                                src={getDinoAsset(item.level)}
                                 alt=""
                                 className="shop-dino-card-art"
                                 draggable={false}
                                 aria-hidden="true"
                               />
+                              <span className="dino-evolution-mark" aria-hidden="true">
+                                {getDinoEvolutionMark(item.level)}
+                              </span>
                               {!item.unlocked ? (
                                 <span className="shop-lock" aria-hidden="true">◆</span>
                               ) : null}
@@ -7436,18 +7466,17 @@ export default function GameApp() {
                             count > 0 ? (
                               <span
                                 key={index}
-                                style={{
-                                  padding: "7px 9px",
-                                  borderRadius: 999,
-                                  background:
-                                    "rgba(167,243,72,.10)",
-                                  border:
-                                    "1px solid rgba(167,243,72,.20)",
-                                  fontSize: 12,
-                                  fontWeight: 800,
-                                }}
+                                className={`profit-dino-chip ${getDinoEvolutionClass(index + 1)}`}
                               >
-                                🦖 Lv.{index + 1} × {count}
+                                <span className="profit-dino-chip-art-wrap" aria-hidden="true">
+                                  <img
+                                    src={getDinoAsset(index + 1)}
+                                    alt=""
+                                    className="profit-dino-chip-art"
+                                    draggable={false}
+                                  />
+                                </span>
+                                <span>Lv.{index + 1} × {count}</span>
                               </span>
                             ) : null,
                         )}
@@ -7519,20 +7548,20 @@ export default function GameApp() {
                         }`}
                       >
                         <div className="levels-art-card-head">
-                          <div className="levels-art-dino-wrap">
+                          <div
+                            className={`levels-art-dino-wrap dino-evolution ${getDinoEvolutionClass(dino.level)}`}
+                          >
+                            <span className="dino-evolution-aura" aria-hidden="true" />
                             <img
-                              src={
-                                dino.level % 3 === 1
-                                  ? "/assets/game/dinosaurs/trex.webp"
-                                  : dino.level % 3 === 2
-                                    ? "/assets/game/dinosaurs/triceratops.webp"
-                                    : "/assets/game/dinosaurs/stegosaurus.webp"
-                              }
+                              src={getDinoAsset(dino.level)}
                               alt=""
                               className="levels-art-dino"
                               draggable={false}
                               aria-hidden="true"
                             />
+                            <span className="dino-evolution-mark" aria-hidden="true">
+                              {getDinoEvolutionMark(dino.level)}
+                            </span>
                             <b>Lv.{dino.level}</b>
                           </div>
 
