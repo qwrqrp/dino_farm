@@ -7390,3 +7390,11 @@ button,
     transform:none;
   }
 }
+
+/* =========================================================
+   STAGE 11F.1 — HIDE GLOBAL TOAST NOTIFICATIONS
+   Visual-only. Keeps modal dialogs / gameplay logic unchanged.
+   ========================================================= */
+.toast{
+  display:none !important;
+}
