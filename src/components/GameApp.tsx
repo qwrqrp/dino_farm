@@ -1287,8 +1287,11 @@ export default function GameApp() {
     const completed = window.localStorage.getItem(TUTORIAL_STORAGE_KEY) === "1";
     if (completed) return;
 
-    const maxLevel = state.board.reduce((highest, level) =>
-      typeof level === "number" ? Math.max(highest, level) : highest, 0);
+    const maxLevel = state.board.reduce<number>(
+      (highest, level) =>
+        typeof level === "number" ? Math.max(highest, level) : highest,
+      0,
+    );
 
     // Auto-show only for a fresh farm. Existing progressed players are not interrupted.
     if (maxLevel <= 1) {
