@@ -590,6 +590,11 @@ type TelegramWebApp = {
   ready?: () => void;
   expand?: () => void;
   openTelegramLink?: (url: string) => void;
+  HapticFeedback?: {
+    impactOccurred?: (style: "light" | "medium" | "heavy" | "rigid" | "soft") => void;
+    notificationOccurred?: (type: "error" | "success" | "warning") => void;
+    selectionChanged?: () => void;
+  };
 };
 
 
@@ -1124,6 +1129,12 @@ export default function GameApp() {
     item?: ShopItem;
   } | null>(null);
   const [isMerging, setIsMerging] = useState(false);
+  const [mergeFx, setMergeFx] = useState<{
+    slot: number;
+    level: number;
+    key: number;
+  } | null>(null);
+  const mergeFxTimerRef = useRef<number | null>(null);
   const [isMoving, setIsMoving] = useState(false);
   const [pendingMerge, setPendingMerge] = useState<{
     fromSlot: number;
@@ -2065,6 +2076,34 @@ export default function GameApp() {
     setSelected(null);
   };
 
+  const triggerMergeCelebration = (slot: number, level: number) => {
+    if (mergeFxTimerRef.current !== null) {
+      window.clearTimeout(mergeFxTimerRef.current);
+    }
+
+    setMergeFx({
+      slot,
+      level,
+      key: Date.now(),
+    });
+
+    const webApp = getTelegramWebApp();
+    webApp?.HapticFeedback?.notificationOccurred?.("success");
+
+    mergeFxTimerRef.current = window.setTimeout(() => {
+      setMergeFx(null);
+      mergeFxTimerRef.current = null;
+    }, 1450);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (mergeFxTimerRef.current !== null) {
+        window.clearTimeout(mergeFxTimerRef.current);
+      }
+    };
+  }, []);
+
   const confirmMerge = async () => {
     if (!pendingMerge || isMerging) return;
 
@@ -2126,16 +2165,26 @@ export default function GameApp() {
             : previous.board,
       }));
 
+      const mergedLevel = data.merged?.level ?? resultLevel;
+      const mergedSlot =
+        typeof data.merged?.boardSlot === "number"
+          ? data.merged.boardSlot
+          : toSlot;
+
+      triggerMergeCelebration(mergedSlot, mergedLevel);
+
       setToast(
-        `MERGE ✓ Lv.${data.merged?.level ?? resultLevel} · комиссия ${formatNumber(
+        `MERGE ✓ Lv.${mergedLevel} · комиссия ${formatNumber(
           data.mergeFee ?? mergeFee,
           0,
         )} Coins`,
       );
 
       if (tutorialOpen && tutorialStep === 1) {
-        setTab("nest");
-        setTutorialStep(2);
+        window.setTimeout(() => {
+          setTab("nest");
+          setTutorialStep(2);
+        }, 1150);
       }
     } catch (error) {
       console.error("Failed to merge dinosaur", error);
@@ -4836,7 +4885,9 @@ export default function GameApp() {
               {state.board.map((level, index) => (
                 <button
                   key={index}
-                  className={`slot ${selected === index ? "selected" : ""}`}
+                  className={`slot ${selected === index ? "selected" : ""}${
+                    mergeFx?.slot === index ? " merge-fx-slot" : ""
+                  }`}
                   onClick={() => chooseSlot(index)}
                   aria-label={level ? `Динозавр уровня ${level}` : "Пустая клетка"}
                   disabled={isLoading || isMerging || Boolean(loadError)}
@@ -4862,9 +4913,40 @@ export default function GameApp() {
                   ) : (
                     <span className="plus">+</span>
                   )}
+
+                  {mergeFx?.slot === index ? (
+                    <span
+                      key={mergeFx.key}
+                      className="merge-celebration"
+                      aria-hidden="true"
+                    >
+                      <span className="merge-celebration-flash" />
+                      <span className="merge-celebration-ring" />
+                      <span className="merge-particle merge-particle-1" />
+                      <span className="merge-particle merge-particle-2" />
+                      <span className="merge-particle merge-particle-3" />
+                      <span className="merge-particle merge-particle-4" />
+                      <span className="merge-particle merge-particle-5" />
+                      <span className="merge-particle merge-particle-6" />
+                      <span className="merge-particle merge-particle-7" />
+                      <span className="merge-particle merge-particle-8" />
+                    </span>
+                  ) : null}
                 </button>
               ))}
             </div>
+
+            {mergeFx ? (
+              <div
+                key={`merge-banner-${mergeFx.key}`}
+                className="merge-level-up-banner"
+                role="status"
+                aria-live="polite"
+              >
+                <small>MERGE!</small>
+                <strong>Lv.{mergeFx.level}</strong>
+              </div>
+            ) : null}
 
             <div className="card game-production-card">
               <strong>Общее производство</strong>
