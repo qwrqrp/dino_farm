@@ -6808,3 +6808,409 @@
     animation:none !important;
   }
 }
+
+/* =========================================================
+   STAGE 11D — TELEGRAM UX POLISH
+   Safe-area / stable viewport / popup / touch polish only.
+   No gameplay, economy or API changes.
+   ========================================================= */
+
+:root{
+  --dino-safe-top:max(
+    var(--tg-safe-area-inset-top,0px),
+    var(--tg-content-safe-area-inset-top,0px),
+    env(safe-area-inset-top,0px)
+  );
+  --dino-safe-bottom:max(
+    var(--tg-safe-area-inset-bottom,0px),
+    var(--tg-content-safe-area-inset-bottom,0px),
+    env(safe-area-inset-bottom,0px)
+  );
+  --dino-safe-left:max(
+    var(--tg-safe-area-inset-left,0px),
+    var(--tg-content-safe-area-inset-left,0px),
+    env(safe-area-inset-left,0px)
+  );
+  --dino-safe-right:max(
+    var(--tg-safe-area-inset-right,0px),
+    var(--tg-content-safe-area-inset-right,0px),
+    env(safe-area-inset-right,0px)
+  );
+  --dino-stable-height:var(--tg-viewport-stable-height,100dvh);
+}
+
+html,
+body{
+  width:100%;
+  min-height:100%;
+  overflow-x:hidden;
+  overscroll-behavior-x:none;
+  -webkit-text-size-adjust:100%;
+}
+
+body{
+  min-height:var(--dino-stable-height);
+  overscroll-behavior-y:none;
+}
+
+button,
+[role="button"]{
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.app-shell{
+  min-height:var(--dino-stable-height) !important;
+  padding-left:max(14px,var(--dino-safe-left)) !important;
+  padding-right:max(14px,var(--dino-safe-right)) !important;
+  padding-bottom:calc(92px + var(--dino-safe-bottom)) !important;
+}
+
+.hud.glass{
+  top:calc(4px + var(--dino-safe-top)) !important;
+}
+
+.bottom-nav.glass,
+.bottom-nav{
+  bottom:calc(7px + var(--dino-safe-bottom)) !important;
+  width:min(
+    calc(100% - 24px - var(--dino-safe-left) - var(--dino-safe-right)),
+    456px
+  ) !important;
+}
+
+.toast{
+  bottom:calc(88px + var(--dino-safe-bottom)) !important;
+  max-width:min(
+    calc(100% - 28px - var(--dino-safe-left) - var(--dino-safe-right)),
+    440px
+  );
+}
+
+/* Keep all full-screen overlays inside Telegram's stable viewport. */
+.menu-popup-panel,
+.nest-upgrade-popup,
+.nest-rewards-hub-modal,
+.deposit-method-picker-panel{
+  max-height:calc(var(--dino-stable-height) - var(--dino-safe-top) - var(--dino-safe-bottom) - 20px) !important;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+  -webkit-overflow-scrolling:touch;
+}
+
+.nest-rewards-hub-backdrop,
+.deposit-method-picker-backdrop{
+  min-height:var(--dino-stable-height) !important;
+  padding-top:calc(10px + var(--dino-safe-top)) !important;
+  padding-bottom:calc(10px + var(--dino-safe-bottom)) !important;
+  padding-left:max(10px,var(--dino-safe-left)) !important;
+  padding-right:max(10px,var(--dino-safe-right)) !important;
+}
+
+/* iOS WebViews should never zoom the whole game when a form field is focused. */
+@media(max-width:430px){
+  input,
+  select,
+  textarea{
+    font-size:16px !important;
+  }
+
+  .app-shell{
+    padding-left:max(8px,var(--dino-safe-left)) !important;
+    padding-right:max(8px,var(--dino-safe-right)) !important;
+    padding-bottom:calc(84px + var(--dino-safe-bottom)) !important;
+  }
+
+  .content{
+    min-width:0;
+  }
+
+  .screen,
+  .card,
+  .form-card,
+  .stat-card{
+    min-width:0;
+  }
+
+  .menu-popup-panel,
+  .nest-upgrade-popup,
+  .nest-rewards-hub-modal,
+  .deposit-method-picker-panel{
+    width:min(
+      calc(100vw - 16px - var(--dino-safe-left) - var(--dino-safe-right)),
+      468px
+    ) !important;
+    max-height:calc(var(--dino-stable-height) - var(--dino-safe-top) - var(--dino-safe-bottom) - 14px) !important;
+  }
+
+  /* Long translations should wrap instead of stretching cards off-screen. */
+  .menu-art-grid > button span,
+  .nest-rewards-options-modal > button span,
+  .menu-farm-hub-actions > button span,
+  .coin-button,
+  .primary{
+    overflow-wrap:anywhere;
+    text-wrap:balance;
+  }
+}
+
+/* Extra-small Telegram / compact Android devices. */
+@media(max-width:360px){
+  .app-shell{
+    padding-left:max(6px,var(--dino-safe-left)) !important;
+    padding-right:max(6px,var(--dino-safe-right)) !important;
+  }
+
+  .bottom-nav.glass,
+  .bottom-nav{
+    width:calc(100% - 12px - var(--dino-safe-left) - var(--dino-safe-right)) !important;
+  }
+}
+
+/* Short screens: preserve access to close buttons and primary actions. */
+@media(max-height:700px){
+  .menu-popup-panel,
+  .nest-upgrade-popup,
+  .nest-rewards-hub-modal,
+  .deposit-method-picker-panel{
+    max-height:calc(var(--dino-stable-height) - var(--dino-safe-top) - var(--dino-safe-bottom) - 10px) !important;
+  }
+}
+
+/* =========================================================
+   STAGE 11E — NEXT GOAL / PROGRESS GUIDANCE
+   UI-only guidance. Uses existing game state and approved WebP assets.
+   No economy, API, timers or callbacks changed.
+   ========================================================= */
+
+.next-goal-card{
+  position:relative;
+  z-index:4;
+  width:100%;
+  min-height:62px;
+  margin:0;
+  padding:8px 13px 8px 10px;
+  border:0;
+  border-radius:18px;
+  display:grid;
+  grid-template-columns:44px minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  overflow:hidden;
+  background:
+    linear-gradient(90deg,rgba(57,27,12,.08),rgba(96,54,23,.12)),
+    url("/assets/game/ui/panel.webp") center / 108% 190% no-repeat;
+  color:#fff1bd;
+  text-align:left;
+  filter:drop-shadow(0 5px 5px rgba(0,0,0,.20));
+  transition:transform .16s ease,filter .16s ease;
+}
+
+.next-goal-card::after{
+  content:"";
+  position:absolute;
+  inset:4px 7px;
+  border:1px solid rgba(235,255,151,.22);
+  border-radius:15px;
+  pointer-events:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.next-goal-card:active{
+  transform:translateY(2px) scale(.992);
+  filter:brightness(.94) drop-shadow(0 3px 4px rgba(0,0,0,.18));
+}
+
+.next-goal-art{
+  position:relative;
+  z-index:2;
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  background:radial-gradient(circle at 50% 38%,rgba(202,255,105,.30),rgba(55,104,32,.18) 64%,rgba(35,19,9,.16));
+  border:1px solid rgba(235,255,151,.22);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12);
+}
+
+.next-goal-art img{
+  width:37px;
+  height:37px;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  filter:drop-shadow(0 3px 3px rgba(0,0,0,.22));
+}
+
+.next-goal-copy{
+  position:relative;
+  z-index:2;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+}
+
+.next-goal-copy small{
+  color:#cfe993;
+  font-size:8px;
+  line-height:1;
+  font-weight:1000;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+  text-shadow:0 1px 2px rgba(0,0,0,.35);
+}
+
+.next-goal-copy strong{
+  min-width:0;
+  color:#fff2c3;
+  font-size:13px;
+  line-height:1.15;
+  font-weight:1000;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  text-shadow:0 2px 0 rgba(67,31,14,.86),0 2px 3px rgba(0,0,0,.25);
+}
+
+.next-goal-copy > span{
+  color:#e5d4a7;
+  font-size:9px;
+  line-height:1.2;
+  white-space:normal;
+}
+
+.next-goal-action{
+  position:relative;
+  z-index:2;
+  max-width:105px;
+  min-width:36px;
+  min-height:30px;
+  padding:6px 10px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(220,255,126,.44);
+  border-radius:999px;
+  background:
+    radial-gradient(circle at 50% 0,rgba(246,255,174,.34),transparent 50%),
+    linear-gradient(180deg,#77aa2a,#426e1c);
+  color:#f5ffd5;
+  font-size:8px;
+  line-height:1.05;
+  font-weight:1000;
+  text-align:center;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 3px 0 rgba(36,46,13,.46);
+  text-shadow:0 1px 2px rgba(0,0,0,.36);
+}
+
+.next-goal-collect .next-goal-art{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 0 14px rgba(216,255,88,.12);
+}
+
+.next-goal-merge .next-goal-art{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 0 14px rgba(119,211,255,.14);
+}
+
+/* Nest stays one-screen: guidance replaces no art and remains a short strip. */
+.nest-screen > .next-goal-nest{
+  min-height:52px;
+  margin-top:-2px;
+  padding-top:6px;
+  padding-bottom:6px;
+}
+
+.nest-screen > .next-goal-nest .next-goal-art{
+  width:38px;
+  height:38px;
+}
+
+.nest-screen > .next-goal-nest .next-goal-art img{
+  width:34px;
+  height:34px;
+}
+
+.nest-screen > .next-goal-nest .next-goal-copy > span{
+  display:none;
+}
+
+.nest-screen > .next-goal-nest + .stats-grid .stat-card{
+  min-height:56px !important;
+}
+
+.game-board-screen > .next-goal-game{
+  margin:-2px 0 1px;
+}
+
+@media(max-width:430px){
+  .next-goal-card{
+    min-height:56px;
+    padding-left:8px;
+    padding-right:9px;
+    grid-template-columns:40px minmax(0,1fr) auto;
+    gap:8px;
+    border-radius:16px;
+  }
+
+  .next-goal-art{
+    width:38px;
+    height:38px;
+    border-radius:12px;
+  }
+
+  .next-goal-art img{
+    width:34px;
+    height:34px;
+  }
+
+  .next-goal-copy strong{
+    font-size:12px;
+  }
+
+  .next-goal-copy > span{
+    font-size:8px;
+  }
+
+  .next-goal-action{
+    max-width:82px;
+    min-height:28px;
+    padding:5px 8px;
+    font-size:7px;
+  }
+
+  .nest-screen > .next-goal-nest{
+    min-height:48px;
+  }
+
+  .nest-screen > .next-goal-nest + .stats-grid .stat-card{
+    min-height:52px !important;
+  }
+}
+
+@media(max-width:430px) and (max-height:780px){
+  .nest-screen > .next-goal-nest{
+    min-height:44px;
+    padding-top:4px;
+    padding-bottom:4px;
+  }
+
+  .nest-screen > .next-goal-nest .next-goal-art{
+    width:34px;
+    height:34px;
+  }
+
+  .nest-screen > .next-goal-nest .next-goal-art img{
+    width:30px;
+    height:30px;
+  }
+
+  .nest-screen > .next-goal-nest + .stats-grid .stat-card{
+    min-height:48px !important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .next-goal-card{
+    transition:none !important;
+  }
+}
