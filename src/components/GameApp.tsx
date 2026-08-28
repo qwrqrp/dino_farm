@@ -763,6 +763,42 @@ const TUTORIAL_COPY: Record<LanguageCode, TutorialCopy> = {
   },
 };
 
+type NextGoalKind = "merge" | "collect" | "buy" | "progress";
+
+type NextGoalCopy = {
+  label: string;
+  mergeTitle: string;
+  mergeBody: string;
+  collectTitle: string;
+  collectBody: string;
+  buyTitle: string;
+  buyBody: string;
+  progressTitle: string;
+  progressBody: string;
+  gameAction: string;
+  nestAction: string;
+};
+
+const NEXT_GOAL_COPY: Record<LanguageCode, NextGoalCopy> = {
+  ru: { label: "Следующая цель", mergeTitle: "Сделай merge Lv.{level} → Lv.{next}", mergeBody: "На поле уже есть два одинаковых динозавра.", collectTitle: "Собери яйца", collectBody: "В гнезде накопился хороший запас яиц.", buyTitle: "Подготовь следующий merge", buyBody: "Есть свободная клетка — можно купить ещё Lv.1.", progressTitle: "Развивай ферму", progressBody: "Копи яйца и готовь следующую пару динозавров.", gameAction: "В ИГРУ", nestAction: "К ГНЕЗДУ" },
+  en: { label: "Next goal", mergeTitle: "Merge Lv.{level} → Lv.{next}", mergeBody: "You already have two matching dinosaurs on the board.", collectTitle: "Collect eggs", collectBody: "A good amount of eggs is ready in the nest.", buyTitle: "Prepare the next merge", buyBody: "There is a free slot — you can buy another Lv.1.", progressTitle: "Grow your farm", progressBody: "Keep producing eggs and prepare the next dinosaur pair.", gameAction: "GO TO GAME", nestAction: "GO TO NEST" },
+  uk: { label: "Наступна ціль", mergeTitle: "Зроби merge Lv.{level} → Lv.{next}", mergeBody: "На полі вже є два однакові динозаври.", collectTitle: "Збери яйця", collectBody: "У гнізді вже накопичився хороший запас яєць.", buyTitle: "Підготуй наступний merge", buyBody: "Є вільна клітинка — можна купити ще Lv.1.", progressTitle: "Розвивай ферму", progressBody: "Накопичуй яйця та готуй наступну пару динозаврів.", gameAction: "ДО ГРИ", nestAction: "ДО ГНІЗДА" },
+  it: { label: "Prossimo obiettivo", mergeTitle: "Fai merge Lv.{level} → Lv.{next}", mergeBody: "Hai già due dinosauri uguali sulla griglia.", collectTitle: "Raccogli le uova", collectBody: "Nel nido si è accumulata una buona quantità di uova.", buyTitle: "Prepara il prossimo merge", buyBody: "C'è uno spazio libero: puoi comprare un altro Lv.1.", progressTitle: "Fai crescere la fattoria", progressBody: "Accumula uova e prepara la prossima coppia di dinosauri.", gameAction: "AL GIOCO", nestAction: "AL NIDO" },
+  fr: { label: "Prochain objectif", mergeTitle: "Fusionne Lv.{level} → Lv.{next}", mergeBody: "Tu as déjà deux dinosaures identiques sur le plateau.", collectTitle: "Ramasse les œufs", collectBody: "Une bonne quantité d'œufs est prête dans le nid.", buyTitle: "Prépare la prochaine fusion", buyBody: "Une case est libre : tu peux acheter un autre Lv.1.", progressTitle: "Développe ta ferme", progressBody: "Accumule des œufs et prépare la prochaine paire de dinosaures.", gameAction: "AU JEU", nestAction: "AU NID" },
+  es: { label: "Siguiente objetivo", mergeTitle: "Haz merge Lv.{level} → Lv.{next}", mergeBody: "Ya tienes dos dinosaurios iguales en el tablero.", collectTitle: "Recoge huevos", collectBody: "Ya hay una buena cantidad de huevos en el nido.", buyTitle: "Prepara el siguiente merge", buyBody: "Hay una casilla libre: puedes comprar otro Lv.1.", progressTitle: "Haz crecer la granja", progressBody: "Acumula huevos y prepara la siguiente pareja de dinosaurios.", gameAction: "IR AL JUEGO", nestAction: "IR AL NIDO" },
+  hi: { label: "अगला लक्ष्य", mergeTitle: "Lv.{level} → Lv.{next} merge करें", mergeBody: "बोर्ड पर पहले से दो समान डायनासोर हैं।", collectTitle: "अंडे इकट्ठा करें", collectBody: "घोंसले में अच्छी मात्रा में अंडे तैयार हैं।", buyTitle: "अगला merge तैयार करें", buyBody: "एक खाली स्लॉट है — आप एक और Lv.1 खरीद सकते हैं।", progressTitle: "फार्म बढ़ाएँ", progressBody: "अंडे जमा करें और अगली डायनासोर जोड़ी तैयार करें।", gameAction: "गेम पर जाएँ", nestAction: "घोंसले पर जाएँ" },
+  pl: { label: "Następny cel", mergeTitle: "Połącz Lv.{level} → Lv.{next}", mergeBody: "Na planszy są już dwa takie same dinozaury.", collectTitle: "Zbierz jajka", collectBody: "W gnieździe czeka już spory zapas jajek.", buyTitle: "Przygotuj następne połączenie", buyBody: "Jest wolne pole — możesz kupić kolejnego Lv.1.", progressTitle: "Rozwijaj farmę", progressBody: "Zbieraj jajka i przygotuj następną parę dinozaurów.", gameAction: "DO GRY", nestAction: "DO GNIAZDA" },
+  de: { label: "Nächstes Ziel", mergeTitle: "Merge Lv.{level} → Lv.{next}", mergeBody: "Auf dem Feld stehen bereits zwei gleiche Dinosaurier.", collectTitle: "Eier sammeln", collectBody: "Im Nest hat sich bereits ein guter Vorrat angesammelt.", buyTitle: "Nächsten Merge vorbereiten", buyBody: "Ein Feld ist frei — du kannst einen weiteren Lv.1 kaufen.", progressTitle: "Farm ausbauen", progressBody: "Sammle Eier und bereite das nächste Dino-Paar vor.", gameAction: "ZUM SPIEL", nestAction: "ZUM NEST" },
+  tr: { label: "Sonraki hedef", mergeTitle: "Lv.{level} → Lv.{next} merge yap", mergeBody: "Tahtada zaten iki aynı dinozor var.", collectTitle: "Yumurtaları topla", collectBody: "Yuvada iyi miktarda yumurta birikti.", buyTitle: "Sonraki merge'i hazırla", buyBody: "Boş bir alan var — bir Lv.1 daha satın alabilirsin.", progressTitle: "Çiftliği geliştir", progressBody: "Yumurta biriktir ve sonraki dinozor çiftini hazırla.", gameAction: "OYUNA GİT", nestAction: "YUVAYA GİT" },
+};
+
+function fillNextGoalTemplate(value: string, level?: number) {
+  if (!level) return value;
+  return value
+    .replace("{level}", String(level))
+    .replace("{next}", String(Math.min(level + 1, MAX_DINOSAUR_LEVEL)));
+}
+
 const LANGUAGE_COLUMN: Record<LanguageCode, number> = {
   ru: 0,
   en: 1,
@@ -1624,6 +1660,69 @@ export default function GameApp() {
       paybackDays,
     };
   }, [state.board]);
+
+  const nextGoal = useMemo(() => {
+    const copy = NEXT_GOAL_COPY[language];
+    const counts = new Map<number, number>();
+
+    for (const level of state.board) {
+      if (typeof level !== "number" || level >= MAX_DINOSAUR_LEVEL) continue;
+      counts.set(level, (counts.get(level) ?? 0) + 1);
+    }
+
+    const mergeLevel = Array.from(counts.entries())
+      .filter(([, count]) => count >= 2)
+      .map(([level]) => level)
+      .sort((a, b) => b - a)[0];
+
+    const nestFill = state.capacity > 0 ? state.eggs / state.capacity : 0;
+    const collectThreshold = Math.max(25, eggsPerHour * 0.25);
+    const hasFreeSlot = state.board.some((level) => level === null);
+
+    if (state.eggs > 0 && (nestFill >= 0.8 || state.eggs >= collectThreshold)) {
+      return {
+        kind: "collect" as NextGoalKind,
+        title: copy.collectTitle,
+        body: copy.collectBody,
+        action: copy.nestAction,
+        targetTab: "nest" as Tab,
+        asset: "/assets/game/nest/egg-rare.webp",
+      };
+    }
+
+    if (mergeLevel) {
+      return {
+        kind: "merge" as NextGoalKind,
+        title: fillNextGoalTemplate(copy.mergeTitle, mergeLevel),
+        body: copy.mergeBody,
+        action: copy.gameAction,
+        targetTab: "game" as Tab,
+        asset: getDinoAsset(mergeLevel),
+      };
+    }
+
+    if (hasFreeSlot && state.coins >= 100) {
+      return {
+        kind: "buy" as NextGoalKind,
+        title: copy.buyTitle,
+        body: copy.buyBody,
+        action: copy.gameAction,
+        targetTab: "game" as Tab,
+        asset: "/assets/game/dinosaurs/trex.webp",
+      };
+    }
+
+    return {
+      kind: "progress" as NextGoalKind,
+      title: copy.progressTitle,
+      body: copy.progressBody,
+      action: copy.nestAction,
+      targetTab: "nest" as Tab,
+      asset: "/assets/game/nest/egg-cluster.webp",
+    };
+  }, [language, state.board, state.capacity, state.coins, state.eggs, eggsPerHour]);
+
+  const nextGoalLabel = NEXT_GOAL_COPY[language].label;
 
   useEffect(() => {
     let cancelled = false;
@@ -4376,6 +4475,52 @@ export default function GameApp() {
 
   const progress = Math.min(100, (state.eggs / Math.max(1, state.capacity)) * 100);
 
+  const activateNextGoal = () => {
+    if (nextGoal.targetTab !== tab) {
+      setTab(nextGoal.targetTab);
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+      return;
+    }
+
+    const selector =
+      nextGoal.kind === "merge"
+        ? ".game-art-board"
+        : nextGoal.kind === "buy"
+          ? ".game-buy-dino"
+          : nextGoal.kind === "collect"
+            ? ".nest-screen .hero-card > .primary"
+            : ".nest-info-art";
+
+    document.querySelector(selector)?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  };
+
+  const renderNextGoal = (location: "nest" | "game") => (
+    <button
+      type="button"
+      className={`next-goal-card next-goal-${nextGoal.kind} next-goal-${location}`}
+      onClick={activateNextGoal}
+      data-i18n-ignore="true"
+      aria-label={`${nextGoalLabel}: ${nextGoal.title}`}
+    >
+      <span className="next-goal-art" aria-hidden="true">
+        <img src={nextGoal.asset} alt="" draggable={false} />
+      </span>
+      <span className="next-goal-copy">
+        <small>{nextGoalLabel}</small>
+        <strong>{nextGoal.title}</strong>
+        <span>{nextGoal.body}</span>
+      </span>
+      <b className="next-goal-action">
+        {nextGoal.targetTab === tab ? "→" : nextGoal.action}
+      </b>
+    </button>
+  );
+
   return (
     <main className={`app-shell${tutorialOpen ? " tutorial-running" : ""}`} ref={appRootRef}>
       <style>{`
@@ -4685,6 +4830,8 @@ export default function GameApp() {
                 </div>
               </div>
             ) : null}
+
+            {renderNextGoal("nest")}
 
             <div className="stats-grid">
               <article className="stat-card"><span>За день</span><strong>{formatNumber(eggsPerHour * 24, 0)}</strong><small>яиц</small></article>
@@ -5039,6 +5186,8 @@ export default function GameApp() {
             <p className="hint game-board-hint">
               Соединяй одинаковых динозавров и открывай новые уровни
             </p>
+
+            {renderNextGoal("game")}
 
             <div className={`board game-art-board${tutorialOpen && tutorialStep === 1 ? " tutorial-target tutorial-board-target" : ""}`}>
               {state.board.map((level, index) => (
