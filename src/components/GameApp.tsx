@@ -652,7 +652,7 @@ const LANGUAGE_OPTIONS: ReadonlyArray<{ code: LanguageCode; short: string; label
 
 const TUTORIAL_STORAGE_KEY = "dino-farm-tutorial-v1-complete";
 
-type TutorialStep = 0 | 1 | 2 | 3;
+type TutorialStep = 0 | 1 | 2 | 3 | 4 | 5;
 
 type TutorialCopy = {
   menuLabel: string;
@@ -661,8 +661,12 @@ type TutorialCopy = {
   next: string;
   start: string;
   openRewards: string;
+  showWithdrawal: string;
+  finish: string;
   stepLabel: string;
   steps: readonly [
+    { title: string; body: string },
+    { title: string; body: string },
     { title: string; body: string },
     { title: string; body: string },
     { title: string; body: string },
@@ -672,93 +676,113 @@ type TutorialCopy = {
 
 const TUTORIAL_COPY: Record<LanguageCode, TutorialCopy> = {
   ru: {
-    menuLabel: "Обучение", replay: "ПОВТОРИТЬ", skip: "Пропустить", next: "ДАЛЬШЕ", start: "В ИГРУ", openRewards: "ОТКРЫТЬ НАГРАДЫ", stepLabel: "Шаг",
+    menuLabel: "Обучение", replay: "ПОВТОРИТЬ", skip: "Пропустить", next: "ДАЛЬШЕ", start: "В ИГРУ", openRewards: "ОТКРЫТЬ НАГРАДЫ", showWithdrawal: "ПОКАЗАТЬ ВЫВОД DNA", finish: "ЗАВЕРШИТЬ", stepLabel: "Шаг",
     steps: [
       { title: "Добро пожаловать в DINO EGG FARM!", body: "Начнём с главной механики. Открой раздел «Игра»." },
       { title: "Сделай первый merge", body: "Нажми на двух одинаковых динозавров и подтверди объединение. Так открываются новые уровни." },
       { title: "Собери яйца", body: "Вернись в Гнездо и нажми «Собрать яйца». Ты получишь Coins и DNA." },
-      { title: "Открой награды", body: "Нажми «Награды». Там находятся ежедневный бонус, задания и достижения." },
+      { title: "Награды помогают развиваться", body: "В «Наградах» находятся ежедневный бонус, задания и достижения. Забирай их регулярно, чтобы получать дополнительные Coins." },
+      { title: "Пополнение Coins", body: "Если хочешь развивать ферму быстрее, в Магазине можно пополнить Coins. Перед созданием платежа игра показывает сумму, монету, сеть и минимальный размер платежа." },
+      { title: "DNA → USDT", body: "Когда накопишь минимальное количество DNA, можно создать заявку на вывод в USDT. В этом окне показаны курс, минимум и сумма к получению. Обучение не создаёт заявку." },
     ],
   },
   en: {
-    menuLabel: "Tutorial", replay: "REPLAY", skip: "Skip", next: "NEXT", start: "PLAY", openRewards: "OPEN REWARDS", stepLabel: "Step",
+    menuLabel: "Tutorial", replay: "REPLAY", skip: "Skip", next: "NEXT", start: "PLAY", openRewards: "OPEN REWARDS", showWithdrawal: "SHOW DNA WITHDRAWAL", finish: "FINISH", stepLabel: "Step",
     steps: [
       { title: "Welcome to DINO EGG FARM!", body: "Start with the core mechanic. Open the Game tab." },
       { title: "Make your first merge", body: "Tap two identical dinosaurs and confirm the merge. This unlocks new levels." },
       { title: "Collect eggs", body: "Return to the Nest and tap Collect Eggs. You will receive Coins and DNA." },
-      { title: "Open rewards", body: "Tap Rewards to find the daily reward, tasks and achievements." },
+      { title: "Rewards help you progress", body: "Rewards contain the daily bonus, tasks and achievements. Claim them regularly for extra Coins." },
+      { title: "Top up Coins", body: "If you want to grow the farm faster, you can top up Coins in the Shop. Before a payment is created, the game shows the amount, coin, network and current minimum." },
+      { title: "DNA → USDT", body: "After you reach the minimum DNA amount, you can submit a USDT withdrawal request. This window shows the rate, minimum and amount to receive. The tutorial does not submit a request." },
     ],
   },
   uk: {
-    menuLabel: "Навчання", replay: "ПОВТОРИТИ", skip: "Пропустити", next: "ДАЛІ", start: "ДО ГРИ", openRewards: "ВІДКРИТИ НАГОРОДИ", stepLabel: "Крок",
+    menuLabel: "Навчання", replay: "ПОВТОРИТИ", skip: "Пропустити", next: "ДАЛІ", start: "ДО ГРИ", openRewards: "ВІДКРИТИ НАГОРОДИ", showWithdrawal: "ПОКАЗАТИ ВИВЕДЕННЯ DNA", finish: "ЗАВЕРШИТИ", stepLabel: "Крок",
     steps: [
       { title: "Ласкаво просимо до DINO EGG FARM!", body: "Почнемо з головної механіки. Відкрий розділ «Гра»." },
       { title: "Зроби перший merge", body: "Натисни на двох однакових динозаврів і підтвердь об’єднання. Так відкриваються нові рівні." },
       { title: "Збери яйця", body: "Повернися до Гнізда та натисни «Зібрати яйця». Ти отримаєш Coins і DNA." },
-      { title: "Відкрий нагороди", body: "Натисни «Нагороди». Там є щоденний бонус, завдання та досягнення." },
+      { title: "Нагороди допомагають розвиватися", body: "У «Нагородах» є щоденний бонус, завдання та досягнення. Забирай їх регулярно для додаткових Coins." },
+      { title: "Поповнення Coins", body: "Щоб швидше розвивати ферму, у Магазині можна поповнити Coins. До створення платежу гра показує суму, монету, мережу та поточний мінімум." },
+      { title: "DNA → USDT", body: "Коли накопичиш мінімальну кількість DNA, можна створити заявку на виведення в USDT. Тут показані курс, мінімум і сума до отримання. Навчання заявку не створює." },
     ],
   },
   it: {
-    menuLabel: "Tutorial", replay: "RIPETI", skip: "Salta", next: "AVANTI", start: "GIOCA", openRewards: "APRI RICOMPENSE", stepLabel: "Passo",
+    menuLabel: "Tutorial", replay: "RIPETI", skip: "Salta", next: "AVANTI", start: "GIOCA", openRewards: "APRI RICOMPENSE", showWithdrawal: "MOSTRA PRELIEVO DNA", finish: "FINE", stepLabel: "Passo",
     steps: [
       { title: "Benvenuto in DINO EGG FARM!", body: "Inizia dalla meccanica principale. Apri la sezione Gioco." },
       { title: "Fai il primo merge", body: "Tocca due dinosauri identici e conferma la fusione. Così sblocchi nuovi livelli." },
       { title: "Raccogli le uova", body: "Torna al Nido e premi Raccogli uova. Riceverai Coins e DNA." },
-      { title: "Apri le ricompense", body: "Premi Ricompense per trovare bonus giornaliero, missioni e obiettivi." },
+      { title: "Le ricompense aiutano la crescita", body: "In Ricompense trovi bonus giornaliero, missioni e obiettivi. Riscattali regolarmente per ottenere Coins extra." },
+      { title: "Ricarica Coins", body: "Per far crescere la fattoria più velocemente puoi ricaricare Coins nel Negozio. Prima del pagamento vedrai importo, moneta, rete e minimo corrente." },
+      { title: "DNA → USDT", body: "Quando raggiungi il minimo di DNA puoi inviare una richiesta di prelievo in USDT. Qui vedi tasso, minimo e importo da ricevere. Il tutorial non invia richieste." },
     ],
   },
   fr: {
-    menuLabel: "Tutoriel", replay: "REJOUER", skip: "Passer", next: "SUIVANT", start: "JOUER", openRewards: "OUVRIR RÉCOMPENSES", stepLabel: "Étape",
+    menuLabel: "Tutoriel", replay: "REJOUER", skip: "Passer", next: "SUIVANT", start: "JOUER", openRewards: "OUVRIR RÉCOMPENSES", showWithdrawal: "VOIR LE RETRAIT DNA", finish: "TERMINER", stepLabel: "Étape",
     steps: [
       { title: "Bienvenue dans DINO EGG FARM !", body: "Commence par la mécanique principale. Ouvre l’onglet Jeu." },
       { title: "Fais ton premier merge", body: "Touche deux dinosaures identiques et confirme la fusion pour débloquer de nouveaux niveaux." },
       { title: "Ramasse les œufs", body: "Retourne au Nid et appuie sur Ramasser les œufs. Tu recevras des Coins et de l’ADN." },
-      { title: "Ouvre les récompenses", body: "Appuie sur Récompenses pour voir le bonus quotidien, les tâches et les succès." },
+      { title: "Les récompenses accélèrent la progression", body: "Récompenses contient le bonus quotidien, les tâches et les succès. Récupère-les régulièrement pour obtenir des Coins supplémentaires." },
+      { title: "Recharger des Coins", body: "Pour développer la ferme plus vite, tu peux recharger des Coins dans la Boutique. Avant le paiement, le jeu affiche le montant, la monnaie, le réseau et le minimum." },
+      { title: "DNA → USDT", body: "Une fois le minimum de DNA atteint, tu peux envoyer une demande de retrait en USDT. Cette fenêtre affiche le taux, le minimum et le montant reçu. Le tutoriel n’envoie aucune demande." },
     ],
   },
   es: {
-    menuLabel: "Tutorial", replay: "REPETIR", skip: "Omitir", next: "SIGUIENTE", start: "JUGAR", openRewards: "ABRIR RECOMPENSAS", stepLabel: "Paso",
+    menuLabel: "Tutorial", replay: "REPETIR", skip: "Omitir", next: "SIGUIENTE", start: "JUGAR", openRewards: "ABRIR RECOMPENSAS", showWithdrawal: "VER RETIRO DE DNA", finish: "FINALIZAR", stepLabel: "Paso",
     steps: [
       { title: "¡Bienvenido a DINO EGG FARM!", body: "Empieza con la mecánica principal. Abre la pestaña Juego." },
       { title: "Haz tu primer merge", body: "Toca dos dinosaurios iguales y confirma la fusión. Así desbloqueas nuevos niveles." },
       { title: "Recoge huevos", body: "Vuelve al Nido y pulsa Recoger huevos. Recibirás Coins y DNA." },
-      { title: "Abre recompensas", body: "Pulsa Recompensas para ver el bono diario, tareas y logros." },
+      { title: "Las recompensas ayudan a progresar", body: "En Recompensas están el bono diario, las tareas y los logros. Reclámalos con frecuencia para obtener Coins extra." },
+      { title: "Recargar Coins", body: "Si quieres desarrollar la granja más rápido, puedes recargar Coins en la Tienda. Antes del pago se muestran el importe, la moneda, la red y el mínimo actual." },
+      { title: "DNA → USDT", body: "Cuando alcances el mínimo de DNA, podrás enviar una solicitud de retiro en USDT. Aquí se muestran la tasa, el mínimo y el importe a recibir. El tutorial no envía solicitudes." },
     ],
   },
   hi: {
-    menuLabel: "ट्यूटोरियल", replay: "फिर चलाएँ", skip: "छोड़ें", next: "आगे", start: "खेलें", openRewards: "पुरस्कार खोलें", stepLabel: "चरण",
+    menuLabel: "ट्यूटोरियल", replay: "फिर चलाएँ", skip: "छोड़ें", next: "आगे", start: "खेलें", openRewards: "पुरस्कार खोलें", showWithdrawal: "DNA निकासी दिखाएँ", finish: "समाप्त", stepLabel: "चरण",
     steps: [
       { title: "DINO EGG FARM में स्वागत है!", body: "मुख्य मैकेनिक से शुरू करें। गेम टैब खोलें।" },
       { title: "पहला merge करें", body: "दो समान डायनासोर पर टैप करें और merge की पुष्टि करें। इससे नए स्तर खुलते हैं।" },
       { title: "अंडे इकट्ठा करें", body: "घोंसले पर लौटें और अंडे इकट्ठा करें दबाएँ। आपको Coins और DNA मिलेंगे।" },
-      { title: "पुरस्कार खोलें", body: "दैनिक पुरस्कार, टास्क और उपलब्धियाँ देखने के लिए पुरस्कार दबाएँ।" },
+      { title: "पुरस्कार प्रगति में मदद करते हैं", body: "पुरस्कार में दैनिक बोनस, टास्क और उपलब्धियाँ हैं। अतिरिक्त Coins के लिए इन्हें नियमित रूप से लें।" },
+      { title: "Coins टॉप-अप", body: "फार्म को तेज़ी से बढ़ाने के लिए दुकान में Coins टॉप-अप किए जा सकते हैं। भुगतान बनाने से पहले राशि, कॉइन, नेटवर्क और न्यूनतम सीमा दिखाई जाती है।" },
+      { title: "DNA → USDT", body: "न्यूनतम DNA जमा होने के बाद USDT निकासी अनुरोध बनाया जा सकता है। इस विंडो में दर, न्यूनतम और मिलने वाली राशि दिखाई जाती है। ट्यूटोरियल कोई अनुरोध नहीं बनाता।" },
     ],
   },
   pl: {
-    menuLabel: "Samouczek", replay: "POWTÓRZ", skip: "Pomiń", next: "DALEJ", start: "GRAJ", openRewards: "OTWÓRZ NAGRODY", stepLabel: "Krok",
+    menuLabel: "Samouczek", replay: "POWTÓRZ", skip: "Pomiń", next: "DALEJ", start: "GRAJ", openRewards: "OTWÓRZ NAGRODY", showWithdrawal: "POKAŻ WYPŁATĘ DNA", finish: "ZAKOŃCZ", stepLabel: "Krok",
     steps: [
       { title: "Witaj w DINO EGG FARM!", body: "Zacznij od głównej mechaniki. Otwórz zakładkę Gra." },
       { title: "Zrób pierwszy merge", body: "Dotknij dwóch identycznych dinozaurów i potwierdź połączenie. Tak odblokujesz nowe poziomy." },
       { title: "Zbierz jajka", body: "Wróć do Gniazda i naciśnij Zbierz jajka. Otrzymasz Coins i DNA." },
-      { title: "Otwórz nagrody", body: "Naciśnij Nagrody, aby zobaczyć bonus dzienny, zadania i osiągnięcia." },
+      { title: "Nagrody pomagają w rozwoju", body: "W Nagrodach znajdziesz bonus dzienny, zadania i osiągnięcia. Odbieraj je regularnie, aby zdobywać dodatkowe Coins." },
+      { title: "Doładuj Coins", body: "Jeśli chcesz szybciej rozwijać farmę, możesz doładować Coins w Sklepie. Przed utworzeniem płatności zobaczysz kwotę, monetę, sieć i aktualne minimum." },
+      { title: "DNA → USDT", body: "Po osiągnięciu minimalnej ilości DNA możesz wysłać wniosek o wypłatę w USDT. Okno pokazuje kurs, minimum i kwotę do otrzymania. Samouczek nie wysyła wniosku." },
     ],
   },
   de: {
-    menuLabel: "Tutorial", replay: "WIEDERHOLEN", skip: "Überspringen", next: "WEITER", start: "SPIELEN", openRewards: "BELOHNUNGEN ÖFFNEN", stepLabel: "Schritt",
+    menuLabel: "Tutorial", replay: "WIEDERHOLEN", skip: "Überspringen", next: "WEITER", start: "SPIELEN", openRewards: "BELOHNUNGEN ÖFFNEN", showWithdrawal: "DNA-AUSZAHLUNG ZEIGEN", finish: "FERTIG", stepLabel: "Schritt",
     steps: [
       { title: "Willkommen bei DINO EGG FARM!", body: "Starte mit der Kernmechanik. Öffne den Tab Spiel." },
       { title: "Mache deinen ersten Merge", body: "Tippe zwei gleiche Dinosaurier an und bestätige den Merge. So schaltest du neue Level frei." },
       { title: "Sammle Eier", body: "Kehre zum Nest zurück und tippe Eier sammeln. Du erhältst Coins und DNA." },
-      { title: "Öffne Belohnungen", body: "Tippe Belohnungen für Tagesbonus, Aufgaben und Erfolge." },
+      { title: "Belohnungen helfen beim Fortschritt", body: "Unter Belohnungen findest du Tagesbonus, Aufgaben und Erfolge. Hole sie regelmäßig für zusätzliche Coins ab." },
+      { title: "Coins aufladen", body: "Wenn du die Farm schneller ausbauen möchtest, kannst du im Shop Coins aufladen. Vor der Zahlung werden Betrag, Coin, Netzwerk und aktuelles Minimum angezeigt." },
+      { title: "DNA → USDT", body: "Sobald du das DNA-Minimum erreicht hast, kannst du eine USDT-Auszahlung anfordern. Dieses Fenster zeigt Kurs, Minimum und Auszahlungsbetrag. Das Tutorial sendet keinen Antrag." },
     ],
   },
   tr: {
-    menuLabel: "Eğitim", replay: "TEKRARLA", skip: "Atla", next: "İLERİ", start: "OYNA", openRewards: "ÖDÜLLERİ AÇ", stepLabel: "Adım",
+    menuLabel: "Eğitim", replay: "TEKRARLA", skip: "Atla", next: "İLERİ", start: "OYNA", openRewards: "ÖDÜLLERİ AÇ", showWithdrawal: "DNA ÇEKİMİNİ GÖSTER", finish: "BİTİR", stepLabel: "Adım",
     steps: [
       { title: "DINO EGG FARM’a hoş geldin!", body: "Ana mekanikle başla. Oyun sekmesini aç." },
       { title: "İlk merge işlemini yap", body: "İki aynı dinozora dokun ve birleştirmeyi onayla. Böylece yeni seviyeler açılır." },
       { title: "Yumurtaları topla", body: "Yuvaya dön ve Yumurtaları topla düğmesine bas. Coins ve DNA kazanırsın." },
-      { title: "Ödülleri aç", body: "Günlük bonus, görevler ve başarılar için Ödüller düğmesine bas." },
+      { title: "Ödüller gelişmene yardım eder", body: "Ödüller bölümünde günlük bonus, görevler ve başarılar bulunur. Ek Coins için düzenli olarak al." },
+      { title: "Coins yükle", body: "Çiftliği daha hızlı geliştirmek istersen Mağazada Coins yükleyebilirsin. Ödeme oluşturulmadan önce tutar, coin, ağ ve güncel minimum gösterilir." },
+      { title: "DNA → USDT", body: "Minimum DNA miktarına ulaştığında USDT çekim talebi oluşturabilirsin. Bu pencere kur, minimum ve alınacak tutarı gösterir. Eğitim herhangi bir talep oluşturmaz." },
     ],
   },
 };
@@ -1385,6 +1409,12 @@ export default function GameApp() {
     }
   };
 
+  const skipTutorial = () => {
+    closeAllTutorialRelatedPopups();
+    setTab("nest");
+    completeTutorial(false);
+  };
+
   const advanceTutorial = () => {
     if (tutorialStep === 0) {
       setTab("game");
@@ -1404,9 +1434,35 @@ export default function GameApp() {
       return;
     }
 
+    if (tutorialStep === 3) {
+      if (!nestRewardsMenuOpen) {
+        setNestRewardsMenuOpen(true);
+        return;
+      }
+
+      setNestRewardsMenuOpen(false);
+      setTab("shop");
+      setShopSection("deposit");
+      setTutorialStep(4);
+      return;
+    }
+
+    if (tutorialStep === 4) {
+      setDepositMethodPickerOpen(false);
+      setDepositConfirmationOpen(false);
+      setTab("menu");
+      closeMenuPopups();
+      setWithdrawalOpen(true);
+      if (authMode === "telegram") {
+        void loadWithdrawals();
+      }
+      setTutorialStep(5);
+      return;
+    }
+
+    setWithdrawalOpen(false);
     setTab("nest");
-    setNestRewardsMenuOpen(true);
-    completeTutorial(true);
+    completeTutorial(false);
   };
 
   useEffect(() => {
@@ -4872,11 +4928,6 @@ export default function GameApp() {
                   type="button"
                   className={`coin-button nest-rewards-toggle${tutorialOpen && tutorialStep === 3 ? " tutorial-target" : ""}`}
                   onClick={() => {
-                    if (tutorialOpen && tutorialStep === 3) {
-                      setNestRewardsMenuOpen(true);
-                      completeTutorial(true);
-                      return;
-                    }
                     setNestRewardsMenuOpen((open) => !open);
                   }}
                   disabled={isLoading || Boolean(loadError)}
@@ -5416,7 +5467,7 @@ export default function GameApp() {
         )}
 
         {tab === "shop" && (
-          <div className="screen shop-art-screen">
+          <div className={`screen shop-art-screen${tutorialOpen && tutorialStep === 4 ? " tutorial-screen-focus tutorial-finance-screen" : ""}`}>
             <div className="shop-art-heading">
               <span className="eyebrow">DINO SHOP</span>
               <h2>Магазин</h2>
@@ -5640,7 +5691,7 @@ export default function GameApp() {
 
                 {depositConfig ? (
                   <div
-                    className="card"
+                    className={`card${tutorialOpen && tutorialStep === 4 ? " tutorial-target tutorial-deposit-target" : ""}`}
                     style={{
                       display: "block",
                       width: "100%",
@@ -6854,6 +6905,10 @@ export default function GameApp() {
         ) && (
           <div
             className={`screen menu-art-screen${
+              tutorialOpen && tutorialStep === 5
+                ? " tutorial-screen-focus tutorial-finance-screen"
+                : ""
+            }${
               tab !== "menu" ? " rewards-popup-host" : ""
             }${
               walletHistoryOpen ||
@@ -8870,7 +8925,7 @@ export default function GameApp() {
             ) : null}
 
             {withdrawalOpen ? (
-              <div className="form-card withdraw-art-panel menu-popup-panel">
+              <div className={`form-card withdraw-art-panel menu-popup-panel${tutorialOpen && tutorialStep === 5 ? " tutorial-target tutorial-withdraw-target" : ""}`}>
                 <div className="withdraw-art-head">
                   <div>
                     <span className="eyebrow">WITHDRAWAL</span>
@@ -9526,8 +9581,8 @@ export default function GameApp() {
             data-i18n-ignore="true"
           >
             <div className="tutorial-guide-topline">
-              <span>{tutorialCopy.stepLabel} {tutorialStep + 1}/4</span>
-              <button type="button" onClick={() => completeTutorial(false)}>
+              <span>{tutorialCopy.stepLabel} {tutorialStep + 1}/6</span>
+              <button type="button" onClick={skipTutorial}>
                 {tutorialCopy.skip}
               </button>
             </div>
@@ -9537,8 +9592,14 @@ export default function GameApp() {
               {tutorialStep === 0
                 ? tutorialCopy.start
                 : tutorialStep === 3
-                  ? tutorialCopy.openRewards
-                  : tutorialCopy.next}
+                  ? nestRewardsMenuOpen
+                    ? tutorialCopy.next
+                    : tutorialCopy.openRewards
+                  : tutorialStep === 4
+                    ? tutorialCopy.showWithdrawal
+                    : tutorialStep === 5
+                      ? tutorialCopy.finish
+                      : tutorialCopy.next}
             </button>
           </section>
         </>
@@ -9550,7 +9611,7 @@ export default function GameApp() {
         </div>
       ) : null}
 
-      <nav className={`bottom-nav glass${tutorialOpen && tutorialStep === 0 ? " tutorial-nav-focus" : ""}`} aria-label="Главная навигация">
+      <nav className={`bottom-nav glass${tutorialOpen && tutorialStep === 0 ? " tutorial-nav-focus" : ""}${tutorialOpen && (tutorialStep === 4 || tutorialStep === 5) ? " tutorial-nav-locked" : ""}`} aria-label="Главная навигация">
         {([
           ["nest", "/assets/game/ui/nav/nest.webp", "Гнездо"],
           ["game", "/assets/game/ui/nav/game.webp", "Игра"],
