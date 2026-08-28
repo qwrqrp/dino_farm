@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   dinosaurs,
   formatNumber,
@@ -1171,6 +1171,31 @@ function translateUiString(value: string, language: LanguageCode) {
   return translated;
 }
 
+type RewardFxKind = "collect" | "daily" | "task" | "achievement";
+
+type RewardFxState = {
+  kind: RewardFxKind;
+  coins: number;
+  dna: number;
+  key: number;
+};
+
+const REWARD_FX_COPY: Record<LanguageCode, {
+  collect: string;
+  reward: string;
+}> = {
+  ru: { collect: "СОБРАНО!", reward: "НАГРАДА!" },
+  en: { collect: "COLLECTED!", reward: "REWARD!" },
+  uk: { collect: "ЗІБРАНО!", reward: "НАГОРОДА!" },
+  it: { collect: "RACCOLTO!", reward: "RICOMPENSA!" },
+  fr: { collect: "RAMASSÉ !", reward: "RÉCOMPENSE !" },
+  es: { collect: "¡RECOGIDO!", reward: "¡RECOMPENSA!" },
+  hi: { collect: "एकत्र किया!", reward: "इनाम!" },
+  pl: { collect: "ZEBRANO!", reward: "NAGRODA!" },
+  de: { collect: "GESAMMELT!", reward: "BELOHNUNG!" },
+  tr: { collect: "TOPLANDI!", reward: "ÖDÜL!" },
+};
+
 function getTelegramWebApp(): TelegramWebApp | undefined {
   if (typeof window === "undefined") return undefined;
 
@@ -1205,6 +1230,8 @@ export default function GameApp() {
     key: number;
   } | null>(null);
   const mergeFxTimerRef = useRef<number | null>(null);
+  const [rewardFx, setRewardFx] = useState<RewardFxState | null>(null);
+  const rewardFxTimerRef = useRef<number | null>(null);
   const [isMoving, setIsMoving] = useState(false);
   const [pendingMerge, setPendingMerge] = useState<{
     fromSlot: number;
@@ -1954,6 +1981,12 @@ export default function GameApp() {
         eggCollectFxTimerRef.current = null;
       }, 1250);
 
+      triggerRewardCelebration(
+        "collect",
+        data.coinsReward ?? 0,
+        data.dnaReward ?? 0,
+      );
+
       setToast(
         `Собрано ${formatNumber(data.collectedEggs ?? 0, 0)} яиц: +${formatNumber(data.coinsReward ?? 0)} Coins и +${formatNumber(data.dnaReward ?? 0)} DNA ✓`,
       );
@@ -2233,6 +2266,40 @@ export default function GameApp() {
     return () => {
       if (mergeFxTimerRef.current !== null) {
         window.clearTimeout(mergeFxTimerRef.current);
+      }
+    };
+  }, []);
+
+  const triggerRewardCelebration = (
+    kind: RewardFxKind,
+    coins: number,
+    dna = 0,
+  ) => {
+    if (rewardFxTimerRef.current !== null) {
+      window.clearTimeout(rewardFxTimerRef.current);
+    }
+
+    setRewardFx({
+      kind,
+      coins: Math.max(0, Number.isFinite(coins) ? coins : 0),
+      dna: Math.max(0, Number.isFinite(dna) ? dna : 0),
+      key: Date.now(),
+    });
+
+    const webApp = getTelegramWebApp();
+    webApp?.HapticFeedback?.notificationOccurred?.("success");
+    webApp?.HapticFeedback?.impactOccurred?.("light");
+
+    rewardFxTimerRef.current = window.setTimeout(() => {
+      setRewardFx(null);
+      rewardFxTimerRef.current = null;
+    }, 1550);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (rewardFxTimerRef.current !== null) {
+        window.clearTimeout(rewardFxTimerRef.current);
       }
     };
   }, []);
@@ -3608,6 +3675,11 @@ export default function GameApp() {
           data.balance?.coins ?? previous.coins,
       }));
 
+      triggerRewardCelebration(
+        "achievement",
+        data.rewardCoins ?? achievement.rewardCoins,
+      );
+
       setToast(
         `🏅 Достижение получено: +${formatNumber(
           data.rewardCoins ?? achievement.rewardCoins,
@@ -3723,6 +3795,11 @@ export default function GameApp() {
         coins: data.balance?.coins ?? previous.coins,
       }));
 
+      triggerRewardCelebration(
+        "task",
+        data.rewardCoins ?? task.rewardCoins,
+      );
+
       setToast(
         `✅ Задание выполнено: +${formatNumber(
           data.rewardCoins ?? task.rewardCoins,
@@ -3830,6 +3907,11 @@ export default function GameApp() {
         ...previous,
         coins: data.balance?.coins ?? previous.coins,
       }));
+
+      triggerRewardCelebration(
+        "daily",
+        data.claimedCoins ?? 0,
+      );
 
       setToast(
         `🎁 Ежедневный бонус: +${formatNumber(data.claimedCoins ?? 0, 0)} Coins`,
@@ -4581,7 +4663,7 @@ export default function GameApp() {
                   : "Level 1 · Demo"
           }</span>
         </div>
-        <div className="balances">
+        <div className={`balances${rewardFx ? " reward-balance-pulse" : ""}`}>
           <span>🪙 {formatNumber(state.coins, 2)}</span>
           <span>🧬 {formatNumber(state.dna, 2)}</span>
         </div>
@@ -9287,6 +9369,35 @@ export default function GameApp() {
                 {isMerging ? "⏳ MERGE..." : "ПОДТВЕРДИТЬ"}
               </button>
             </div>
+          </div>
+        </div>
+      ) : null}
+
+      {rewardFx ? (
+        <div
+          key={rewardFx.key}
+          className={`reward-celebration reward-celebration-${rewardFx.kind}`}
+          aria-hidden="true"
+          data-i18n-ignore="true"
+        >
+          <div className="reward-celebration-burst" />
+          <div className="reward-celebration-particles">
+            {Array.from({ length: 12 }, (_, index) => (
+              <i key={index} style={{ "--reward-particle": String(index) } as CSSProperties} />
+            ))}
+          </div>
+          <div className="reward-celebration-card">
+            <small>
+              {rewardFx.kind === "collect"
+                ? REWARD_FX_COPY[language].collect
+                : REWARD_FX_COPY[language].reward}
+            </small>
+            {rewardFx.coins > 0 ? (
+              <strong>+{formatNumber(rewardFx.coins, rewardFx.coins < 10 ? 2 : 0)} Coins</strong>
+            ) : null}
+            {rewardFx.dna > 0 ? (
+              <b>+{formatNumber(rewardFx.dna, rewardFx.dna < 10 ? 2 : 0)} DNA</b>
+            ) : null}
           </div>
         </div>
       ) : null}
