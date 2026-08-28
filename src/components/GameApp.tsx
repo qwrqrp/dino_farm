@@ -1196,6 +1196,32 @@ const REWARD_FX_COPY: Record<LanguageCode, {
   tr: { collect: "TOPLANDI!", reward: "ÖDÜL!" },
 };
 
+type NewDinoUnlockState = {
+  level: number;
+  key: number;
+};
+
+type NewDinoUnlockCopy = {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  daily: string;
+  continue: string;
+};
+
+const NEW_DINO_UNLOCK_COPY: Record<LanguageCode, NewDinoUnlockCopy> = {
+  ru: { eyebrow: "НОВОЕ ОТКРЫТИЕ", title: "Новый уровень динозавра!", subtitle: "Теперь этот уровень открыт вашим прогрессом merge.", daily: "Доход за сутки", continue: "ПРОДОЛЖИТЬ" },
+  en: { eyebrow: "NEW DISCOVERY", title: "New dinosaur level!", subtitle: "This level is now unlocked by your merge progress.", daily: "Daily income", continue: "CONTINUE" },
+  uk: { eyebrow: "НОВЕ ВІДКРИТТЯ", title: "Новий рівень динозавра!", subtitle: "Цей рівень тепер відкрито вашим прогресом merge.", daily: "Дохід за добу", continue: "ПРОДОВЖИТИ" },
+  it: { eyebrow: "NUOVA SCOPERTA", title: "Nuovo livello dinosauro!", subtitle: "Questo livello è ora sbloccato dai tuoi progressi di merge.", daily: "Guadagno giornaliero", continue: "CONTINUA" },
+  fr: { eyebrow: "NOUVELLE DÉCOUVERTE", title: "Nouveau niveau de dinosaure !", subtitle: "Ce niveau est maintenant débloqué grâce à ta progression de fusion.", daily: "Revenu quotidien", continue: "CONTINUER" },
+  es: { eyebrow: "NUEVO DESCUBRIMIENTO", title: "¡Nuevo nivel de dinosaurio!", subtitle: "Este nivel ya está desbloqueado por tu progreso de merge.", daily: "Ingreso diario", continue: "CONTINUAR" },
+  hi: { eyebrow: "नई खोज", title: "नया डायनासोर स्तर!", subtitle: "यह स्तर अब आपकी merge प्रगति से खुल गया है।", daily: "दैनिक आय", continue: "जारी रखें" },
+  pl: { eyebrow: "NOWE ODKRYCIE", title: "Nowy poziom dinozaura!", subtitle: "Ten poziom został odblokowany dzięki postępowi w merge.", daily: "Dzienny dochód", continue: "DALEJ" },
+  de: { eyebrow: "NEUE ENTDECKUNG", title: "Neues Dinosaurier-Level!", subtitle: "Dieses Level ist jetzt durch deinen Merge-Fortschritt freigeschaltet.", daily: "Tagesertrag", continue: "WEITER" },
+  tr: { eyebrow: "YENİ KEŞİF", title: "Yeni dinozor seviyesi!", subtitle: "Bu seviye merge ilerlemenizle artık açıldı.", daily: "Günlük gelir", continue: "DEVAM" },
+};
+
 function getTelegramWebApp(): TelegramWebApp | undefined {
   if (typeof window === "undefined") return undefined;
 
@@ -1230,6 +1256,8 @@ export default function GameApp() {
     key: number;
   } | null>(null);
   const mergeFxTimerRef = useRef<number | null>(null);
+  const [newDinoUnlock, setNewDinoUnlock] = useState<NewDinoUnlockState | null>(null);
+  const newDinoUnlockTimerRef = useRef<number | null>(null);
   const [rewardFx, setRewardFx] = useState<RewardFxState | null>(null);
   const rewardFxTimerRef = useRef<number | null>(null);
   const [isMoving, setIsMoving] = useState(false);
@@ -2267,8 +2295,22 @@ export default function GameApp() {
       if (mergeFxTimerRef.current !== null) {
         window.clearTimeout(mergeFxTimerRef.current);
       }
+      if (newDinoUnlockTimerRef.current !== null) {
+        window.clearTimeout(newDinoUnlockTimerRef.current);
+      }
     };
   }, []);
+
+  const triggerNewDinoUnlock = (level: number) => {
+    if (newDinoUnlockTimerRef.current !== null) {
+      window.clearTimeout(newDinoUnlockTimerRef.current);
+    }
+
+    newDinoUnlockTimerRef.current = window.setTimeout(() => {
+      setNewDinoUnlock({ level, key: Date.now() });
+      newDinoUnlockTimerRef.current = null;
+    }, 900);
+  };
 
   const triggerRewardCelebration = (
     kind: RewardFxKind,
@@ -2323,6 +2365,10 @@ export default function GameApp() {
       return;
     }
 
+    const previousMaxLevel = state.board.reduce<number>((max, level) => {
+      return typeof level === "number" ? Math.max(max, level) : max;
+    }, 0);
+
     setIsMerging(true);
     setToast("Объединяем динозавров на сервере...");
 
@@ -2372,6 +2418,10 @@ export default function GameApp() {
           : toSlot;
 
       triggerMergeCelebration(mergedSlot, mergedLevel);
+
+      if (!tutorialOpen && mergedLevel > previousMaxLevel) {
+        triggerNewDinoUnlock(mergedLevel);
+      }
 
       setToast(
         `MERGE ✓ Lv.${mergedLevel} · комиссия ${formatNumber(
@@ -4438,6 +4488,7 @@ export default function GameApp() {
         depositConfirmationOpen ||
         pendingPurchase ||
         pendingMerge ||
+        newDinoUnlock ||
         nestUpgradeOpen ||
         nestRewardsMenuOpen ||
         dailyOpen ||
@@ -4471,6 +4522,10 @@ export default function GameApp() {
       if (pendingMerge) {
         setPendingMerge(null);
         setSelected(null);
+        return;
+      }
+      if (newDinoUnlock) {
+        setNewDinoUnlock(null);
         return;
       }
       if (nestUpgradeOpen) {
@@ -4536,6 +4591,7 @@ export default function GameApp() {
     depositConfirmationOpen,
     pendingPurchase,
     pendingMerge,
+    newDinoUnlock,
     nestUpgradeOpen,
     nestRewardsMenuOpen,
     dailyOpen,
@@ -9372,6 +9428,63 @@ export default function GameApp() {
           </div>
         </div>
       ) : null}
+
+      {newDinoUnlock ? (() => {
+        const unlockedConfig = getDinosaurConfig(newDinoUnlock.level);
+        const copy = NEW_DINO_UNLOCK_COPY[language];
+
+        return (
+          <div
+            key={newDinoUnlock.key}
+            className="new-dino-unlock-backdrop"
+            role="presentation"
+            onClick={() => setNewDinoUnlock(null)}
+            data-i18n-ignore="true"
+          >
+            <section
+              className={`new-dino-unlock-modal ${getDinoEvolutionClass(newDinoUnlock.level)}`}
+              role="dialog"
+              aria-modal="true"
+              aria-label={`${copy.title} Lv.${newDinoUnlock.level}`}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="new-dino-unlock-rays" aria-hidden="true" />
+              <small>{copy.eyebrow}</small>
+              <h2>{copy.title}</h2>
+
+              <div className="new-dino-unlock-hero">
+                <span className="new-dino-unlock-aura" aria-hidden="true" />
+                <img
+                  src={getDinoAsset(newDinoUnlock.level)}
+                  alt=""
+                  draggable={false}
+                  aria-hidden="true"
+                />
+                <strong>Lv.{newDinoUnlock.level}</strong>
+              </div>
+
+              <p>{copy.subtitle}</p>
+
+              {unlockedConfig ? (
+                <div className="new-dino-unlock-income">
+                  <span>{copy.daily}</span>
+                  <b>
+                    {formatNumber(unlockedConfig.dailyCoins, 2)} Coins + {formatNumber(unlockedConfig.dailyDna, 2)} DNA
+                  </b>
+                </div>
+              ) : null}
+
+              <button
+                type="button"
+                className="new-dino-unlock-continue"
+                onClick={() => setNewDinoUnlock(null)}
+              >
+                {copy.continue}
+              </button>
+            </section>
+          </div>
+        );
+      })() : null}
 
       {rewardFx ? (
         <div
