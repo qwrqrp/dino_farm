@@ -618,6 +618,12 @@ type TelegramWebApp = {
   ready?: () => void;
   expand?: () => void;
   openTelegramLink?: (url: string) => void;
+  BackButton?: {
+    show?: () => void;
+    hide?: () => void;
+    onClick?: (callback: () => void) => void;
+    offClick?: (callback: () => void) => void;
+  };
   HapticFeedback?: {
     impactOccurred?: (style: "light" | "medium" | "heavy" | "rigid" | "soft") => void;
     notificationOccurred?: (type: "error" | "success" | "warning") => void;
@@ -4238,6 +4244,131 @@ export default function GameApp() {
     }
   }, [tab]);
 
+  // Telegram-native Back button closes the topmost in-app popup first.
+  // This is UI-only and does not touch any gameplay/API state.
+  useEffect(() => {
+    const webApp = getTelegramWebApp();
+    const backButton = webApp?.BackButton;
+    if (!backButton?.show || !backButton?.hide || !backButton?.onClick) return;
+
+    const hasClosableOverlay = Boolean(
+      languageMenuOpen ||
+        depositMethodPickerOpen ||
+        depositConfirmationOpen ||
+        pendingPurchase ||
+        pendingMerge ||
+        nestUpgradeOpen ||
+        nestRewardsMenuOpen ||
+        dailyOpen ||
+        tasksOpen ||
+        achievementsOpen ||
+        farmToolsMenuOpen ||
+        profileOpen ||
+        walletHistoryOpen ||
+        withdrawalOpen ||
+        levelsOpen ||
+        profitPlanOpen,
+    );
+
+    const closeTopOverlay = () => {
+      if (languageMenuOpen) {
+        setLanguageMenuOpen(false);
+        return;
+      }
+      if (depositConfirmationOpen) {
+        setDepositConfirmationOpen(false);
+        return;
+      }
+      if (depositMethodPickerOpen) {
+        setDepositMethodPickerOpen(false);
+        return;
+      }
+      if (pendingPurchase) {
+        setPendingPurchase(null);
+        return;
+      }
+      if (pendingMerge) {
+        setPendingMerge(null);
+        setSelected(null);
+        return;
+      }
+      if (nestUpgradeOpen) {
+        setNestUpgradeOpen(false);
+        return;
+      }
+      if (dailyOpen) {
+        setDailyOpen(false);
+        return;
+      }
+      if (tasksOpen) {
+        setTasksOpen(false);
+        return;
+      }
+      if (achievementsOpen) {
+        setAchievementsOpen(false);
+        return;
+      }
+      if (nestRewardsMenuOpen) {
+        setNestRewardsMenuOpen(false);
+        return;
+      }
+      if (farmToolsMenuOpen) {
+        setFarmToolsMenuOpen(false);
+        return;
+      }
+      if (profileOpen) {
+        setProfileOpen(false);
+        return;
+      }
+      if (walletHistoryOpen) {
+        setWalletHistoryOpen(false);
+        return;
+      }
+      if (withdrawalOpen) {
+        setWithdrawalOpen(false);
+        return;
+      }
+      if (levelsOpen) {
+        setLevelsOpen(false);
+        return;
+      }
+      if (profitPlanOpen) {
+        setProfitPlanOpen(false);
+      }
+    };
+
+    if (!hasClosableOverlay || tutorialOpen) {
+      backButton.hide();
+      return;
+    }
+
+    backButton.show();
+    backButton.onClick(closeTopOverlay);
+
+    return () => {
+      backButton.offClick?.(closeTopOverlay);
+      backButton.hide?.();
+    };
+  }, [
+    languageMenuOpen,
+    depositMethodPickerOpen,
+    depositConfirmationOpen,
+    pendingPurchase,
+    pendingMerge,
+    nestUpgradeOpen,
+    nestRewardsMenuOpen,
+    dailyOpen,
+    tasksOpen,
+    achievementsOpen,
+    farmToolsMenuOpen,
+    profileOpen,
+    walletHistoryOpen,
+    withdrawalOpen,
+    levelsOpen,
+    profitPlanOpen,
+    tutorialOpen,
+  ]);
+
   const withdrawalPreview = withdrawalConfig
     ? Math.max(0, Number(withdrawDna) || 0) * withdrawalConfig.usdtPerDna
     : 0;
@@ -4264,12 +4395,12 @@ export default function GameApp() {
           top: 50% !important;
           transform: translate(-50%, -50%) !important;
           width: min(calc(100vw - 24px), 468px) !important;
-          max-height: calc(100dvh - 28px) !important;
+          max-height: calc(var(--tg-viewport-stable-height, 100dvh) - 28px) !important;
           margin: 0 !important;
           overflow-y: auto !important;
           overscroll-behavior: contain;
           z-index: 2010 !important;
-          padding-bottom: calc(18px + env(safe-area-inset-bottom)) !important;
+          padding-bottom: calc(18px + var(--tg-content-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important;
           box-shadow:
             0 0 0 100vmax rgba(2, 12, 8, .76),
             0 24px 70px rgba(0, 0, 0, .52) !important;
@@ -4280,7 +4411,7 @@ export default function GameApp() {
           .menu-popup-panel,
           .nest-upgrade-popup {
             width: calc(100vw - 16px) !important;
-            max-height: calc(100dvh - 16px) !important;
+            max-height: calc(var(--tg-viewport-stable-height, 100dvh) - 16px) !important;
           }
         }
       `}</style>
@@ -5571,6 +5702,7 @@ export default function GameApp() {
 
                 {depositMethodPickerOpen ? (
                   <div
+                    className="deposit-method-picker-backdrop"
                     role="dialog"
                     aria-modal="true"
                     aria-label="Выбор монеты и сети"
@@ -5590,14 +5722,14 @@ export default function GameApp() {
                     }
                   >
                     <div
-                      className="glass"
+                      className="glass deposit-method-picker-panel"
                       onClick={(event) =>
                         event.stopPropagation()
                       }
                       style={{
                         width: "min(460px, 100%)",
                         maxHeight:
-                          "min(78dvh, 720px)",
+                          "min(calc(var(--tg-viewport-stable-height, 100dvh) - 36px), 720px)",
                         overflowY: "auto",
                         borderRadius: 26,
                         padding: 16,
